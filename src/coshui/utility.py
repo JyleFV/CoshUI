@@ -1,5 +1,6 @@
 from .engine import CoshUI
 from .nodes import Node
+from .types import *
 from typing import TypeVar, Generic
 import difflib
 
@@ -17,13 +18,26 @@ class Ref(Generic[T]):
     def value(self, new_value : T):
         self._value = new_value
 
-def measure():
+def measure(node : Node):
+    for child in node.children:
+        measure(child)
+
+    if isinstance(node, Container):
+        if not node.sizing == CoshSizing.FIT:
+            return
+        
+        match node.direction:
+            case CoshDirection.ROW:
+                node.layout.width = (sum(child.layout.width for child in node.children) + (node.gap * (len(node.children) - 1)))
+                node.layout.height = max((child.layout.height for child in node.children), default=0)
+            case CoshDirection.COLUMN:
+                node.layout.width = max((child.layout.width for child in node.children), default=0)
+                node.layout.height = (sum(child.layout.height for child in node.children) + (node.gap * (len(node.children) - 1)))
+
+def layout(node : Node):
     pass
 
-def layout():
-    pass
-
-def render():
+def render(node : Node, backend : CoshBackend):
     pass
 
 def get_node(node_name : str):
@@ -46,26 +60,6 @@ def set_nested_attr(node : Node, n_property : str, value):
     setattr(obj, parts[-1], value)
 
 # Animation-related
-
-# Maybe add these in a different file
-def lerp_float():
-    pass
-
-def lerp_vector3():
-    pass
-
-def ease_linear():
-    pass
-
-def ease_in():
-    pass
-
-def ease_out():
-    pass
-
-def ease_in_out():
-    pass
-
 EASING_MAP = {
         "linear" : ease_linear,
         "ease_in" : ease_in,
@@ -74,14 +68,19 @@ EASING_MAP = {
     }
 
 PROPERTY_MAP = {
-        "scale" : ("style.transform_scale", lerp_float)
+        "true_scale" : ("layout.true_scale", lerp_float)
+        "scale" : ("style.transform_scale", lerp_float),
+        "background_color" : ("style.background_color", lerp_vector3)
     }
 
 class Tween:
     def __init__(self, n_property : str, target, end_value, duration : float, easing : callable):
         self.property = n_property
         self.target = target
-        self.start_value = get_nested_attr(target, PROPERTY_MAP.get(n_property))
+
+        self.path, self.lerp_fn = PROPERTY_MAP.get(n_property) 
+
+        self.start_value = get_nested_attr(target, self.path)
         self.end_value = end_value
         self.time = 0
         self.duration = duration
@@ -89,7 +88,20 @@ class Tween:
         self.finished = False
 
     def update(self, delta):
-        pass
+        if self.finsihed:
+            return
+        
+        self.time += delta
+        raw_t = min(self.time / self.duration, 1.0)
+        eased_t = self.easing(raw_t)
 
-def animate():
-    pass
+        new_value = self.lerp_fn(self.start_value, self.end_value, eased_t)
+        set_nested_attr(self.target, self.path, new_value)
+
+        if raw_t >= 1.0:
+            self.finished = True
+
+def animate(n_property : str, target : Node, end_value, duration : float, easing : str):
+    ease_fn = EASING_MAP.get(easing, ease_linear)
+    tween = Tween(n_property, target, end_value, duration, ease_fn)
+    CoshUI._active_tweens.add(tween)

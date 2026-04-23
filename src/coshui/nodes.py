@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from .types import CoshLayout, CoshStyling
 from .engine import CoshUI
 
 @dataclass
 class Node(ABC):
+    layout : CoshLayout = field(default_factory=lambda: CoshLayout())
+    style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
 
     def __post_init__(self):
