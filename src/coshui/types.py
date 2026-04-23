@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import NamedTuple
 from enum import Enum
 
 @dataclass
@@ -17,6 +18,9 @@ class Vector3:
     y : int = 0
     z : int = 0
 
+    def get_tuple(self):
+        return (self.x, self.y, self.z)
+
 @dataclass
 class FVector3:
     x : float = 0.0
@@ -29,6 +33,9 @@ class Vector4:
     y : int = 0
     z : int = 0
     w : int = 0
+
+    def get_tuple(self):
+        return (self.x, self.y, self.z, self.w) 
 
 @dataclass
 class FVector4:
@@ -48,13 +55,20 @@ class CoshLayout:
 
 @dataclass
 class CoshStyling:
-    background_color : Vector3 = field(default_factory=lambda: Vector3(0, 0, 0))
+    background_color : Vector4 = field(default_factory=lambda: Vector4(0, 0, 0, 0))
     color : Vector3 = field(default_factory=lambda: Vector3(0, 0, 0))
     border_radius : Vector4 = field(default_factory=lambda: Vector4(0, 0, 0))
     transform_position : Vector2 = field(default_factory=lambda: Vector2(0, 0))
     transform_rotation : float = 0.0
     transform_scale : float = 1.0
-    z_index : int = 0
+
+class RenderRect(NamedTuple):
+    x : float
+    y : float
+    width : float
+    height : float
+    background_color : tuple
+    z_index : int
 
 class CoshDirection(Enum):
     ROW = 0

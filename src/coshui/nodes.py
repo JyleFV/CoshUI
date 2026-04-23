@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from .types import CoshLayout, CoshStyling
+from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, RenderRect
 
 @dataclass
 class Node(ABC):
     layout : CoshLayout = field(default_factory=lambda: CoshLayout())
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     id : str = ""
+    z_index : int = 0
     children : list = field(default_factory=list)
 
     def __post_init__(self):
         from .engine import CoshUI
-        CoshUI._stack[-1].children.append(self)
+        if CoshUI._stack:
+            CoshUI._stack[-1].children.append(self)
 
         if self.id:
             CoshUI._node_map[self.id] = self
@@ -37,7 +39,19 @@ class ParentNode(Node):
 
 @dataclass
 class Container(ParentNode):
+    sizing : CoshSizing = CoshSizing.FIT
+    direction : CoshDirection = CoshDirection.ROW
     gap : float = 0.0
+
+    def get_render_data(self) -> RenderRect:
+        return RenderRect(
+            x=self.style.transform_position.x,
+            y=self.style.transform_position.y,
+            width=self.layout.width,
+            height=self.layout.height,
+            background_color=self.style.background_color.get_tuple(),
+            z_index=self.z_index
+        )
 
 @dataclass
 class Grid(ParentNode):

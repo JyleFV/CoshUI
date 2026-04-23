@@ -1,4 +1,5 @@
 from ..backend import CoshBackend
+from ..types import RenderRect
 
 try:
     import pygame
@@ -15,3 +16,7 @@ class PygameBackend(CoshBackend):
 
     def draw_rect(self, x, y, w, h, color):
         pygame.draw.rect(self.surface, color, (x, y, w, h))
+
+    def flush(self, render_stack : list[RenderRect]):
+        for data in render_stack:
+            self.draw_rect(data.x, data.y, data.width, data.height, data.background_color)

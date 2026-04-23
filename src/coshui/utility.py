@@ -6,7 +6,6 @@ from typing import TypeVar, Generic
 import difflib
 
 T = TypeVar('T')
-
 class Ref(Generic[T]):
     def __init__(self, value : T) -> None:
         self._value : T = value
@@ -38,8 +37,17 @@ def measure(node : Node):
 def layout(node : Node):
     pass
 
+def update(delta : float):
+    for tween in CoshUI._active_tweens:
+        tween.update(delta)
+
+    CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
+
 def render(node : Node, backend : CoshBackend):
-    pass
+    for child in node.children:
+        if isinstance(child, Container): # Temporary so only containers get rendered for now
+            CoshUI._render_stack.append(child.get_render_data())
+        render(child, backend)
 
 def add_font(name : str, path : str):
     if not name or not path:
@@ -117,8 +125,14 @@ class Tween:
             self.finished = True
 
 def animate(n_property : str, target : Node, end_value, duration : float, easing : str):
-    # add a check if ever theres any new changes to the object while the animation is going on
-    # if there is, skip the current animation and add the new tween.
+    for t in CoshUI._active_tweens:
+        if t.target is target and t.property == n_property and t.end_value == end_value:
+            return
+    
+    CoshUI._active_tweens -= {
+        t for t in CoshUI._active_tweens if t.target is target and t.property == n_property
+    }
+    
     ease_fn = EASING_MAP.get(easing, ease_linear)
     tween = Tween(n_property, target, end_value, duration, ease_fn)
     CoshUI._active_tweens.add(tween)

@@ -10,4 +10,6 @@ src/coshui/widgets.py
 src/coshui.egg-info/PKG-INFO
 src/coshui.egg-info/SOURCES.txt
 src/coshui.egg-info/dependency_links.txt
+src/coshui.egg-info/requires.txt
 src/coshui.egg-info/top_level.txt
+src/coshui/backends/pygame_backend.py

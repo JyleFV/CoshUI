@@ -1,3 +1,4 @@
+from coshui import *
 import pygame
 
 WIDTH, HEIGHT = 800, 600
@@ -19,7 +20,9 @@ def main():
         
         screen.fill(BLACK)  # Clear the screen
 
-        pygame.draw.rect(screen, (255, 255, 0), (50, 50, 50, 50), 500, 10)
+        with CoshUIRenderer(PygameBackend(screen)):
+            with Container(layout=CoshLayout(width=200, height=200), style=CoshStyling(background_color=Vector4(255, 255, 100, 1))):
+                pass
 
         pygame.display.flip()  # Update the full display Surface to the screen
         clock.tick(FPS)        # Ensure the loop runs at the specified FPS
