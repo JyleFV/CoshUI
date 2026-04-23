@@ -1,4 +1,4 @@
-from dataclass import dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 
 @dataclass
@@ -50,9 +50,11 @@ class CoshLayout:
 class CoshStyling:
     background_color : Vector3 = field(default_factory=lambda: Vector3(0, 0, 0))
     color : Vector3 = field(default_factory=lambda: Vector3(0, 0, 0))
+    border_radius : Vector4 = field(default_factory=lambda: Vector4(0, 0, 0))
     transform_position : Vector2 = field(default_factory=lambda: Vector2(0, 0))
     transform_rotation : float = 0.0
     transform_scale : float = 1.0
+    z_index : int = 0
 
 class CoshDirection(Enum):
     ROW = 0
@@ -74,9 +76,17 @@ def lerp_float(start_value, end_value, time):
     return start_value + time * (end_value - start_value)
 
 def lerp_vector2(start_vec, end_vec, time):
-    x = lerp_float(start_vec.x, end_vec.x, time)
-    y = lerp_float(start_vec.y, end_vec.y, time)
-    return {"x": x, "y": y}
+    return Vector2(
+        x=lerp_float(start_vec.x, end_vec.x, time),
+        y=lerp_float(start_vec.y, end_vec.y, time)
+    )
+
+def lerp_vector3(start_vec, end_vec, time):
+    return Vector3(
+        x=lerp_float(start_vec.x, end_vec.x, time),
+        y=lerp_float(start_vec.y, end_vec.y, time),
+        z=lerp_float(start_vec.z, end_vec.z, time)
+    )
 
 def ease_linear(t : float):
     return t
@@ -93,4 +103,4 @@ def ease_in_out(t : float):
     else:
         return 1 - pow(-2 * t + 2, 2) / 2 
 
-__all__ = ['CoshLayout', 'CoshStyling', 'CoshAlignment', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_vector2', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out', 'Vector2', 'FVector2', 'Vector3', 'FVector3', 'Vector4', 'FVector4']
+__all__ = ['CoshLayout', 'CoshStyling', 'CoshAlignment', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_vector2', 'lerp_vector3', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out', 'Vector2', 'FVector2', 'Vector3', 'FVector3', 'Vector4', 'FVector4']

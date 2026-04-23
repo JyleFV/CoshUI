@@ -1,6 +1,7 @@
 from .engine import CoshUI
-from .nodes import Node
+from .nodes import Node, Container
 from .types import *
+from .backend import CoshBackend
 from typing import TypeVar, Generic
 import difflib
 
@@ -40,6 +41,12 @@ def layout(node : Node):
 def render(node : Node, backend : CoshBackend):
     pass
 
+def add_font(name : str, path : str):
+    if not name or not path:
+        raise Exception("Please input a name or a path when adding fonts.")
+    
+    CoshUI._font_library[name] = path
+
 def get_node(node_name : str):
     node = CoshUI._node_map.get(node_name)
     if node == None:
@@ -49,8 +56,9 @@ def get_node(node_name : str):
 
 def get_nested_attr(node : Node, n_property : str):
     parts = n_property.split('.')
+    obj = node
     for part in parts:
-        obj = getattr(node, part)
+        obj = getattr(obj, part)
     return obj
 
 def set_nested_attr(node : Node, n_property : str, value):
@@ -68,8 +76,15 @@ EASING_MAP = {
     }
 
 PROPERTY_MAP = {
-        "true_scale" : ("layout.true_scale", lerp_float)
+        # Layout
+        "true_scale" : ("layout.true_scale", lerp_float),
+        "true_position" : ("layout.true_position", lerp_vector2),
+        "width" : ("layout.width", lerp_float),
+        "height" : ("layout.height", lerp_float),
+        
+        # Style
         "scale" : ("style.transform_scale", lerp_float),
+        "position" : ("style.transform_position", lerp_vector2),
         "background_color" : ("style.background_color", lerp_vector3)
     }
 
@@ -88,7 +103,7 @@ class Tween:
         self.finished = False
 
     def update(self, delta):
-        if self.finsihed:
+        if self.finished:
             return
         
         self.time += delta
@@ -102,6 +117,8 @@ class Tween:
             self.finished = True
 
 def animate(n_property : str, target : Node, end_value, duration : float, easing : str):
+    # add a check if ever theres any new changes to the object while the animation is going on
+    # if there is, skip the current animation and add the new tween.
     ease_fn = EASING_MAP.get(easing, ease_linear)
     tween = Tween(n_property, target, end_value, duration, ease_fn)
     CoshUI._active_tweens.add(tween)

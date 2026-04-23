@@ -5,9 +5,5 @@ class CoshBackend(ABC):
     def draw(self):
         pass
 
-class PygameBackend(CoshBackend):
-    def __init__(self, surface):
-        self.surface = surface
-
-    def draw(self):
+    def flush(self, render_stack : list):
         pass

@@ -11,5 +11,3 @@ class InputField(Element):
 
 class Checkbox(Element):
     pass
-
-class 
