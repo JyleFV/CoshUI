@@ -58,6 +58,13 @@ class Grid(ParentNode):
     column_count : int = 1
     gap : float = 0.0
 
+    def get_render_data(self) -> RenderRect:
+        pass
+    
 @dataclass
 class Element(Node):
     pass
+
+    @abstractmethod
+    def get_render_data(self):
+        pass

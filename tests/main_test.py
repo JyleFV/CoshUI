@@ -1,4 +1,5 @@
 from coshui import *
+import random as rd
 import pygame
 
 WIDTH, HEIGHT = 800, 600
@@ -12,16 +13,22 @@ def main():
     pygame.display.set_caption("My Pygame Window")
     clock = pygame.time.Clock()
 
+    x = 0
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        
+
+        x += 1
         screen.fill(BLACK)  # Clear the screen
 
         with CoshUIRenderer(PygameBackend(screen)):
-            with Container(layout=CoshLayout(width=200, height=200), style=CoshStyling(background_color=Vector4(255, 255, 100, 1))):
+            with Container(layout=CoshLayout(width=200, height=200), style=CoshStyling(
+                transform_position=Vector2(x, 0),
+                background_color=Vector4(255, 255, 100, 0.1)
+            )):
                 pass
 
         pygame.display.flip()  # Update the full display Surface to the screen
