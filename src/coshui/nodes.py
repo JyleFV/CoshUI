@@ -16,11 +16,16 @@ class Node(ABC):
         if CoshUI._stack:
             CoshUI._stack[-1].children.append(self)
 
+        # TODO: Add an error for when multiple nodes share the same ID.
         if self.id: # TODO: Do diffs with previous state once that's set up
             CoshUI._node_map[self.id] = self
         
         if self.classes:
             self.style = CoshUI._style_class[self.classes]
+
+    @abstractmethod
+    def measure(self):
+        pass
 
     @abstractmethod
     def get_render_data(self):
@@ -47,6 +52,19 @@ class Container(ParentNode):
     direction : CoshDirection = CoshDirection.ROW
     gap : float = 0.0
 
+    def measure(self):
+        if self.sizing != CoshSizing.FIT:
+            return
+        
+        match self.direction:
+            case CoshDirection.ROW:
+                self.layout.width = (sum(child.layout.width for child in self.children) + (self.gap * (len(self.children) - 1)))
+                self.layout.height = max((child.layout.height for child in self.children), default=0)
+            case CoshDirection.COLUMN:
+                self.layout.width = max((child.layout.width for child in self.children), default=0)
+                self.layout.height = (sum(child.layout.height for child in self.children) + (self.gap * (len(self.children) - 1)))
+        
+
     def get_render_data(self) -> RenderRect:
         return RenderRect(
             x=self.layout.true_position.x,
@@ -70,6 +88,9 @@ class Grid(ParentNode):
 @dataclass
 class Element(Node):
     pass
+
+    def measure(self):
+        pass
 
     @abstractmethod
     def get_render_data(self):

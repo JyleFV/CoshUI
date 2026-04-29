@@ -23,18 +23,7 @@ class Ref(Generic[T]):
 def measure(node : Node):
     for child in node.children:
         measure(child)
-
-    if isinstance(node, Container):
-        if node.sizing != CoshSizing.FIT:
-            return
-        
-        match node.direction:
-            case CoshDirection.ROW:
-                node.layout.width = (sum(child.layout.width for child in node.children) + (node.gap * (len(node.children) - 1)))
-                node.layout.height = max((child.layout.height for child in node.children), default=0)
-            case CoshDirection.COLUMN:
-                node.layout.width = max((child.layout.width for child in node.children), default=0)
-                node.layout.height = (sum(child.layout.height for child in node.children) + (node.gap * (len(node.children) - 1)))
+    node.measure()
 
 def layout(node : Node, x: float = 0.0, y: float = 0.0):
     node.layout.true_position.x = x
@@ -60,8 +49,10 @@ def update(delta : float):
     CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
 
 def render(node : Node, is_root : bool = False):
-    if isinstance(node, Container) and not is_root: # Temporary so only containers get rendered for now    
-        CoshUI._render_stack.append(node.get_render_data())
+    if not is_root:
+        data = node.get_render_data()
+        if data:
+            CoshUI._render_stack.append(data)
 
     for child in node.children:
         render(child)

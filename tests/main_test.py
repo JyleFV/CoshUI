@@ -8,16 +8,19 @@ BLACK = (0, 0, 0)
 
 def UI(screen : pygame.Surface):
     with CoshUIRenderer(PygameBackend(screen)):
-        with Container(sizing=CoshSizing.FIXED, id="new_container", layout=CoshLayout(
-            width=200, 
-            height=200,
-            padding=20
-        ),     
-        style=CoshStyling(
-            background_color=Vector4(255, 255, 100, 100)
-        )):
-            with Container(sizing=CoshSizing.FIXED, id="other_container", layout=CoshLayout(width=100, height=100), style=CoshStyling(background_color=Vector4(255, 100, 100, 0.1))):
-                pass
+        with Container(sizing=CoshSizing.FIT, layout=CoshLayout(padding=20), gap=10):
+            with Container(sizing=CoshSizing.FIXED, gap=12.5, id="container1", layout=CoshLayout(width=200, height=200, padding=12.5), style=CoshStyling(background_color=Vector4(255, 255, 100, 100))):
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(255, 0, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(0, 255, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(100, 0, 255, 255)))
+            with Container(sizing=CoshSizing.FIXED, gap=12.5, id="container2", layout=CoshLayout(width=200, height=200, padding=12.5), style=CoshStyling(background_color=Vector4(255, 255, 100, 100))):
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(255, 0, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(0, 255, 100, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(0, 0, 255, 255)))
+            with Container(sizing=CoshSizing.FIXED, gap=12.5, id="container3", layout=CoshLayout(width=200, height=200, padding=12.5), style=CoshStyling(background_color=Vector4(255, 255, 100, 100))):
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(255, 100, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(0, 255, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=Vector4(0, 0, 255, 255)))
 
 def main():
     pygame.init()
