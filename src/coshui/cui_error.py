@@ -1,0 +1,2 @@
+class CoshUIError(Exception):
+    pass

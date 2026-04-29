@@ -1,5 +1,4 @@
 from coshui import *
-import random as rd
 import pygame
 
 WIDTH, HEIGHT = 800, 600
@@ -25,7 +24,11 @@ def main():
         screen.fill(BLACK)  # Clear the screen
 
         with CoshUIRenderer(PygameBackend(screen)):
-            with Container(layout=CoshLayout(width=200, height=200), style=CoshStyling(
+            with Container(id="new_container", layout=CoshLayout(
+                width=200, 
+                height=200
+            ),     
+            style=CoshStyling(
                 transform_position=Vector2(x, 0),
                 background_color=Vector4(255, 255, 100, 0.1)
             )):

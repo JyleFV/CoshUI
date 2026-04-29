@@ -6,6 +6,7 @@ from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, RenderRec
 class Node(ABC):
     layout : CoshLayout = field(default_factory=lambda: CoshLayout())
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
+    classes : str | None = None 
     id : str = ""
     z_index : int = 0
     children : list = field(default_factory=list)
@@ -15,8 +16,11 @@ class Node(ABC):
         if CoshUI._stack:
             CoshUI._stack[-1].children.append(self)
 
-        if self.id:
+        if self.id: # TODO: Do diffs with previous state once that's set up
             CoshUI._node_map[self.id] = self
+        
+        if self.classes:
+            self.style = CoshUI._style_class[self.classes]
 
     @abstractmethod
     def get_render_data(self):
