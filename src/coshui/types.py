@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from typing import NamedTuple
 from enum import Enum
 
+# TODO: Get rid of Vectors and just use Tuples
+
 @dataclass
 class Vector2:
     x : int = 0
@@ -69,6 +71,8 @@ class RenderRect(NamedTuple):
     height : float
     background_color : tuple
     z_index : int
+    transform_x : float = 0.0
+    transform_y : float = 0.0
 
 class CoshDirection(Enum):
     ROW = 0

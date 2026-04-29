@@ -6,13 +6,24 @@ FPS = 60
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
+def UI(screen : pygame.Surface):
+    with CoshUIRenderer(PygameBackend(screen)):
+        with Container(sizing=CoshSizing.FIXED, id="new_container", layout=CoshLayout(
+            width=200, 
+            height=200,
+            padding=20
+        ),     
+        style=CoshStyling(
+            background_color=Vector4(255, 255, 100, 100)
+        )):
+            with Container(sizing=CoshSizing.FIXED, id="other_container", layout=CoshLayout(width=100, height=100), style=CoshStyling(background_color=Vector4(255, 100, 100, 0.1))):
+                pass
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("My Pygame Window")
+    pygame.display.set_caption("CoshUI Test")
     clock = pygame.time.Clock()
-
-    x = 0
 
     running = True
     while running:
@@ -20,19 +31,9 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        x += 1
         screen.fill(BLACK)  # Clear the screen
 
-        with CoshUIRenderer(PygameBackend(screen)):
-            with Container(id="new_container", layout=CoshLayout(
-                width=200, 
-                height=200
-            ),     
-            style=CoshStyling(
-                transform_position=Vector2(x, 0),
-                background_color=Vector4(255, 255, 100, 0.1)
-            )):
-                pass
+        UI(screen)        
 
         pygame.display.flip()  # Update the full display Surface to the screen
         clock.tick(FPS)        # Ensure the loop runs at the specified FPS

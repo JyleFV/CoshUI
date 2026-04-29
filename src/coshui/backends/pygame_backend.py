@@ -19,4 +19,4 @@ class PygameBackend(CoshBackend):
 
     def flush(self, render_stack : list[RenderRect]):
         for data in render_stack:
-            self.draw_rect(data.x, data.y, data.width, data.height, data.background_color)
+            self.draw_rect(data.x + data.transform_x, data.y + data.transform_y, data.width, data.height, data.background_color)

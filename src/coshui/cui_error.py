@@ -1,2 +1,2 @@
 class CoshUIError(Exception):
-    pass
+    __module__ = "builtins"
