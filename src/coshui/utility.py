@@ -2,7 +2,6 @@ from .cui_error import CoshUIError
 from .engine import CoshUI
 from .nodes import Node, Container
 from .types import *
-from .backend import CoshBackend
 from typing import TypeVar, Generic
 import difflib
 import os
@@ -20,14 +19,15 @@ class Ref(Generic[T]):
     def value(self, new_value : T):
         self._value = new_value
 
+# ================ Layouting and Rendering ================
+
 def measure(node : Node):
     for child in node.children:
         measure(child)
     node.measure()
 
 def layout(node : Node, x: float = 0.0, y: float = 0.0):
-    node.layout.true_position.x = x
-    node.layout.true_position.y = y
+    node.layout.true_position = (x, y)
 
     if isinstance(node, Container):
         cursor_x = x + node.layout.padding
@@ -57,6 +57,10 @@ def render(node : Node, is_root : bool = False):
     for child in node.children:
         render(child)
 
+# ================ Layouting and Rendering ================
+
+# ================ Fonts ================
+
 def add_font(name : str, path : str):
     if not name or not path:
         raise CoshUIError("Please input a name or a path when adding fonts.")
@@ -72,6 +76,10 @@ def set_default_font(name : str):
     except KeyError:
         raise CoshUIError("That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments.") from None
 
+# ================ Fonts ================
+
+# ================ Nodes ================
+
 def get_node(node_name : str):
     node = CoshUI._node_map.get(node_name)
     if node is None:
@@ -79,8 +87,16 @@ def get_node(node_name : str):
         raise CoshUIError(f"Node `{node_name}` doesn't exist. Did you mean `{close_match[0] if close_match else ""}`?")
     return node
 
+# ================ Nodes ================
+
+# ================ Styling Classes ================
+
 def add_class(name : str, style : CoshStyling):
     CoshUI._style_class[name] = style
+
+# ================ Styling Classes ================
+
+# ================ Helper Functions ================
 
 def get_nested_attr(node : Node, n_property : str):
     parts = n_property.split('.')
@@ -95,3 +111,12 @@ def set_nested_attr(node : Node, n_property : str, value):
     for part in parts[:-1]:
         obj = getattr(obj, part)
     setattr(obj, parts[-1], value)
+
+def resolve_border_radius(value : int | float | tuple) -> tuple: 
+    match value:
+        case int() | float():
+            return (value, value, value, value)
+        case (a, b, c, d):
+            return (a, b, c, d)
+        case _:
+            raise CoshUIError(f"Invalid border_radius `{value}`. Expected an int/float or a tuple of the 4 corner values (top-left, top-right, bottom-right, bottom-left).")

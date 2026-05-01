@@ -1,6 +1,6 @@
 # Animation-related
 from .nodes import Node
-from .types import ease_in, ease_in_out, ease_linear, ease_out, lerp_float, lerp_vector2, lerp_vector3
+from .types import ease_in, ease_in_out, ease_linear, ease_out, lerp_float, lerp_tuple
 from .engine import CoshUI
 from .utility import get_nested_attr, set_nested_attr
 
@@ -14,14 +14,14 @@ EASING_MAP = {
 PROPERTY_MAP = {
         # Layout
         "true_scale" : ("layout.true_scale", lerp_float),
-        "true_position" : ("layout.true_position", lerp_vector2),
+        "true_position" : ("layout.true_position", lerp_tuple),
         "width" : ("layout.width", lerp_float),
         "height" : ("layout.height", lerp_float),
         
         # Style
         "scale" : ("style.transform_scale", lerp_float),
-        "position" : ("style.transform_position", lerp_vector2),
-        "background_color" : ("style.background_color", lerp_vector3)
+        "position" : ("style.transform_position", lerp_tuple),
+        "background_color" : ("style.background_color", lerp_tuple)
     }
 
 class Tween:
@@ -51,6 +51,12 @@ class Tween:
 
         if raw_t >= 1.0:
             self.finished = True
+
+    def reverse(self):
+        self.start_value = get_nested_attr(self.target, self.path)
+        self.end_value, self.start_value = self.start_value, self.end_value
+        self.time = 0
+        self.finished = False
 
 def animate(n_property : str, target : Node, end_value, duration : float, easing : str):
     for t in CoshUI._active_tweens:

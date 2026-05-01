@@ -1,7 +1,0 @@
-
-[opengl]
-PyOpenGL
-PyOpenGL-accelerated
-
-[pygame]
-pygame-ce
