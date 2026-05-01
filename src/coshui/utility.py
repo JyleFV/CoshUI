@@ -1,10 +1,13 @@
-from .cui_error import CoshUIError
-from .engine import CoshUI
-from .nodes import Node, Container
-from .types import *
 from typing import TypeVar, Generic
 import difflib
 import os
+
+from .cui_error import CoshUIError
+from .engine import CoshUI
+from .input import CoshInput
+from .nodes import Node, Container, Grid
+from .widgets import Button
+from .types import *
 
 T = TypeVar('T')
 class Ref(Generic[T]):
@@ -19,7 +22,7 @@ class Ref(Generic[T]):
     def value(self, new_value : T):
         self._value = new_value
 
-# ================ Layouting and Rendering ================
+# ================ Layout, Updating, Events, and Rendering ================
 
 def measure(node : Node):
     for child in node.children:
@@ -42,6 +45,18 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                 case CoshDirection.COLUMN:
                     cursor_y += child.layout.height + node.gap
 
+    if isinstance(node, Grid):
+        cursor_x = x + node.layout.padding
+        cursor_y = y + node.layout.padding
+        
+        for i, child in enumerate(node.children):
+            layout(child, cursor_x, cursor_y)
+            cursor_x += child.layout.width + node.gap
+            
+            if (i + 1) % node.column_count == 0:  # end of row
+                cursor_x = x + node.layout.padding
+                cursor_y += child.layout.height + node.gap
+
 def update(delta : float):
     for tween in CoshUI._active_tweens:
         tween.update(delta)
@@ -63,6 +78,34 @@ def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset
     tx, ty = node.style.transform_position
     for child in node.children:
         render(child, offset_x + tx, offset_y + ty, z_offset + node.z_index)
+
+# TODO: Rework this to "Capture" the node that's active (focused on).
+def process_events():
+    mx, my = CoshInput.get_mouse_position()
+
+    for data in reversed(CoshUI._render_stack):
+        if data.id is None:
+            continue
+
+        node = get_node(data.id)
+        if node is None:
+            continue
+
+        x = data.x + data.transform_x
+        y = data.y + data.transform_y
+        hovered = point_in_rect(mx, my, x, y, data.width, data.height)
+        
+        was_hovered = node._was_hovered
+        node._was_hovered = hovered
+
+        if hovered and not was_hovered and node.on_hover:
+            node.on_hover()
+        if not hovered and was_hovered and node.on_unhover:
+            node.on_unhover()
+        if hovered and CoshInput.get_mouse_just_pressed() and node.on_click:
+            node.on_click()
+        if hovered and CoshInput.get_mouse_just_released() and node.on_release:
+            node.on_release()
 
 # ================ Layouting and Rendering ================
 
@@ -127,3 +170,6 @@ def resolve_border_radius(value : int | float | tuple) -> tuple:
             return (a, b, c, d)
         case _:
             raise CoshUIError(f"Invalid border_radius `{value}`. Expected an int/float or a tuple of the 4 corner values (top-left, top-right, bottom-right, bottom-left).")
+
+def point_in_rect(px, py, rx, ry, rw, rh):
+    return (rx <= px <= rx + rw and ry <= py <= ry + rh)

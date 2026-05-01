@@ -1,10 +1,8 @@
-from .cui_error import CoshUIError
 from dataclasses import dataclass, field
 from typing import NamedTuple
 from enum import Enum
 
-# ((0, 0)) ((5, 0))
-# [(0, 5), (0, 0)]
+from .cui_error import CoshUIError
 
 @dataclass
 class CoshLayout:
@@ -19,6 +17,7 @@ class CoshStyling:
     background_color : tuple | None = None
     alpha : int | None = None
     # gradients : tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str] | None = None
+    border : tuple | None = None
     border_radius : int | tuple = 0
     transform_position : tuple = (0, 0)
     transform_rotation : float = 0.0
@@ -31,9 +30,21 @@ class CoshStyling:
             self.background_color = (r, g, b)
             if self.alpha is None:
                 self.alpha = a
-        
+
         if self.alpha is None:
             self.alpha = 255
+
+        if self.border is not None:
+            if is_valid_border(self.border):
+                pass # correct format already
+            elif isinstance(self.border, tuple) and len(self.border) == 4:
+                try:    
+                    r, g, b, width = self.border
+                    self.border = ((r, g, b), width)
+                except TypeError:
+                    raise CoshUIError(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.") from None
+            else:
+                raise CoshUIError(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.")
 
 class CoshOverflow(Enum):
     HIDDEN = 0
@@ -44,12 +55,19 @@ class CoshDirection(Enum):
     ROW = 0
     COLUMN = 1
 
-class CoshAlignment(Enum):
-    TOP = 0
-    BOTTOM = 1
-    CENTER = 2
-    LEFT = 3
-    RIGHT = 4
+class CoshJustify(Enum):
+    START = 0
+    CENTER = 1
+    END = 2
+    SPACE_BETWEEN = 3
+    SPACE_AROUND = 4
+    SPACE_EVENLY = 5
+
+class CoshAlign(Enum):
+    START = 0
+    CENTER = 1
+    END = 2
+    STRETCH = 3
 
 class CoshSizing(Enum):
     FIXED = 0
@@ -57,6 +75,8 @@ class CoshSizing(Enum):
     FILL = 2
 
 class RenderContext(NamedTuple):
+    # Node-specific
+    id : str | None = None
     # Layout
     x : float = 0.0
     y : float = 0.0
@@ -67,9 +87,10 @@ class RenderContext(NamedTuple):
     transform_y : float = 0.0
     # Visual
     background_color : tuple | None = None
-    border_radius : tuple | None = None
-    alpha : int = 0
+    border_radius : int | tuple = 0
     transform_scale : float = 1.0
+    border : tuple | None = None
+    alpha : int = 0
     # Text
     text : str | None = None
     font : str | None = None
@@ -97,4 +118,13 @@ def ease_in_out(t : float):
     else:
         return 1 - pow(-2 * t + 2, 2) / 2 
 
-__all__ = ['CoshLayout', 'CoshStyling', 'CoshAlignment', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']
+# HELPER
+def is_valid_border(border):
+    return (
+        isinstance(border, tuple) and len(border) == 2 and
+        isinstance(border[0], tuple) and len(border[0]) == 3 and
+        all(isinstance(x, int) for x in border[0]) and
+        isinstance(border[1], int)
+    )
+
+__all__ = ['CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']

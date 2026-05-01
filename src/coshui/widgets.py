@@ -1,17 +1,17 @@
+from dataclasses import dataclass
+
 from .nodes import Element
 from .types import RenderContext
 
+@dataclass
 class Button(Element):
     text : str = ""
-    on_hover : callable | None = None
-    on_unhover : callable | None = None
-    on_click : callable | None = None
-    on_release : callable | None = None
 
     def get_render_data(self):
         x, y = self.layout.true_position
         transform_x, transform_y = self.style.transform_position
         return RenderContext(
+            id=self.id,
             x=x,
             y=y,
             transform_x=transform_x,
@@ -22,12 +22,15 @@ class Button(Element):
             z_index=self.z_index,
             border_radius=self.style.border_radius,
             alpha=self.style.alpha,
-            transform_scale=self.style.transform_scale
+            transform_scale=self.style.transform_scale,
+            border=self.style.border
         )
 
+@dataclass
 class Label(Element):
     pass
 
+@dataclass
 class InputField(Element):
     pass
 

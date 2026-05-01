@@ -1,9 +1,10 @@
+import difflib
+
 from .nodes import Node
 from .types import ease_in, ease_in_out, ease_linear, ease_out, lerp_float, lerp_tuple
 from .engine import CoshUI
 from .utility import get_nested_attr, set_nested_attr
 from .cui_error import CoshUIError
-import difflib
 
 EASING_MAP = {
         "linear" : ease_linear,
@@ -72,13 +73,13 @@ def animate(n_property : str, target : Node, end_value, duration : float, easing
 
     target_id = target.id
 
-    for t in CoshUI._active_tweens:
-        if t.target.id == target_id and t.property == n_property and t.end_value == end_value:
-            return
+    existing_tween = next((t for t in CoshUI._active_tweens if t.target.id == target_id and t.property == n_property), None)
 
-    CoshUI._active_tweens -= {
-        t for t in CoshUI._active_tweens if t.target.id == target_id and t.property == n_property
-    }
+    if existing_tween:
+        if existing_tween.end_value == end_value:
+            return
+        
+        CoshUI._active_tweens.remove(existing_tween)
 
     ease_fn = EASING_MAP.get(easing, ease_linear)
     tween = Tween(n_property, target, end_value, duration, ease_fn)

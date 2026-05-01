@@ -12,3 +12,7 @@ class CoshBackend(ABC):
     @abstractmethod
     def get_size(self):
         pass
+
+    @abstractmethod
+    def poll_input(self):
+        pass

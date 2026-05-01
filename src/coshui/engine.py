@@ -1,6 +1,16 @@
+"""CoshUI module for the global and main processes of the UI Engine.
+
+Set the main loop of the UI tree with CoshUIRenderer where every process
+runs within its __enter__ and __exit__ dunder operators.
+
+The CoshUI global namespace is private and should only be accessed 
+by internal code, never outside.
+"""
+
+import time
+
 from .cui_error import CoshUIError
 from .backend import CoshBackend
-import time
 
 class CoshUI:
     _stack = []
@@ -14,6 +24,7 @@ class CoshUI:
     _active_renderer = False
     _default_font = None # TODO: Set this to a default font
     _last_time : float = 0.0
+    _active_node = None
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
@@ -41,6 +52,7 @@ class CoshUIRenderer:
             delta = 1/60
         
         update(delta)
+        self.backend.poll_input()
 
         CoshUI._active_renderer = True
         CoshUI._active_ids.clear()
@@ -50,14 +62,16 @@ class CoshUIRenderer:
         return self
 
     def __exit__(self, *args):
-        from .utility import measure, layout, render
+        from .utility import measure, layout, render, process_events
         CoshUI._stack.pop()
         CoshUI._active_renderer = False
 
         measure(self.root)
         layout(self.root, self.root.layout.true_position[0], self.root.layout.true_position[1]) # index 0 is x, index 1 is y
         render(self.root)
+
         CoshUI._render_stack.sort(key=lambda d: d.z_index)
+        process_events()
         self.backend.flush(CoshUI._render_stack)
         CoshUI._render_stack.clear()
 

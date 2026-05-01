@@ -1,10 +1,28 @@
 from coshui import *
 import pygame
 
-WIDTH, HEIGHT = 1200, 900
+WIDTH, HEIGHT = 800, 800
 FPS = 60
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+
+def hovered():
+    animate("background_color", get_node("element3"), (255, 100, 50, 255), 0.15, "ease_in")
+    animate("scale", get_node("element3"), 1.5, 0.15, "ease_in")
+
+def unhover():
+    animate("background_color", get_node("element3"), (255, 0, 0, 255), 0.15, "ease_in")
+    animate("scale", get_node("element3"), 1.0, 0.15, "ease_in")
+
+def clicked():
+    animate("background_color", get_node("element3"), (255, 0, 0, 255), 0.15, "ease_in")
+    animate("position", get_node("container1"), (100, 100), 0.35, "ease_in")
+    animate("scale", get_node("element3"), 1.2, 0.15, "ease_in")
+
+def released():
+    animate("background_color", get_node("element3"), (255, 100, 50, 255), 0.15, "ease_in")
+    animate("position", get_node("container1"), (0, 0), 0.35, "ease_in")
+    animate("scale", get_node("element3"), 1.5, 0.15, "ease_in")
 
 def UI(screen : pygame.Surface):
     with CoshUIRenderer(PygameBackend(screen)):
@@ -13,14 +31,16 @@ def UI(screen : pygame.Surface):
                 Button(z_index=1, id="element", layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(255, 0, 0), border_radius=100))
                 Button(z_index=0, id="element2", layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(0, 255, 0)))
                 Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
-            with Container(direction=CoshDirection.COLUMN,sizing=CoshSizing.FIXED, gap=12.5, id="container2", layout=CoshLayout(width=200, height=200, padding=12.5), style=CoshStyling(background_color=(255, 255, 100, 255))):
-                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(255, 0, 0)))    
-                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(0, 255, 100)))
-                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(0, 0, 255)))
-            with Container(sizing=CoshSizing.FIXED, gap=12.5, id="container3", layout=CoshLayout(width=200, height=200, padding=12.5), style=CoshStyling(background_color=(255, 255, 100, 255))):
-                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(255, 100, 0)))
-                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(0, 255, 0)))
-                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(0, 0, 255)))
+            with Grid(id="container2", layout=CoshLayout(padding=20), style=CoshStyling(background_color=(255, 255, 0), alpha=255, border_radius=(12, 12, 5, 5)), column_count=3, gap=20):
+                Button(on_unhover=unhover, on_hover=hovered, on_click=clicked, on_release=released, z_index=1, id="element3", layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(255, 0, 0), border_radius=100))
+                Button(z_index=0, id="element4", layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(0, 255, 0)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255), border=(255, 1, 0, 2)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
+                Button(layout=CoshLayout(width=50, height=50), style=CoshStyling(background_color=(100, 0, 255)))
 
 def main():
     pygame.init()
@@ -33,11 +53,6 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    animate("position", get_node("container1"), (100, 100), 0.35, "linear")
-                if event.key == pygame.K_r:
-                    animate("position", get_node("container1"), (0, 0), 0.35, "ease_in")
 
         screen.fill(BLACK)  # Clear the screen
 

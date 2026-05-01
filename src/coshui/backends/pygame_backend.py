@@ -2,6 +2,7 @@ from ..backend import CoshBackend
 from ..types import RenderContext
 from ..utility import resolve_border_radius
 from ..cui_error import CoshUIError
+from ..input import CoshInput
 
 try:
     import pygame
@@ -17,7 +18,7 @@ class PygameBackend(CoshBackend):
         self.surface = surface
 
     # Create a context manager to hold all these values so it's not so messy.
-    def _draw_rect(self, x, y, w, h, color, border_radius, alpha):
+    def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border):
         try:
             if color is None:
                 return
@@ -34,8 +35,16 @@ class PygameBackend(CoshBackend):
                     border_top_left_radius=int(tl),
                     border_top_right_radius=int(tr),
                     border_bottom_right_radius=int(br),
-                    border_bottom_left_radius=int(bl)
+                    border_bottom_left_radius=int(bl),
                 )
+                if border is not None:
+                    border_color, border_width = border
+                    pygame.draw.rect(temp, border_color, (0, 0, w, h), border_width,
+                        border_top_left_radius=int(tl),
+                        border_top_right_radius=int(tr),
+                        border_bottom_right_radius=int(br),
+                        border_bottom_left_radius=int(bl)
+                    )
                 self.surface.blit(temp, (x, y))
             else:
                 # No alpha, draw directly for performance
@@ -43,8 +52,16 @@ class PygameBackend(CoshBackend):
                     border_top_left_radius=int(tl),
                     border_top_right_radius=int(tr),
                     border_bottom_right_radius=int(br),
-                    border_bottom_left_radius=int(bl)
+                    border_bottom_left_radius=int(bl),
                 )
+                if border is not None:
+                    border_color, border_width = border
+                    pygame.draw.rect(self.surface, border_color, (x, y, w, h), border_width,
+                        border_top_left_radius=int(tl),
+                        border_top_right_radius=int(tr),
+                        border_bottom_right_radius=int(br),
+                        border_bottom_left_radius=int(bl),               
+                    )
         except ValueError:
             raise CoshUIError(f"Value in border radius is the wrong type")
 
@@ -57,7 +74,13 @@ class PygameBackend(CoshBackend):
             offset_y = (data.height - scaled_h) / 2
             true_x = data.x + data.transform_x + offset_x
             true_y = data.y + data.transform_y + offset_y
-            self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha)
+
+            self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border)
 
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()
+    
+    def poll_input(self):
+        CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
+        CoshInput._mouse_position = pygame.mouse.get_pos()
+        CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]
