@@ -29,8 +29,8 @@ class Node(ABC):
             CoshUI._active_ids.add(self.id)
             existing = CoshUI._node_map.get(self.id)
             if existing is not None and existing is not self:
-                # existing.stuff = self.stuff
-                pass
+                self.style = existing.style
+
             CoshUI._node_map[self.id] = self
         
         if self.classes:
@@ -81,7 +81,6 @@ class Container(ParentNode):
                 self.layout.width = max((child.layout.width for child in self.children), default=0)
                 self.layout.height = (sum(child.layout.height for child in self.children) + (self.gap * (len(self.children) - 1)))
         
-
     def get_render_data(self) -> RenderContext:
         x, y = self.layout.true_position
         transform_x, transform_y = self.style.transform_position
@@ -95,7 +94,8 @@ class Container(ParentNode):
             background_color=self.style.background_color,
             z_index=self.z_index,
             border_radius=self.style.border_radius,
-            alpha=self.style.alpha
+            alpha=self.style.alpha,
+            transform_scale=self.style.transform_scale
         )
 
 @dataclass

@@ -48,14 +48,21 @@ def update(delta : float):
 
     CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
 
-def render(node : Node, is_root : bool = False):
+def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False):
     if not is_root:
         data = node.get_render_data()
         if data:
+            data = data._replace(
+                transform_x=data.transform_x + offset_x,
+                transform_y=data.transform_y + offset_y,
+                z_index=data.z_index + z_offset
+                # TODO: Make children inherit scale from the parent as well.
+            )
             CoshUI._render_stack.append(data)
 
+    tx, ty = node.style.transform_position
     for child in node.children:
-        render(child)
+        render(child, offset_x + tx, offset_y + ty, z_offset + node.z_index)
 
 # ================ Layouting and Rendering ================
 

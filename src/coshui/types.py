@@ -1,11 +1,14 @@
+from .cui_error import CoshUIError
 from dataclasses import dataclass, field
 from typing import NamedTuple
 from enum import Enum
 
+# ((0, 0)) ((5, 0))
+# [(0, 5), (0, 0)]
+
 @dataclass
 class CoshLayout:
     true_position : tuple = (0, 0) 
-    true_scale : float = 1.0
     width : float = 0.0
     height : float = 0.0
     padding : float = 0.0
@@ -66,13 +69,14 @@ class RenderContext(NamedTuple):
     background_color : tuple | None = None
     border_radius : tuple | None = None
     alpha : int = 0
+    transform_scale : float = 1.0
     # Text
     text : str | None = None
     font : str | None = None
     # Image
     image_path : str | None = None
 
-def lerp_float(start_value, end_value, time):
+def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)
 
 def lerp_tuple(start_tup, end_tup, time):

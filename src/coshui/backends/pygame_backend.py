@@ -50,7 +50,14 @@ class PygameBackend(CoshBackend):
 
     def flush(self, render_stack : list[RenderContext]):
         for data in render_stack:
-            self._draw_rect(data.x + data.transform_x, data.y + data.transform_y, data.width, data.height, data.background_color, data.border_radius, data.alpha)
+            scale = data.transform_scale
+            scaled_w = data.width * scale
+            scaled_h = data.height * scale
+            offset_x = (data.width - scaled_w) / 2
+            offset_y = (data.height - scaled_h) / 2
+            true_x = data.x + data.transform_x + offset_x
+            true_y = data.y + data.transform_y + offset_y
+            self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha)
 
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()

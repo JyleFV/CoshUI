@@ -13,6 +13,7 @@ class CoshUI:
     _style_class = {}
     _active_renderer = False
     _default_font = None # TODO: Set this to a default font
+    _last_time : float = 0.0
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
@@ -20,7 +21,6 @@ class CoshUIRenderer:
         self.backend = backend
         screen_w, screen_h = self.backend.get_size()
         self.root = Container()
-        self._last_time = time.perf_counter()
 
     def __enter__(self):
         from .utility import update
@@ -29,8 +29,13 @@ class CoshUIRenderer:
             raise CoshUIError("Cannot nest renderer objects.")
         
         now = time.perf_counter()
-        delta = now - self._last_time
-        self._last_time = now
+
+        if CoshUI._last_time == 0.0:
+            delta = 1/60
+        else:
+            delta = now - CoshUI._last_time
+        
+        CoshUI._last_time = now
 
         if delta > 0.1:
             delta = 1/60
@@ -52,6 +57,7 @@ class CoshUIRenderer:
         measure(self.root)
         layout(self.root, self.root.layout.true_position[0], self.root.layout.true_position[1]) # index 0 is x, index 1 is y
         render(self.root)
+        CoshUI._render_stack.sort(key=lambda d: d.z_index)
         self.backend.flush(CoshUI._render_stack)
         CoshUI._render_stack.clear()
 

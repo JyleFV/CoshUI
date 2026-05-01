@@ -21,7 +21,8 @@ class Button(Element):
             background_color=self.style.background_color,
             z_index=self.z_index,
             border_radius=self.style.border_radius,
-            alpha=self.style.alpha
+            alpha=self.style.alpha,
+            transform_scale=self.style.transform_scale
         )
 
 class Label(Element):
