@@ -191,15 +191,16 @@ def process_events():
         hovered = point_in_rect(mx, my, tx, ty, sw, sh)
 
         was_hovered = node._was_hovered
-        node._was_hovered = hovered
 
         if hovered and not consumed_hover:
+            node._was_hovered = True
             if not was_hovered and node.on_hover:
                 node.on_hover()
-            if node.mouse_filter: 
+            if node.mouse_filter:
                 consumed_hover = True
-        elif not hovered and was_hovered:
-            if node.on_unhover: 
+        else:
+            node._was_hovered = False
+            if was_hovered and node.on_unhover:
                 node.on_unhover()
 
         # Click Logic
