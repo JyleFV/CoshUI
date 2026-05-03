@@ -5,7 +5,7 @@ import math
 import difflib
 
 from .cui_error import CoshUIError
-from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, RenderContext
+from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, RenderContext
 
 @dataclass
 class Node(ABC):
@@ -13,18 +13,19 @@ class Node(ABC):
 
     layout : CoshLayout = field(default_factory=lambda: CoshLayout())
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
+    children : list = field(default_factory=list)
+    sizing : CoshSizing = CoshSizing.FIT
     width : float = 0.0 
     height : float = 0.0
     classes : str | None = None 
     id : str | None = None
     z_index : int = 0
-    children : list = field(default_factory=list)
     on_hover : Callable | None = None
     on_unhover : Callable | None = None
     on_click : Callable | None = None
     on_release : Callable | None = None
     _was_hovered : bool = False
-    mouse_filter : bool = True # Currently a bool, if False, it will capture mouse events, if True, it will ignore mouse events.
+    mouse_filter : bool = True # Currently a bool, if True, it will capture mouse events, if False, it will ignore mouse events.
 
     def __post_init__(self):
         from .engine import CoshUI
@@ -73,6 +74,10 @@ class Node(ABC):
 @dataclass
 class ParentNode(Node):
     """A separate node that still inherits from Node but has custom methods specialized for "container-type" nodes."""
+    
+    justify : CoshJustify = CoshJustify.START
+    align : CoshAlign = CoshAlign.START
+    gap : float = 0.0
 
     def __enter__(self):
         from .engine import CoshUI
@@ -87,9 +92,7 @@ class ParentNode(Node):
 class Container(ParentNode):
     """The base Container Node, simple but the most customizable."""
 
-    sizing : CoshSizing = CoshSizing.FIT
     direction : CoshDirection = CoshDirection.ROW
-    gap : float = 0.0
 
     def measure(self):
         if self.sizing != CoshSizing.FIT:
@@ -126,9 +129,7 @@ class Container(ParentNode):
 class Grid(ParentNode):
     """A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row."""
     
-    sizing : CoshSizing = CoshSizing.FIT
     column_count : int = 1
-    gap : float = 0.0
 
     def measure(self):
         if self.sizing != CoshSizing.FIT:

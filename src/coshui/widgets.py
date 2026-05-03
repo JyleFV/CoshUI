@@ -51,7 +51,7 @@ class InputField(Element):
 class Checkbox(Element):
     pass
 
-class Checkbox(Element):
+class Dropdown(Element):
     pass
 
 class Image(Element):

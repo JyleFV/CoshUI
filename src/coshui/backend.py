@@ -4,6 +4,14 @@ class CoshBackend(ABC):
     @abstractmethod
     def _draw_rect(self):
         pass
+
+    @abstractmethod
+    def _draw_text(self):
+        pass
+
+    @abstractmethod
+    def _draw_image(self):
+        pass
     
     @abstractmethod
     def flush(self):

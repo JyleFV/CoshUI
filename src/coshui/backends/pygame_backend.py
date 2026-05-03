@@ -9,6 +9,9 @@ try:
 except ImportError:
     pygame = None
 
+_image_cache = {}
+_font_cache = {}
+
 class PygameBackend(CoshBackend):
     def __init__(self, surface):
         if pygame is None:
@@ -65,7 +68,21 @@ class PygameBackend(CoshBackend):
         except ValueError:
             raise CoshUIError(f"Value in border radius is the wrong type")
 
+    def _draw_text(self):
+        pass
+
+    def _draw_image(self):
+        pass
+
     def flush(self, render_stack : list[RenderContext]):
+        from ..engine import CoshUI
+
+        if CoshUI._temp_paths:
+            for path in CoshUI._temp_paths:
+                image = pygame.image.load(path).convert_alpha()
+                _image_cache[path] = image
+            CoshUI._temp_paths.clear()
+
         for data in render_stack:
             scale = data.transform_scale
             scaled_w = data.width * scale

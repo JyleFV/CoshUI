@@ -61,9 +61,28 @@ class Tween:
         self.finished = False
 
 def animate(n_property : str, target : Node, end_value, duration : float, easing : str):
+    """
+    Animates a node property over time. 
+    
+    This function creates a `Tween` object and adds it
+    to the global `_active_tweens` registry to be updated per frame.
+
+    :param n_property: The property you want to animate (e.g., 'position', 'scale', or 'alpha').
+    :param target: The Node instance the animation is applied to.
+    :param end_value: The final target value to reach by the end of the animation.
+    :param duration: Animation length in seconds.
+    :param easing: The easing curve name. Defaults to 'linear' if not passed.
+
+    .. note ::
+        **Best Practice:** Call this inside a callable passed to event fields. 
+        **Requirement:** Ensure the target has an `id`. Nodes with no id are not persistent as of pre-v1.0.0 and may cause tweens to fail.
+    """
+
+    # TODO: Do more comprehensive checks on each parameter and raise CoshUIErrors for better DX.
+
     if n_property not in PROPERTY_MAP:
         close_match = difflib.get_close_matches(n_property, PROPERTY_MAP.keys(), n=1)
-        raise CoshUIError(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else "Unknown"}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
+        raise CoshUIError(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
     
     _, lerp_fn = PROPERTY_MAP[n_property]
     expected_type = PROPERTY_TYPE_MAP.get(lerp_fn)

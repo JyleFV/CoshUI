@@ -28,33 +28,117 @@ def measure(node : Node):
         measure(child)
     node.measure()
 
+# NOTE: Align is currently the equivalent of CSS's `align-content`
+# TODO: Separate Align to `AlignContent` and `AlignItems` to make the library more flexible
 def layout(node : Node, x: float = 0.0, y: float = 0.0):
     node.layout.true_position = (x, y)
 
     if isinstance(node, Container):
+        if node.direction == CoshDirection.ROW:
+            total_content_size = sum(c.layout.width + (c.layout.margin * 2) for c in node.children) + (node.gap * (len(node.children) - 1))
+        else:
+            total_content_size = sum(c.layout.height + (c.layout.margin * 2) for c in node.children) + (node.gap * (len(node.children) - 1))
+
         cursor_x = x + node.layout.padding
         cursor_y = y + node.layout.padding
-        
+
+        if node.direction == CoshDirection.ROW:
+            total_gap = node.gap * (len(node.children) - 1)
+            available_width = node.layout.width - (node.layout.padding * 2) - total_gap
+
+            fill_widgets = [child for child in node.children if child.sizing is CoshSizing.FILL]
+            static_widgets = [child for child in node.children if child.sizing is not CoshSizing.FILL]
+
+            for widget in static_widgets:
+                available_width -= (widget.layout.width + widget.layout.margin * 2)
+            
+            if fill_widgets:
+                shared_width = max(0, available_width / len(fill_widgets))
+                for child in fill_widgets:
+                    child.layout.width = shared_width
+                    child.layout.height = node.layout.height - (node.layout.padding * 2) - (child.layout.margin * 2)
+
+            total_content_size = sum(c.layout.width + (c.layout.margin * 2) for c in node.children) + total_gap
+
+            match node.justify:
+                case CoshJustify.CENTER:
+                    cursor_x = x + (node.layout.width / 2) - (total_content_size / 2)
+                case CoshJustify.END:
+                    cursor_x = x + node.layout.width - node.layout.padding - total_content_size
+        else:
+            total_gap = node.gap * (len(node.children) - 1)
+            available_height = node.layout.height - (node.layout.padding * 2) - total_gap
+
+            fill_widgets = [child for child in node.children if child.sizing is CoshSizing.FILL]
+            static_widgets = [child for child in node.children if child.sizing is not CoshSizing.FILL]
+
+            for widget in static_widgets:
+                available_height -= (widget.layout.height + widget.layout.margin * 2)
+            
+            if fill_widgets:
+                shared_height = max(0, available_height / len(fill_widgets))
+                for child in fill_widgets:
+                    child.layout.height = shared_height
+                    child.layout.width = node.layout.width - (node.layout.padding * 2) - (child.layout.margin * 2)
+
+            total_content_size = sum(c.layout.height + (c.layout.margin * 2) for c in node.children) + total_gap
+
+            match node.justify:
+                case CoshJustify.CENTER:
+                    cursor_y = y + (node.layout.height / 2) - (total_content_size / 2)
+                case CoshJustify.END:
+                    cursor_y = y + node.layout.height - node.layout.padding - total_content_size
+
         for child in node.children:
-            layout(child, cursor_x + child.layout.margin, cursor_y + child.layout.margin)
-            match node.direction:
-                case CoshDirection.ROW:
-                    cursor_x += child.layout.width + (child.layout.margin * 2) + node.gap
-                case CoshDirection.COLUMN:
-                    cursor_y += child.layout.height + (child.layout.margin * 2) + node.gap
+            if node.direction == CoshDirection.ROW:
+                match node.align:
+                    case CoshAlign.START:  child_y = y + node.layout.padding
+                    case CoshAlign.CENTER: child_y = y + (node.layout.height / 2) - ((child.layout.height + child.layout.margin * 2) / 2)
+                    case CoshAlign.END:    child_y = y + node.layout.height - node.layout.padding - (child.layout.height + child.layout.margin * 2)
+                
+                layout(child, cursor_x + child.layout.margin, child_y + child.layout.margin)
+                cursor_x += child.layout.width + (child.layout.margin * 2) + node.gap
+
+            else:
+                match node.align:
+                    case CoshAlign.START:  child_x = x + node.layout.padding
+                    case CoshAlign.CENTER: child_x = x + (node.layout.width / 2) - ((child.layout.width + child.layout.margin * 2) / 2)
+                    case CoshAlign.END:    child_x = x + node.layout.width - node.layout.padding - (child.layout.width + child.layout.margin * 2)
+                
+                layout(child, child_x + child.layout.margin, cursor_y + child.layout.margin)
+                cursor_y += child.layout.height + (child.layout.margin * 2) + node.gap
 
     if isinstance(node, Grid):
-        cursor_x = x + node.layout.padding
-        cursor_y = y + node.layout.padding
+        rows = [node.children[i:i + node.column_count] for i in range(0, len(node.children), node.column_count)]
         
-        for i, child in enumerate(node.children):
-            layout(child, cursor_x + child.layout.margin, cursor_y + child.layout.margin)
-            cursor_x += child.layout.width + (child.layout.margin * 2) + node.gap
+        row_heights = [max(child.layout.height + (child.layout.margin * 2) for child in row) for row in rows]
+        total_content_height = sum(row_heights) + (node.gap * (len(rows) - 1))
+
+        match node.align:
+            case CoshAlign.START:
+                current_y = y + node.layout.padding
+            case CoshAlign.CENTER:
+                current_y = y + (node.layout.height / 2) - (total_content_height / 2)
+            case CoshAlign.END:
+                current_y = y + node.layout.height - node.layout.padding - total_content_height
+
+        for i, row in enumerate(rows):
+            row_width = sum(child.layout.width + (child.layout.margin * 2) for child in row) + (node.gap * (len(row) - 1))
             
-            if (i + 1) % node.column_count == 0:
-                cursor_x = x + node.layout.padding
-                cursor_y += child.layout.height + (child.layout.margin * 2) + node.gap
-                
+            match node.justify:
+                case CoshJustify.START:
+                    current_x = x + node.layout.padding
+                case CoshJustify.CENTER:
+                    current_x = x + (node.layout.width / 2) - (row_width / 2)
+                case CoshJustify.END:
+                    current_x = x + node.layout.width - node.layout.padding - row_width
+
+            for child in row:
+                layout(child, current_x + child.layout.margin, current_y + child.layout.margin)
+                current_x += child.layout.width + (child.layout.margin * 2) + node.gap
+
+            current_y += row_heights[i] + node.gap
+
 def update(delta : float):
     for tween in CoshUI._active_tweens:
         tween.update(delta)
@@ -150,6 +234,10 @@ def set_default_font(name : str):
 # ================ Nodes ================
 
 def get_node(node_name : str):
+    """
+    Returns the passed in node.
+    """
+    
     node = CoshUI._node_map.get(node_name)
     if node is None:
         close_match = difflib.get_close_matches(node_name, CoshUI._node_map.keys(), n=1)
@@ -169,8 +257,27 @@ def add_class(name : str, style : CoshStyling):
 
 # ================ Preload Helpers ================
 
-def preload_images(path : str | list):
-    pass
+def preload_images(img_paths : str | list):
+    """
+    Preloads images to the backend to create image textures early.
+
+    :param img_paths: Can be a string with a single value or a list of strings.
+    :type img_paths: `str | list`
+    :raises CoshUIError: If a path does not exist or is not a file
+
+    .. note :: 
+        `preload_images()` converts relative file paths to absolute paths based on the current working directory.
+    """
+
+    if isinstance(img_paths, str):
+        img_paths = [img_paths]
+    
+    for path in img_paths:
+        abs_path = os.path.abspath(path)
+        if not os.path.exists(abs_path) or not os.path.isfile(abs_path):
+            raise CoshUIError(f"Image path `{abs_path}` doesn't exist or is not a file.")
+        
+        CoshUI._temp_paths.add(abs_path)
 
 # ================ Preload Helpers ================
 

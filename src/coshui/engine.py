@@ -4,8 +4,7 @@ Set the main loop of the UI tree with CoshUIRenderer where every process
 runs within its __enter__ and __exit__ dunder operators.
 
 The CoshUI global namespace is private and should only be accessed 
-by internal code, never outside.
-"""
+by internal code, never outside."""
 
 import time
 
@@ -18,6 +17,8 @@ class CoshUI:
     _active_ids = set()
     _active_tweens = set()
     _style_dirty = set() 
+    _temp_paths = set()
+    _temp_fonts = set()
     _font_library = {}
     _render_stack = []
     _style_class = {}
@@ -29,9 +30,10 @@ class CoshUI:
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
         from .nodes import Container
+        from .types import CoshSizing
         self.backend = backend
         screen_w, screen_h = self.backend.get_size()
-        self.root = Container()
+        self.root = Container(sizing=CoshSizing.FIXED, width=screen_w, height=screen_h)
 
     def __enter__(self):
         from .utility import update
