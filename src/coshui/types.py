@@ -55,6 +55,16 @@ class CoshDirection(Enum):
     ROW = 0
     COLUMN = 1
 
+class CoshTextJustify(Enum):
+    LEFT = 0
+    CENTER = 1
+    RIGHT = 2
+
+class CoshTextAlign(Enum):
+    TOP = 0
+    CENTER = 1
+    BOTTOM = 2
+
 class CoshJustify(Enum):
     START = 0
     CENTER = 1
@@ -93,7 +103,11 @@ class RenderContext(NamedTuple):
     alpha : int = 0
     # Text
     text : str | None = None
+    text_color : tuple = (255, 255, 255)
     font : str | None = None
+    font_size : int = 18
+    text_justify : CoshTextJustify = CoshTextJustify.CENTER
+    text_align : CoshTextAlign = CoshTextAlign.CENTER
     # Image
     image_path : str | None = None
 

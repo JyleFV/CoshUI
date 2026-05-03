@@ -1,5 +1,5 @@
 from ..backend import CoshBackend
-from ..types import RenderContext
+from ..types import RenderContext, CoshTextAlign, CoshTextJustify
 from ..utility import resolve_border_radius
 from ..cui_error import CoshUIError
 from ..input import CoshInput
@@ -68,8 +68,34 @@ class PygameBackend(CoshBackend):
         except ValueError:
             raise CoshUIError(f"Value in border radius is the wrong type")
 
-    def _draw_text(self):
-        pass
+    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify):
+        scaled_font_size = max(1, int(font_size * scale))
+        cache_key = (font_path, scaled_font_size)
+        font = _font_cache.get(cache_key)
+        if font is None:
+            font = pygame.font.Font(font_path, scaled_font_size)
+            _font_cache[cache_key] = font
+
+        text_surface = font.render(text, True, color)
+        text_w, text_h = text_surface.get_size()
+
+        match justify:
+            case CoshTextJustify.LEFT:
+                text_x = x
+            case CoshTextJustify.CENTER:
+                text_x = x + (w / 2) - (text_w / 2)
+            case CoshTextJustify.RIGHT:
+                text_x = x + w - text_w
+
+        match align:
+            case CoshTextAlign.TOP:
+                text_y = y
+            case CoshTextAlign.CENTER:
+                text_y = y + (h / 2) - (text_h / 2)
+            case CoshTextAlign.BOTTOM:
+                text_y = y + h - text_h
+
+        self.surface.blit(text_surface, (text_x, text_y))
 
     def _draw_image(self):
         pass
@@ -83,6 +109,8 @@ class PygameBackend(CoshBackend):
                 _image_cache[path] = image
             CoshUI._temp_paths.clear()
 
+        # TODO: add font paths from CoshUI._temp_fonts and put it in _font_cache.
+
         for data in render_stack:
             scale = data.transform_scale
             scaled_w = data.width * scale
@@ -93,6 +121,9 @@ class PygameBackend(CoshBackend):
             true_y = data.y + data.transform_y + offset_y
 
             self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border)
+            
+            if data.text:
+                self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify)
 
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()

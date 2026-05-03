@@ -3,9 +3,10 @@ from dataclasses import dataclass, field
 from collections.abc import Callable
 import math
 import difflib
+import warnings
 
-from .cui_error import CoshUIError
-from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, RenderContext
+from .cui_error import CoshUIError, warn
+from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshTextAlign, CoshTextJustify, RenderContext
 
 @dataclass
 class Node(ABC):
@@ -71,6 +72,17 @@ class Node(ABC):
     def get_render_data(self):
         pass
 
+    def _register_id(self, id: str):
+        from .engine import CoshUI
+        if id in CoshUI._active_ids:
+            raise CoshUIError(f"A node with id `{id}` already exists.")
+        CoshUI._active_ids.add(id)
+        existing = CoshUI._node_map.get(id)
+        if existing is not None and existing is not self:
+            self.style = existing.style
+            self._was_hovered = existing._was_hovered
+        CoshUI._node_map[id] = self
+
 @dataclass
 class ParentNode(Node):
     """A separate node that still inherits from Node but has custom methods specialized for "container-type" nodes."""
@@ -87,7 +99,6 @@ class ParentNode(Node):
     def __exit__(self, *args):
         from .engine import CoshUI
         CoshUI._stack.pop()
-
 @dataclass
 class Container(ParentNode):
     """The base Container Node, simple but the most customizable."""
@@ -166,4 +177,40 @@ class Element(Node):
     """Base Element node that widgets inherit from. Mostly useless except for the use of clarity for developers and passing the measure() abstract method."""
     
     def measure(self):
-        pass
+        if self.sizing == CoshSizing.FIT:
+            warn(f"`CoshSizing.FIT` is not supported on elements and will be ignored. Use `CoshSizing.FIXED` or `CoshSizing.FILL` instead.")
+
+@dataclass
+class TextNode(Element):
+    text : str | None = None
+    font : str | None = None
+    font_size : int | None = None
+    text_color : tuple = (255, 255, 255)
+    text_align : CoshTextAlign = CoshTextAlign.CENTER
+    text_justify : CoshTextJustify = CoshTextJustify.CENTER
+
+    def get_render_data(self):
+        from .engine import CoshUI
+        x, y = self.layout.true_position
+        transform_x, transform_y = self.style.transform_position
+        return RenderContext(
+            id=self.id,
+            x=x,
+            y=y,
+            transform_x=transform_x,
+            transform_y=transform_y,
+            width=self.layout.width,
+            height=self.layout.height,
+            background_color=self.style.background_color,
+            z_index=self.z_index,
+            border_radius=self.style.border_radius,
+            alpha=self.style.alpha,
+            transform_scale=self.style.transform_scale,
+            border=self.style.border,
+            text=self.text,
+            font=CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font,
+            font_size=self.font_size,
+            text_color=self.text_color,
+            text_align=self.text_align,
+            text_justify=self.text_justify
+        )

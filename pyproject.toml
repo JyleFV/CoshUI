@@ -12,7 +12,9 @@ requires-python = ">=3.10"
 
 [project.optional-dependencies]
 pygame = ["pygame-ce"]
-opengl = ["PyOpenGL", "PyOpenGL-accelerated"]
+pyopengl = ["PyOpenGL"] 
+pyopengl-accelerate = ["PyOpenGL", "PyOpenGL-accelerate"]
+all = ["pygame-ce", "PyOpenGL", "PyOpenGL-accelerate"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

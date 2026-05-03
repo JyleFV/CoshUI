@@ -7,6 +7,7 @@ The CoshUI global namespace is private and should only be accessed
 by internal code, never outside."""
 
 import time
+import os
 
 from .cui_error import CoshUIError
 from .backend import CoshBackend
@@ -18,14 +19,14 @@ class CoshUI:
     _active_tweens = set()
     _style_dirty = set() 
     _temp_paths = set()
-    _temp_fonts = set()
     _font_library = {}
     _render_stack = []
     _style_class = {}
     _focused_node = None
     _active_renderer = False
-    _default_font = None # TODO: Set this to a default font
+    _default_font = os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf")
     _last_time : float = 0.0
+    _widget_counter : int = 0
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
@@ -58,6 +59,7 @@ class CoshUIRenderer:
 
         CoshUI._active_renderer = True
         CoshUI._active_ids.clear()
+        CoshUI._widget_counter = 0
         CoshUI._stack.clear()  
         self.root.children.clear()
         CoshUI._stack.append(self.root)

@@ -20,17 +20,23 @@ def unhovered():
 
 def UI(screen : pygame.Surface):
     with CoshUIRenderer(PygameBackend(screen)):
-        with Container(sizing=CoshSizing.FIT, gap=10, justify=CoshJustify.CENTER, align=CoshAlign.CENTER):
-            with Container(direction=CoshDirection.ROW, sizing=CoshSizing.FILL, width=500, height=500, gap=20, style=CoshStyling(background_color=(50, 255, 50)), layout=CoshLayout(padding=20)):
-                Button(id="element", width=50, height=65, style=CoshStyling(background_color=(255, 50, 50)), sizing=CoshSizing.FILL, z_index=10)
-                with Container(z_index=9, id="hello", justify=CoshJustify.END, align=CoshAlign.END, sizing=CoshSizing.FILL, style=CoshStyling(background_color=(255, 50, 255))):
-                    Button(on_unhover=unhovered, on_hover=hovered, on_click=clicked, on_release=released, id="yellow_btn", z_index=11, width=50, height=50, style=CoshStyling(background_color=(255, 255, 0)))
+        # with Container(sizing=CoshSizing.FIT, gap=10, justify=CoshJustify.CENTER, align=CoshAlign.CENTER):
+        #     with Container(direction=CoshDirection.ROW, sizing=CoshSizing.FILL, width=500, height=500, gap=20, style=CoshStyling(background_color=(50, 255, 50)), layout=CoshLayout(padding=20)):
+        #         Button(id="element", width=50, height=65, style=CoshStyling(background_color=(255, 50, 50)), sizing=CoshSizing.FILL)
+        #         with Container(id="hello", justify=CoshJustify.END, align=CoshAlign.END, sizing=CoshSizing.FILL, style=CoshStyling(background_color=(255, 50, 255))):
+        #             Button(on_unhover=unhovered, on_hover=hovered, on_click=clicked, on_release=released, id="yellow_btn", width=50, height=50, style=CoshStyling(background_color=(255, 255, 0)))
+        #             Button(text="Hello", classes="main_btn")
+        with Container(classes="main_container", layout=CoshLayout(padding=20, width=500, height=500), sizing=CoshSizing.FIXED):
+            Label(text="Hello!")
+            Button(sizing=CoshSizing.FIT, text="FUCK YOU")
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("CoshUI Test")
     clock = pygame.time.Clock()
+
+    add_class("main_container", CoshStyling(background_color=(200, 100, 0)))
 
     running = True
     while running:

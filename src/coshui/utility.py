@@ -159,7 +159,7 @@ def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset
 
     tx, ty = node.style.transform_position
     for child in node.children:
-        render(child, offset_x + tx, offset_y + ty, z_offset + node.z_index)
+        render(child, offset_x + tx, offset_y + ty, z_offset)
 
 def process_events():
     mx, my = CoshInput._mouse_position
@@ -222,11 +222,12 @@ def add_font(name : str, path : str):
     if not os.path.isfile(path):
         raise CoshUIError(f"Font path `{path}` does not exist or is not a file")
     
-    CoshUI._font_library[name] = path
+    CoshUI._font_library[name] = os.path.abspath(path)
 
 def set_default_font(name : str):
     try:
-        CoshUI._default_font = (name, CoshUI._font_library[name])
+        path = os.path.abspath(CoshUI._font_library[name])
+        CoshUI._default_font = (name, path)
     except KeyError:
         raise CoshUIError("That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments.") from None
 
