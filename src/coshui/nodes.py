@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from collections.abc import Callable
 import math
+import difflib
 
 from .cui_error import CoshUIError
 from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, RenderContext
@@ -12,6 +13,8 @@ class Node(ABC):
 
     layout : CoshLayout = field(default_factory=lambda: CoshLayout())
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
+    width : float = 0.0 
+    height : float = 0.0
     classes : str | None = None 
     id : str | None = None
     z_index : int = 0
@@ -21,12 +24,18 @@ class Node(ABC):
     on_click : Callable | None = None
     on_release : Callable | None = None
     _was_hovered : bool = False
-    mouse_filter : bool = False # Currently a bool, if False, it will capture mouse events, if True, it will ignore mouse events.
+    mouse_filter : bool = True # Currently a bool, if False, it will capture mouse events, if True, it will ignore mouse events.
 
     def __post_init__(self):
         from .engine import CoshUI
         if CoshUI._stack:
             CoshUI._stack[-1].children.append(self)
+
+        # These flat parameters take precedence over CoshLayout's width and height, which feels weird :/.
+        if self.width:
+            self.layout.width = self.width
+        if self.height:
+            self.layout.height = self.height
 
         if self.id: 
             if self.id in CoshUI._active_ids:
@@ -41,7 +50,17 @@ class Node(ABC):
             CoshUI._node_map[self.id] = self
         
         if self.classes:
-            self.style = CoshUI._style_class[self.classes]
+            from .utility import merge_styles
+            class_names = self.classes.split() if isinstance(self.classes, str) else self.classes
+
+            merged_style = CoshStyling
+            for name in class_names:
+                if name not in CoshUI._style_class.keys():
+                    close_match = difflib.get_close_matches(name, CoshUI._style_class.keys(), n=1)
+                    raise CoshUIError(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else "Unknown"}`?")   
+                merged_style = merge_styles(merged_style, CoshUI._style_class.get(name))
+
+            self.style = merge_styles(merged_style, self.style)
 
     @abstractmethod
     def measure(self):
@@ -78,11 +97,11 @@ class Container(ParentNode):
         
         match self.direction:
             case CoshDirection.ROW:
-                self.layout.width = (sum(child.layout.width for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
-                self.layout.height = max((child.layout.height for child in self.children), default=0) + (self.layout.padding * 2)
+                self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
             case CoshDirection.COLUMN:
-                self.layout.width = max((child.layout.width for child in self.children), default=0) + (self.layout.padding * 2)
-                self.layout.height = (sum(child.layout.height for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
+                self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
         
     def get_render_data(self) -> RenderContext:
         x, y = self.layout.true_position
@@ -116,8 +135,8 @@ class Grid(ParentNode):
             return
         
         rows = math.ceil(len(self.children) / self.column_count)
-        max_child_width = max((child.layout.width for child in self.children), default=0)
-        max_child_height = max((child.layout.height for child in self.children), default=0)
+        max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0)
+        max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0)
         
         self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
         self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)

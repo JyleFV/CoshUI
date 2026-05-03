@@ -21,10 +21,10 @@ class CoshUI:
     _font_library = {}
     _render_stack = []
     _style_class = {}
+    _focused_node = None
     _active_renderer = False
     _default_font = None # TODO: Set this to a default font
     _last_time : float = 0.0
-    _active_node = None
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
