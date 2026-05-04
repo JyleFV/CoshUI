@@ -1,17 +1,10 @@
 from .animation import animate
+from .engine import CoshUI
+from .utility import adjust_color
 
-# Buttons
-BUTTON_DEFAULT_STYLE = {
-    "width" : 175,
-    "height" : 65,
-    "background_color" : (86, 115, 143),
-    "border" : ((255, 255, 255), 2),
-    "border_radius" : 20,
-    "font_size" : 24
-}
-
+# Button
 def _button_default_hover(node):
-    animate("background_color", node, (119, 161, 201), 0.1, "ease_in")
+    animate("background_color", node, adjust_color(CoshUI._active_theme.button["background_color"], 1.5), 0.1, "ease_in")
 
 def _button_default_unhover(node):
     animate("background_color", node, (86, 115, 143), 0.1, "ease_in")
@@ -22,11 +15,12 @@ def _button_default_click(node):
 def _button_default_release(node):
     animate("background_color", node, (119, 161, 201) if node._was_hovered else (86, 115, 143), 0.1, "ease_in")
 
-# Labels
-LABEL_DEFAULT_STYLE = {
-    "width" : 175,
-    "height" : 65,
-    "font_size" : 24
-}
+# Checkbox
+def _checkbox_default_hover(node):
+    pass
 
-__all__ = ["BUTTON_DEFAULT_STYLE", "LABEL_DEFAULT_STYLE", "_button_default_click", "_button_default_hover", "_button_default_release", "_button_default_unhover"]
+def _checkbox_default_unhover(node):
+    pass
+
+def _checkbox_default_click(node):
+    node.checked = not node.checked

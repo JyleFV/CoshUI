@@ -9,6 +9,13 @@ authors = [{name = "Jyle Frazier Villareal", email = "jylefraziervillareal@gmail
 description = "A Python-first — Declarative-Mode UI Library"
 readme = "README.md"
 requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Games/Entertainment",
+]
 
 [project.optional-dependencies]
 pygame = ["pygame-ce"]
@@ -18,3 +25,11 @@ all = ["pygame-ce", "PyOpenGL", "PyOpenGL-accelerate"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+coshui = ["assets/fonts/*.ttf"]
+
+[project.urls]
+Homepage = "https://github.com/Terrarizer03/CoshUI"
+Repository = "https://github.com/Terrarizer03/CoshUI"
+Documentation = "https://terrarizer03.github.io/CoshUI"

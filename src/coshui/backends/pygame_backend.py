@@ -23,9 +23,6 @@ class PygameBackend(CoshBackend):
     # Create a context manager to hold all these values so it's not so messy.
     def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border):
         try:
-            if color is None:
-                return
-            
             if alpha <= 0:
                 return
 
@@ -97,8 +94,20 @@ class PygameBackend(CoshBackend):
 
         self.surface.blit(text_surface, (text_x, text_y))
 
-    def _draw_image(self):
-        pass
+    def _draw_image(self, img_path, x ,y, w, h, alpha):
+        if alpha <= 0:
+            return
+
+        cache_key = img_path
+        image = _image_cache.get(cache_key)
+        if image is None:
+            image = pygame.image.load(img_path).convert_alpha()
+            _image_cache[cache_key] = image
+
+        scaled_image = pygame.transform.smoothscale(image, (int(w), int(h)))
+        if alpha < 255:
+            scaled_image.set_alpha(alpha)
+        self.surface.blit(scaled_image, (x, y))
 
     def flush(self, render_stack : list[RenderContext]):
         from ..engine import CoshUI
@@ -120,10 +129,14 @@ class PygameBackend(CoshBackend):
             true_x = data.x + data.transform_x + offset_x
             true_y = data.y + data.transform_y + offset_y
 
-            self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border)
+            if data.background_color:
+                self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border)
             
             if data.text:
                 self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify)
+
+            if data.image_src:
+                self._draw_image(data.image_src, true_x, true_y, scaled_w, scaled_h, data.alpha)
 
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()

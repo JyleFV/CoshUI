@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from collections.abc import Callable
 import math
 import difflib
-import warnings
 
 from .cui_error import CoshUIError, warn
 from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshTextAlign, CoshTextJustify, RenderContext
@@ -29,28 +28,18 @@ class Node(ABC):
     mouse_filter : bool = True # Currently a bool, if True, it will capture mouse events, if False, it will ignore mouse events.
 
     def __post_init__(self):
-        from .engine import CoshUI
+        from .engine import CoshUI, CoshLifecycle
         if CoshUI._stack:
             CoshUI._stack[-1].children.append(self)
 
-        # These flat parameters take precedence over CoshLayout's width and height, which feels weird :/.
+        # These flat parameters take precedence over CoshLayout's width and height for most nodes (ones that don't override __post_init__), which feels weird :/.
         if self.width:
             self.layout.width = self.width
         if self.height:
             self.layout.height = self.height
-
-        if self.id: 
-            if self.id in CoshUI._active_ids:
-                raise CoshUIError(f"A node with id `{self.id}` already exists. Node ids must be unique.")
-
-            CoshUI._active_ids.add(self.id)
-            existing = CoshUI._node_map.get(self.id)
-            if existing is not None and existing is not self:
-                self.style = existing.style
-                self._was_hovered = existing._was_hovered
-
-            CoshUI._node_map[self.id] = self
         
+        # TODO: CHECK IF CLASSES WORK PROPERLY, I HAVE A FEELING ID REGISTRATION IS JUST FUCKED
+
         if self.classes:
             from .utility import merge_styles
             class_names = self.classes.split() if isinstance(self.classes, str) else self.classes
@@ -64,6 +53,9 @@ class Node(ABC):
 
             self.style = merge_styles(merged_style, self.style)
 
+        if self.id:
+            self._register_id(self.id)
+
     @abstractmethod
     def measure(self):
         pass
@@ -71,6 +63,10 @@ class Node(ABC):
     @abstractmethod
     def get_render_data(self):
         pass
+    
+    def _recover_state(self, existing):
+        self._was_hovered = existing._was_hovered
+        self.style = existing.style
 
     def _register_id(self, id: str):
         from .engine import CoshUI
@@ -81,7 +77,8 @@ class Node(ABC):
         if existing is not None and existing is not self:
             self.style = existing.style
             self._was_hovered = existing._was_hovered
-        CoshUI._node_map[id] = self
+        if id not in CoshUI._node_map:
+            CoshUI._node_map[id] = self
 
 @dataclass
 class ParentNode(Node):
@@ -176,9 +173,12 @@ class Grid(ParentNode):
 class Element(Node):
     """Base Element node that widgets inherit from. Mostly useless except for the use of clarity for developers and passing the measure() abstract method."""
     
+    sizing : CoshSizing = CoshSizing.FIXED
+
     def measure(self):
         if self.sizing == CoshSizing.FIT:
-            warn(f"`CoshSizing.FIT` is not supported on elements and will be ignored. Use `CoshSizing.FIXED` or `CoshSizing.FILL` instead.")
+            warn("`CoshSizing.FIT` is not supported on elements and will be ignored. Use `CoshSizing.FIXED` or `CoshSizing.FILL` instead.")
+            
 
 @dataclass
 class TextNode(Element):

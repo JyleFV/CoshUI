@@ -8,25 +8,85 @@ by internal code, never outside."""
 
 import time
 import os
+import difflib
 
 from .cui_error import CoshUIError
 from .backend import CoshBackend
+from .themes import CoshTheme
 
 class CoshUI:
-    _stack = []
-    _node_map = {}
-    _active_ids = set()
-    _active_tweens = set()
-    _style_dirty = set() 
-    _temp_paths = set()
-    _font_library = {}
-    _render_stack = []
-    _style_class = {}
-    _focused_node = None
-    _active_renderer = False
-    _default_font = os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf")
+    # Lifecycle
+    _stack : list = []
+    _node_map : dict = {}
+    _active_ids : set = set()
+    _active_tweens : set = set()
+    _active_renderer : bool = False
     _last_time : float = 0.0
     _widget_counter : int = 0
+    _state_storage : dict = {}
+
+    # Render-related
+    _style_dirty : set = set() 
+    _temp_paths : set = set()
+    _font_library : dict = {}
+    _render_stack : list = []
+    _default_font : str = os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf")
+
+    # Input-related
+    _focused_node = None
+
+    # Theme-related
+    _theme_registry : dict = {}
+    _active_theme = CoshTheme(
+        button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
+        label={ "width" : 175, "height" : 65, "font_size" : 18 },
+        container={},
+        checkbox={ "width" : 25, "height" : 25, "checked" : (85, 75, 255), "unchecked" : (200, 200, 200)},
+        image={ "width" : 150, "height" : 150 }
+    )
+    
+    # Class System
+    _style_class : dict = {}
+    
+    @classmethod
+    def get_state(cls, node_id, key, default=None):
+        return cls._state_storage.get(node_id, {}).get(key, default)
+
+    @classmethod
+    def set_state(cls, node_id, key, value):
+        if not node_id in cls._state_storage:
+            cls._state_storage[node_id] = {}
+        cls._state_storage[node_id][key] = value
+
+class CoshLifecycle:
+    @staticmethod
+    def register_node(node):
+        if CoshUI._stack:
+            CoshUI._stack[-1].children.append(node)
+        
+        if node.id:
+            if node.id in CoshUI._active_ids:
+                raise CoshUIError(f"A node with id `{id}` already exists.")
+            CoshUI._active_ids.add(node.id)
+            CoshUI._node_map[node.id] = node
+        
+        CoshLifecycle.apply_styling(node)
+
+    @staticmethod
+    def apply_styling(node):
+        if node.classes:
+            from .utility import merge_styles
+            from .types import CoshStyling
+            class_names = node.classes.split() if isinstance(node.classes, str) else node.classes
+
+            merged_style = CoshStyling()
+            for name in class_names:
+                if name not in CoshUI._style_class.keys():
+                    close_match = difflib.get_close_matches(name, CoshUI._style_class.keys(), n=1)
+                    raise CoshUIError(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else "Unknown"}`?")   
+                merged_style = merge_styles(merged_style, CoshUI._style_class.get(name))
+
+            node.style = merge_styles(merged_style, node.style)
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
@@ -63,6 +123,7 @@ class CoshUIRenderer:
         CoshUI._stack.clear()  
         self.root.children.clear()
         CoshUI._stack.append(self.root)
+
         return self
 
     def __exit__(self, *args):

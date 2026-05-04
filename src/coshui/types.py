@@ -109,7 +109,7 @@ class RenderContext(NamedTuple):
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     # Image
-    image_path : str | None = None
+    image_src : str | None = None
 
 def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)

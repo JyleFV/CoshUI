@@ -259,6 +259,7 @@ def add_class(name : str, style : CoshStyling):
 
 # ================ Preload Helpers ================
 
+# NOTE: This currently does practically nothing due to how the architecture is made.
 def preload_images(img_paths : str | list):
     """
     Preloads images to the backend to create image textures early.
@@ -269,6 +270,10 @@ def preload_images(img_paths : str | list):
 
     .. note :: 
         `preload_images()` converts relative file paths to absolute paths based on the current working directory.
+
+    .. warning::
+        Preloading is not yet fully implemented. Images are currently loaded on first render.
+        True preloading will be available in a future update.
     """
 
     if isinstance(img_paths, str):
@@ -284,6 +289,9 @@ def preload_images(img_paths : str | list):
 # ================ Preload Helpers ================
 
 # ================ Helper Functions ================
+
+def adjust_color(color : tuple, scalar : int):
+    return tuple(value * scalar for value in color)
 
 def get_nested_attr(node : Node, n_property : str):
     parts = n_property.split('.')
