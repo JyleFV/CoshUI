@@ -164,11 +164,13 @@ def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset
 def process_events():
     mx, my = CoshInput._mouse_position
 
+
     if CoshInput.get_mouse_just_released():
-        if CoshUI._focused_node:
-            if CoshUI._focused_node.on_release:
-                CoshUI._focused_node.on_release()
-            CoshUI._focused_node = None
+        if CoshUI._focused_id:
+            actions = CoshUI._action_map.get(CoshUI._focused_id, {})
+            if "on_release" in actions:
+                actions["on_release"]()
+            CoshUI._focused_id = None
     
     consumed_hover = False
     consumed_click = False
@@ -177,9 +179,8 @@ def process_events():
         if data.id is None: 
             continue
 
-        node = CoshUI._node_map.get(data.id)
-        if node is None: 
-            continue
+        actions = CoshUI._action_map.get(data.id, {})
+        was_hovered = CoshUI.get_state(data.id, "_was_hovered", False)
 
         scale = data.transform_scale
         sw, sh = data.width * scale, data.height * scale
@@ -190,25 +191,23 @@ def process_events():
         
         hovered = point_in_rect(mx, my, tx, ty, sw, sh)
 
-        was_hovered = node._was_hovered
-
         if hovered and not consumed_hover:
-            node._was_hovered = True
-            if not was_hovered and node.on_hover:
-                node.on_hover()
-            if node.mouse_filter:
+            CoshUI.set_state(data.id, "_was_hovered", True)
+            if not was_hovered and "on_hover" in actions:
+                actions["on_hover"]()
+            if data.mouse_filter:
                 consumed_hover = True
         else:
-            node._was_hovered = False
-            if was_hovered and node.on_unhover:
-                node.on_unhover()
+            CoshUI.set_state(data.id, "_was_hovered", False)
+            if was_hovered and "on_unhover" in actions:
+                actions["on_unhover"]()
 
         # Click Logic
         if hovered and not consumed_click and CoshInput.get_mouse_just_pressed():
-            if node.on_click:
-                node.on_click()
-            CoshUI._focused_node = node
-            if node.mouse_filter:
+            if "on_click" in actions:
+                actions["on_click"]()
+            CoshUI._focused_id = data.id
+            if data.mouse_filter:
                 consumed_click = True
 
 # ================ Layouting and Rendering ================
@@ -235,16 +234,16 @@ def set_default_font(name : str):
 
 # ================ Nodes ================
 
-def get_node(node_name : str):
-    """
-    Returns the passed in node.
-    """
+# def get_node(node_name : str):
+#     """
+#     Returns the passed in node.
+#     """
     
-    node = CoshUI._node_map.get(node_name)
-    if node is None:
-        close_match = difflib.get_close_matches(node_name, CoshUI._node_map.keys(), n=1)
-        raise CoshUIError(f"Node `{node_name}` doesn't exist. Did you mean `{close_match[0] if close_match else ""}`?")
-    return node
+#     node = CoshUI._node_map.get(node_name)
+#     if node is None:
+#         close_match = difflib.get_close_matches(node_name, CoshUI._node_map.keys(), n=1)
+#         raise CoshUIError(f"Node `{node_name}` doesn't exist. Did you mean `{close_match[0] if close_match else ""}`?")
+#     return node
 
 # ================ Nodes ================
 
@@ -290,22 +289,22 @@ def preload_images(img_paths : str | list):
 
 # ================ Helper Functions ================
 
-def adjust_color(color : tuple, scalar : int):
-    return tuple(value * scalar for value in color)
+# def adjust_color(color : tuple, scalar : int):
+#     return tuple(value * scalar for value in color)
 
-def get_nested_attr(node : Node, n_property : str):
-    parts = n_property.split('.')
-    obj = node
-    for part in parts:
-        obj = getattr(obj, part)
-    return obj
+# def get_nested_attr(node : Node, n_property : str):
+#     parts = n_property.split('.')
+#     obj = node
+#     for part in parts:
+#         obj = getattr(obj, part)
+#     return obj
 
-def set_nested_attr(node : Node, n_property : str, value):
-    parts = n_property.split('.')
-    obj = node
-    for part in parts[:-1]:
-        obj = getattr(obj, part)
-    setattr(obj, parts[-1], value)
+# def set_nested_attr(node : Node, n_property : str, value):
+#     parts = n_property.split('.')
+#     obj = node
+#     for part in parts[:-1]:
+#         obj = getattr(obj, part)
+#     setattr(obj, parts[-1], value)
 
 def resolve_border_radius(value : int | float | tuple) -> tuple: 
     match value:

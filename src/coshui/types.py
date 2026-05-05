@@ -7,8 +7,8 @@ from .cui_error import CoshUIError
 @dataclass
 class CoshLayout:
     true_position : tuple = (0, 0) 
-    width : float = 0.0
-    height : float = 0.0
+    width : float | None = None
+    height : float | None = None
     padding : float = 0.0
     margin : float = 0.0
 
@@ -18,7 +18,7 @@ class CoshStyling:
     alpha : int | None = None
     # gradients : tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str] | None = None
     border : tuple | None = None
-    border_radius : int | tuple = 0
+    border_radius : int | tuple | None = None
     transform_position : tuple = (0, 0)
     transform_rotation : float = 0.0
     transform_scale : float = 1.0
@@ -101,6 +101,8 @@ class RenderContext(NamedTuple):
     transform_scale : float = 1.0
     border : tuple | None = None
     alpha : int = 0
+    # Interaction
+    mouse_filter : bool = True
     # Text
     text : str | None = None
     text_color : tuple = (255, 255, 255)

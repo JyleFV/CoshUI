@@ -66,7 +66,13 @@ class PygameBackend(CoshBackend):
             raise CoshUIError(f"Value in border radius is the wrong type")
 
     def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify):
-        scaled_font_size = max(1, int(font_size * scale))
+        safe_font_size = font_size if font_size is not None else 16
+        safe_scale = scale if scale is not None else 1.0
+        # print(f"text: {text}")
+        # print(f"font_size: {font_size} | safe_font_size: {safe_font_size}")
+        # print(f"scale: {scale} | safe_scale: {safe_scale}")
+
+        scaled_font_size = max(1, int(safe_font_size * safe_scale))
         cache_key = (font_path, scaled_font_size)
         font = _font_cache.get(cache_key)
         if font is None:

@@ -1,26 +1,39 @@
 from .animation import animate
 from .engine import CoshUI
-from .utility import adjust_color
+
+ENGINE_DEFAULTS = {
+    "width": 0.0,
+    "height": 0.0,
+    "margin": 0.0,
+    "padding": 0.0,
+    "gap": 0.0,
+    "alpha": 255,
+    "border_radius": 0,
+    "transform_scale": 1.0,
+    "transform_rotation": 0.0,
+    "font_size": 16,
+    "text_color": (255, 255, 255),
+}
 
 # Button
-def _button_default_hover(node):
-    animate("background_color", node, adjust_color(CoshUI._active_theme.button["background_color"], 1.5), 0.1, "ease_in")
+def _button_default_hover(node_id):
+    animate("background_color", node_id, (117, 156, 195), 0.1, "ease_in")
 
-def _button_default_unhover(node):
-    animate("background_color", node, (86, 115, 143), 0.1, "ease_in")
+def _button_default_unhover(node_id):
+    animate("background_color", node_id, (86, 115, 143), 0.1, "ease_in")
 
-def _button_default_click(node):
-    animate("background_color", node, (60, 85, 110), 0.1, "ease_in")
+def _button_default_click(node_id):
+    animate("background_color", node_id, (60, 85, 110), 0.1, "ease_in")
 
-def _button_default_release(node):
-    animate("background_color", node, (119, 161, 201) if node._was_hovered else (86, 115, 143), 0.1, "ease_in")
+def _button_default_release(node_id):
+    animate("background_color", node_id, (119, 161, 201), 0.1, "ease_in")
 
 # Checkbox
-def _checkbox_default_hover(node):
+def _checkbox_default_hover(node_id):
     pass
 
-def _checkbox_default_unhover(node):
+def _checkbox_default_unhover(node_id):
     pass
 
-def _checkbox_default_click(node):
-    node.checked = not node.checked
+def _checkbox_default_click(node_id):
+    CoshUI.set_state(node_id, "checked", not CoshUI.get_state(node_id, "checked", False))

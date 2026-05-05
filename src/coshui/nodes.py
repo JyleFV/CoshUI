@@ -2,9 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from collections.abc import Callable
 import math
-import difflib
 
-from .cui_error import CoshUIError, warn
+from .cui_error import warn
 from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshTextAlign, CoshTextJustify, RenderContext
 
 @dataclass
@@ -28,33 +27,14 @@ class Node(ABC):
     mouse_filter : bool = True # Currently a bool, if True, it will capture mouse events, if False, it will ignore mouse events.
 
     def __post_init__(self):
-        from .engine import CoshUI, CoshLifecycle
-        if CoshUI._stack:
-            CoshUI._stack[-1].children.append(self)
+        from .engine import CoshLifecycle
+        CoshLifecycle.register_node(self)
 
         # These flat parameters take precedence over CoshLayout's width and height for most nodes (ones that don't override __post_init__), which feels weird :/.
         if self.width:
             self.layout.width = self.width
         if self.height:
             self.layout.height = self.height
-        
-        # TODO: CHECK IF CLASSES WORK PROPERLY, I HAVE A FEELING ID REGISTRATION IS JUST FUCKED
-
-        if self.classes:
-            from .utility import merge_styles
-            class_names = self.classes.split() if isinstance(self.classes, str) else self.classes
-
-            merged_style = CoshStyling
-            for name in class_names:
-                if name not in CoshUI._style_class.keys():
-                    close_match = difflib.get_close_matches(name, CoshUI._style_class.keys(), n=1)
-                    raise CoshUIError(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else "Unknown"}`?")   
-                merged_style = merge_styles(merged_style, CoshUI._style_class.get(name))
-
-            self.style = merge_styles(merged_style, self.style)
-
-        if self.id:
-            self._register_id(self.id)
 
     @abstractmethod
     def measure(self):
@@ -63,22 +43,6 @@ class Node(ABC):
     @abstractmethod
     def get_render_data(self):
         pass
-    
-    def _recover_state(self, existing):
-        self._was_hovered = existing._was_hovered
-        self.style = existing.style
-
-    def _register_id(self, id: str):
-        from .engine import CoshUI
-        if id in CoshUI._active_ids:
-            raise CoshUIError(f"A node with id `{id}` already exists.")
-        CoshUI._active_ids.add(id)
-        existing = CoshUI._node_map.get(id)
-        if existing is not None and existing is not self:
-            self.style = existing.style
-            self._was_hovered = existing._was_hovered
-        if id not in CoshUI._node_map:
-            CoshUI._node_map[id] = self
 
 @dataclass
 class ParentNode(Node):
@@ -130,7 +94,8 @@ class Container(ParentNode):
             border_radius=self.style.border_radius,
             alpha=self.style.alpha,
             transform_scale=self.style.transform_scale,
-            border=self.style.border
+            border=self.style.border,
+            mouse_filter=self.mouse_filter
         )
 
 @dataclass
@@ -166,7 +131,8 @@ class Grid(ParentNode):
             border_radius=self.style.border_radius,
             alpha=self.style.alpha,
             transform_scale=self.style.transform_scale,
-            border=self.style.border
+            border=self.style.border,
+            mouse_filter=self.mouse_filter
         )
     
 @dataclass
@@ -212,5 +178,6 @@ class TextNode(Element):
             font_size=self.font_size,
             text_color=self.text_color,
             text_align=self.text_align,
-            text_justify=self.text_justify
+            text_justify=self.text_justify,
+            mouse_filter=self.mouse_filter
         )
