@@ -28,7 +28,7 @@ def measure(node : Node):
         measure(child)
     node.measure()
 
-# NOTE: Align is currently the equivalent of CSS's `align-content`
+# NOTE: Align is currently the equivalent of CSS's `align-items`
 # TODO: Separate Align to `AlignContent` and `AlignItems` to make the library more flexible
 def layout(node : Node, x: float = 0.0, y: float = 0.0):
     node.layout.true_position = (x, y)

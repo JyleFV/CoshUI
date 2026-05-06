@@ -44,6 +44,26 @@ class Node(ABC):
     def get_render_data(self):
         pass
 
+    def get_base_render_data(self):
+        x, y = self.layout.true_position
+        transform_x, transform_y = self.style.transform_position
+        return {
+            "id" : self.id,
+            "x" : x,
+            "y" : y,
+            "transform_x" : transform_x,
+            "transform_y" : transform_y,
+            "width" : self.layout.width,
+            "height" : self.layout.height,
+            "background_color" : self.style.background_color,
+            "z_index" : self.z_index,
+            "border_radius" : self.style.border_radius,
+            "alpha" : self.style.alpha,
+            "transform_scale" : self.style.transform_scale,
+            "border" : self.style.border,
+            "mouse_filter" : self.mouse_filter
+        }
+
 @dataclass
 class ParentNode(Node):
     """A separate node that still inherits from Node but has custom methods specialized for "container-type" nodes."""
@@ -79,24 +99,7 @@ class Container(ParentNode):
                 self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
         
     def get_render_data(self) -> RenderContext:
-        x, y = self.layout.true_position
-        transform_x, transform_y = self.style.transform_position
-        return RenderContext(
-            id=self.id,
-            x=x,
-            y=y,
-            transform_x=transform_x,
-            transform_y=transform_y,
-            width=self.layout.width,
-            height=self.layout.height,
-            background_color=self.style.background_color,
-            z_index=self.z_index,
-            border_radius=self.style.border_radius,
-            alpha=self.style.alpha,
-            transform_scale=self.style.transform_scale,
-            border=self.style.border,
-            mouse_filter=self.mouse_filter
-        )
+        return RenderContext(**self.get_base_render_data())
 
 @dataclass
 class Grid(ParentNode):
@@ -116,24 +119,7 @@ class Grid(ParentNode):
         self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
 
     def get_render_data(self) -> RenderContext:
-        x, y = self.layout.true_position
-        transform_x, transform_y = self.style.transform_position
-        return RenderContext(
-            id=self.id,
-            x=x,
-            y=y,
-            transform_x=transform_x,
-            transform_y=transform_y,
-            width=self.layout.width,
-            height=self.layout.height,
-            background_color=self.style.background_color,
-            z_index=self.z_index,
-            border_radius=self.style.border_radius,
-            alpha=self.style.alpha,
-            transform_scale=self.style.transform_scale,
-            border=self.style.border,
-            mouse_filter=self.mouse_filter
-        )
+        return RenderContext(**self.get_base_render_data())
     
 @dataclass
 class Element(Node):
@@ -157,27 +143,11 @@ class TextNode(Element):
 
     def get_render_data(self):
         from .engine import CoshUI
-        x, y = self.layout.true_position
-        transform_x, transform_y = self.style.transform_position
-        return RenderContext(
-            id=self.id,
-            x=x,
-            y=y,
-            transform_x=transform_x,
-            transform_y=transform_y,
-            width=self.layout.width,
-            height=self.layout.height,
-            background_color=self.style.background_color,
-            z_index=self.z_index,
-            border_radius=self.style.border_radius,
-            alpha=self.style.alpha,
-            transform_scale=self.style.transform_scale,
-            border=self.style.border,
-            text=self.text,
-            font=CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font,
-            font_size=self.font_size,
-            text_color=self.text_color,
-            text_align=self.text_align,
-            text_justify=self.text_justify,
-            mouse_filter=self.mouse_filter
-        )
+        data = self.get_base_render_data()
+        data["text"] = self.text
+        data["font"] = CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font
+        data["font_size"] = self.font_size
+        data["text_color"] = self.text_color
+        data["text_align"] = self.text_align
+        data["text_justify"] = self.text_justify
+        return RenderContext(**data)

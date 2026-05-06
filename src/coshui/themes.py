@@ -1,4 +1,7 @@
 from dataclasses import dataclass, field
+import difflib
+
+from .cui_error import CoshUIError
 
 # ================ Theme ================
 
@@ -27,10 +30,16 @@ class CoshTheme:
 
         return None
     
-def create_theme(theme : CoshTheme):
-    pass
+def create_theme(name : str, theme : CoshTheme):
+    from .engine import CoshUI
+    CoshUI._theme_registry[name] = theme
 
-def set_theme(theme : CoshTheme):
-    pass
+def set_theme(theme_name : str):
+    from .engine import CoshUI
+    theme = CoshUI._theme_registry.get(theme_name, None)
+    if theme is None:
+        close_match = difflib.get_close_matches(theme_name, CoshUI._theme_registry.keys(), n=1)
+        raise CoshUIError(f"The theme `{theme_name}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+    CoshUI._active_theme = theme
 
 # ================ Theme ================

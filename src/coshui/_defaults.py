@@ -1,5 +1,6 @@
 from .animation import animate
 from .engine import CoshUI
+from .themes import CoshTheme
 
 ENGINE_DEFAULTS = {
     "width": 0.0,
@@ -14,6 +15,14 @@ ENGINE_DEFAULTS = {
     "font_size": 16,
     "text_color": (255, 255, 255),
 }
+
+ENGINE_DEFAULT_THEME = CoshTheme(
+        button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
+        label={ "width" : 175, "height" : 65, "font_size" : 18 },
+        container={},
+        checkbox={ "width" : 25, "height" : 25, "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
+        image={ "width" : 150, "height" : 150 }
+    )
 
 # Button
 def _button_default_hover(node_id):

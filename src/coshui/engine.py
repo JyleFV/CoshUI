@@ -25,22 +25,23 @@ class CoshUI:
     # ---------------- Render-related ----------------
     _style_dirty : set = set() 
     _temp_paths : set = set()
-    _font_library : dict = {}
+    _font_library : dict = { "Inter" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf") }
     _render_stack : list = []
-    _default_font : str = os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf")
+    _default_font : str = _font_library.get("Inter")
     # ---------------- Input & Event-related ----------------
     _focused_id = None
     _action_map : dict = {} # For events
     _active_tweens : set = set()
     # ---------------- Theme-related ----------------
-    _theme_registry : dict = {}
-    _active_theme = CoshTheme(
-        button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
-        label={ "width" : 175, "height" : 65, "font_size" : 18 },
-        container={},
-        checkbox={ "width" : 25, "height" : 25, "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
-        image={ "width" : 150, "height" : 150 }
-    )
+    _theme_registry : dict = { "DEFAULT" : CoshTheme(
+            button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
+            label={ "width" : 175, "height" : 65, "font_size" : 18 },
+            container={},
+            checkbox={ "width" : 25, "height" : 25, "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
+            image={ "width" : 150, "height" : 150 }
+        )
+    }
+    _active_theme = _theme_registry.get("DEFAULT")
     # ----------------Class System ----------------
     _style_class : dict = {}
     
@@ -155,15 +156,15 @@ class CoshLifecycle:
                     setattr(node.style, key, value)
                 elif hasattr(node, key):
                     setattr(node, key, value)
-            else:
-                CoshUI._state_storage[node.id] = {
-                    "background_color": node.style.background_color,
-                    "alpha": node.style.alpha,
-                    "transform_position": node.style.transform_position,
-                    "transform_scale": node.style.transform_scale,
-                    "transform_rotation": node.style.transform_rotation,
-                    "_was_hovered": node._was_hovered
-                }
+        else:
+            CoshUI._state_storage[node.id] = {
+                "background_color": node.style.background_color,
+                "alpha": node.style.alpha,
+                "transform_position": node.style.transform_position,
+                "transform_scale": node.style.transform_scale,
+                "transform_rotation": node.style.transform_rotation,
+                "_was_hovered": node._was_hovered
+            }
 
     @staticmethod
     def register_events(node):

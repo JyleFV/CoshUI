@@ -31,9 +31,6 @@ class CoshStyling:
             if self.alpha is None:
                 self.alpha = a
 
-        if self.alpha is None:
-            self.alpha = 255
-
         if self.border is not None:
             if is_valid_border(self.border):
                 pass # correct format already
