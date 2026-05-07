@@ -34,20 +34,23 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
     node.layout.true_position = (x, y)
 
     if isinstance(node, Container):
+        relative_children = [c for c in node.children if c.positioning != CoshPositioning.ABSOLUTE]
+        absolute_children = [c for c in node.children if c.positioning == CoshPositioning.ABSOLUTE]
+
         if node.direction == CoshDirection.ROW:
-            total_content_size = sum(c.layout.width + (c.layout.margin * 2) for c in node.children) + (node.gap * (len(node.children) - 1))
+            total_content_size = sum(c.layout.width + (c.layout.margin * 2) for c in relative_children) + (node.gap * max(0, (len(relative_children)) - 1))
         else:
-            total_content_size = sum(c.layout.height + (c.layout.margin * 2) for c in node.children) + (node.gap * (len(node.children) - 1))
+            total_content_size = sum(c.layout.height + (c.layout.margin * 2) for c in relative_children) + (node.gap * max(0, (len(relative_children)) - 1))
 
         cursor_x = x + node.layout.padding
         cursor_y = y + node.layout.padding
 
         if node.direction == CoshDirection.ROW:
-            total_gap = node.gap * (len(node.children) - 1)
+            total_gap = node.gap * max(0, (len(relative_children)) - 1)
             available_width = node.layout.width - (node.layout.padding * 2) - total_gap
 
-            fill_widgets = [child for child in node.children if child.sizing is CoshSizing.FILL]
-            static_widgets = [child for child in node.children if child.sizing is not CoshSizing.FILL]
+            fill_widgets = [child for child in relative_children if child.sizing is CoshSizing.FILL]
+            static_widgets = [child for child in relative_children if child.sizing is not CoshSizing.FILL]
 
             for widget in static_widgets:
                 available_width -= (widget.layout.width + widget.layout.margin * 2)
@@ -58,7 +61,7 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                     child.layout.width = shared_width
                     child.layout.height = node.layout.height - (node.layout.padding * 2) - (child.layout.margin * 2)
 
-            total_content_size = sum(c.layout.width + (c.layout.margin * 2) for c in node.children) + total_gap
+            total_content_size = sum(c.layout.width + (c.layout.margin * 2) for c in relative_children) + total_gap
 
             match node.justify:
                 case CoshJustify.CENTER:
@@ -66,11 +69,11 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                 case CoshJustify.END:
                     cursor_x = x + node.layout.width - node.layout.padding - total_content_size
         else:
-            total_gap = node.gap * (len(node.children) - 1)
+            total_gap = node.gap * max(0, (len(relative_children)) - 1)
             available_height = node.layout.height - (node.layout.padding * 2) - total_gap
 
-            fill_widgets = [child for child in node.children if child.sizing is CoshSizing.FILL]
-            static_widgets = [child for child in node.children if child.sizing is not CoshSizing.FILL]
+            fill_widgets = [child for child in relative_children if child.sizing is CoshSizing.FILL]
+            static_widgets = [child for child in relative_children if child.sizing is not CoshSizing.FILL]
 
             for widget in static_widgets:
                 available_height -= (widget.layout.height + widget.layout.margin * 2)
@@ -81,7 +84,7 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                     child.layout.height = shared_height
                     child.layout.width = node.layout.width - (node.layout.padding * 2) - (child.layout.margin * 2)
 
-            total_content_size = sum(c.layout.height + (c.layout.margin * 2) for c in node.children) + total_gap
+            total_content_size = sum(c.layout.height + (c.layout.margin * 2) for c in relative_children) + total_gap
 
             match node.justify:
                 case CoshJustify.CENTER:
@@ -89,7 +92,7 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                 case CoshJustify.END:
                     cursor_y = y + node.layout.height - node.layout.padding - total_content_size
 
-        for child in node.children:
+        for child in relative_children:
             if node.direction == CoshDirection.ROW:
                 match node.align:
                     case CoshAlign.START:  child_y = y + node.layout.padding
@@ -107,9 +110,16 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                 
                 layout(child, child_x + child.layout.margin, cursor_y + child.layout.margin)
                 cursor_y += child.layout.height + (child.layout.margin * 2) + node.gap
+        
+        for child in absolute_children:
+            layout(child, x + node.layout.padding + child.layout.true_position[0], 
+                          y + node.layout.padding + child.layout.true_position[1])
 
     if isinstance(node, Grid):
-        rows = [node.children[i:i + node.column_count] for i in range(0, len(node.children), node.column_count)]
+        relative_children = [c for c in node.children if c.positioning != CoshPositioning.ABSOLUTE]
+        absolute_children = [c for c in node.children if c.positioning == CoshPositioning.ABSOLUTE]
+
+        rows = [relative_children[i:i + node.column_count] for i in range(0, len(relative_children), node.column_count)]
         
         row_heights = [max(child.layout.height + (child.layout.margin * 2) for child in row) for row in rows]
         total_content_height = sum(row_heights) + (node.gap * (len(rows) - 1))
@@ -139,31 +149,39 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
 
             current_y += row_heights[i] + node.gap
 
+        for child in absolute_children:
+            layout(child, x + node.layout.padding + child.layout.true_position[0], 
+                          y + node.layout.padding + child.layout.true_position[1])
+
 def update(delta : float):
     for tween in CoshUI._active_tweens:
         tween.update(delta)
 
     CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
 
-def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False):
+def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None):
     if not is_root:
         data = node.get_render_data()
         if data:
             data = data._replace(
                 transform_x=data.transform_x + offset_x,
                 transform_y=data.transform_y + offset_y,
-                z_index=data.z_index + z_offset
+                z_index=data.z_index + z_offset,
+                clip_rect=clip_rect
                 # TODO: Make children inherit scale from the parent as well.
             )
             CoshUI._render_stack.append(data)
 
+    child_clip = None
+    if hasattr(node, 'overflow') and node.overflow == CoshOverflow.HIDDEN:
+        child_clip = (node.layout.true_position[0], node.layout.true_position[1], node.layout.width, node.layout.height)
+
     tx, ty = node.style.transform_position
     for child in node.children:
-        render(child, offset_x + tx, offset_y + ty, z_offset)
+        render(child, offset_x + tx, offset_y + ty, z_offset, clip_rect=child_clip or clip_rect)
 
 def process_events():
     mx, my = CoshInput._mouse_position
-
 
     if CoshInput.get_mouse_just_released():
         if CoshUI._focused_id:
@@ -191,6 +209,8 @@ def process_events():
         
         hovered = point_in_rect(mx, my, tx, ty, sw, sh)
 
+        # The property `mouse_filter` works like MOUSE_FILTER_STOP (when True) and MOUSE_FILTER_PASS (when False) in Godot
+        # This is due to the consumed_[hover/click] booleans being toggled AFTER the action was done.
         if hovered and not consumed_hover:
             CoshUI.set_state(data.id, "_was_hovered", True)
             if not was_hovered and "on_hover" in actions:
@@ -321,10 +341,10 @@ def point_in_rect(px, py, rx, ry, rw, rh):
 def merge_styles(base : CoshStyling, override : CoshStyling) -> CoshStyling:
     return CoshStyling(
         background_color=override.background_color if override.background_color is not None else base.background_color,
-        alpha=override.alpha if override.alpha != 255 else base.alpha, # This is a little weird, classes will override alpha even if users explicitly set it on the node itself.
+        alpha=override.alpha if override.alpha is not None else base.alpha,
         border=override.border if override.border is not None else base.border,
-        border_radius=override.border_radius if override.border_radius != 0 else base.border_radius,
-        transform_position=override.transform_position if override.transform_position != (0, 0) else base.transform_position,
-        transform_rotation=override.transform_rotation if override.transform_rotation != 0.0 else base.transform_rotation,
-        transform_scale=override.transform_scale if override.transform_scale != 1.0 else base.transform_scale
+        border_radius=override.border_radius if override.border_radius is not None else base.border_radius,
+        transform_position=override.transform_position if override.transform_position is not None else base.transform_position,
+        transform_rotation=override.transform_rotation if override.transform_rotation is not None else base.transform_rotation,
+        transform_scale=override.transform_scale if override.transform_scale is not None else base.transform_scale
     )

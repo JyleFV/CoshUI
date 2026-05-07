@@ -4,7 +4,7 @@ from collections.abc import Callable
 import math
 
 from .cui_error import warn
-from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshTextAlign, CoshTextJustify, RenderContext
+from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshPositioning, CoshOverflow, CoshTextAlign, CoshTextJustify, CoshTextOverflow, RenderContext
 
 @dataclass
 class Node(ABC):
@@ -14,8 +14,10 @@ class Node(ABC):
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
     sizing : CoshSizing = CoshSizing.FIT
-    width : float = 0.0 
-    height : float = 0.0
+    width : float | None = None 
+    height : float | None = None
+    x : float | None = None
+    y : float | None = None
     classes : str | None = None 
     id : str | None = None
     z_index : int = 0
@@ -25,26 +27,34 @@ class Node(ABC):
     on_release : Callable | None = None
     _was_hovered : bool = False
     mouse_filter : bool = True # Currently a bool, if True, it will capture mouse events, if False, it will ignore mouse events.
+    positioning : CoshPositioning = CoshPositioning.RELATIVE
 
     def __post_init__(self):
         from .engine import CoshLifecycle
         CoshLifecycle.register_node(self)
 
         # These flat parameters take precedence over CoshLayout's width and height for most nodes (ones that don't override __post_init__), which feels weird :/.
-        if self.width:
+        if self.width is not None:
             self.layout.width = self.width
-        if self.height:
+        if self.height is not None:
             self.layout.height = self.height
+        
+        # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
+        if self.positioning != CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
+            warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
+        
+        # Just like width and height, the x and y flat parameters take precedence over CoshLayout's true_position tuple.
+        self.layout.true_position = (self.x if self.x is not None else 0.0, self.y if self.y is not None else 0.0)
 
     @abstractmethod
     def measure(self):
         pass
 
     @abstractmethod
-    def get_render_data(self):
+    def get_render_data(self) -> RenderContext:
         pass
 
-    def get_base_render_data(self):
+    def get_base_render_data(self) -> dict:
         x, y = self.layout.true_position
         transform_x, transform_y = self.style.transform_position
         return {
@@ -70,7 +80,9 @@ class ParentNode(Node):
     
     justify : CoshJustify = CoshJustify.START
     align : CoshAlign = CoshAlign.START
+    overflow : CoshOverflow = CoshOverflow.VISIBLE
     gap : float = 0.0
+    src : str | None = None
 
     def __enter__(self):
         from .engine import CoshUI
@@ -80,6 +92,12 @@ class ParentNode(Node):
     def __exit__(self, *args):
         from .engine import CoshUI
         CoshUI._stack.pop()
+
+    def get_render_data(self) -> RenderContext:
+        data = self.get_base_render_data()
+        data["image_src"] = self.src
+        return RenderContext(**data)
+
 @dataclass
 class Container(ParentNode):
     """The base Container Node, simple but the most customizable."""
@@ -97,9 +115,6 @@ class Container(ParentNode):
             case CoshDirection.COLUMN:
                 self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
                 self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
-        
-    def get_render_data(self) -> RenderContext:
-        return RenderContext(**self.get_base_render_data())
 
 @dataclass
 class Grid(ParentNode):
@@ -118,9 +133,10 @@ class Grid(ParentNode):
         self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
         self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
 
-    def get_render_data(self) -> RenderContext:
-        return RenderContext(**self.get_base_render_data())
-    
+@dataclass
+class Modal(ParentNode):
+    pass
+
 @dataclass
 class Element(Node):
     """Base Element node that widgets inherit from. Mostly useless except for the use of clarity for developers and passing the measure() abstract method."""
@@ -140,6 +156,7 @@ class TextNode(Element):
     text_color : tuple = (255, 255, 255)
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
+    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
 
     def get_render_data(self):
         from .engine import CoshUI
@@ -150,4 +167,5 @@ class TextNode(Element):
         data["text_color"] = self.text_color
         data["text_align"] = self.text_align
         data["text_justify"] = self.text_justify
+        data["text_overflow"] = self.text_overflow
         return RenderContext(**data)

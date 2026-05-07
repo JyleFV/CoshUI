@@ -37,7 +37,7 @@ class CoshUI:
             button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
             label={ "width" : 175, "height" : 65, "font_size" : 18 },
             container={},
-            checkbox={ "width" : 25, "height" : 25, "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
+            checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
             image={ "width" : 150, "height" : 150 }
         )
     }

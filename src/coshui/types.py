@@ -19,12 +19,12 @@ class CoshStyling:
     # gradients : tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str] | None = None
     border : tuple | None = None
     border_radius : int | tuple | None = None
-    transform_position : tuple = (0, 0)
-    transform_rotation : float = 0.0
-    transform_scale : float = 1.0
+    transform_position : tuple | None = None
+    transform_rotation : float | None = None
+    transform_scale : float | None = None
 
-    # Lets user use a 4 value tuple for background_color or a 3 value tuple with an explicit alpha field or default.
     def __post_init__(self):
+        # Lets user use a 4 value tuple for background_color or a 3 value tuple with an explicit alpha field or default.
         if self.background_color is not None and len(self.background_color) == 4:
             r, g, b, a = self.background_color
             self.background_color = (r, g, b)
@@ -47,6 +47,15 @@ class CoshOverflow(Enum):
     HIDDEN = 0
     VISIBLE = 1
     SCROLL = 2
+
+class CoshTextOverflow(Enum):
+    HIDDEN = 0  
+    VISIBLE = 1
+    WRAP = 2
+
+class CoshPositioning(Enum):
+    RELATIVE = 0
+    ABSOLUTE = 1
 
 class CoshDirection(Enum):
     ROW = 0
@@ -107,8 +116,11 @@ class RenderContext(NamedTuple):
     font_size : int = 18
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_align : CoshTextAlign = CoshTextAlign.CENTER
+    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
     # Image
     image_src : str | None = None
+    # Overflow-logic
+    clip_rect : tuple | None = None
 
 def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)
@@ -140,4 +152,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']
+__all__ = ['CoshPositioning', 'CoshOverflow', 'CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']

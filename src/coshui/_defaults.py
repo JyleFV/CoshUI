@@ -11,6 +11,7 @@ ENGINE_DEFAULTS = {
     "alpha": 255,
     "border_radius": 0,
     "transform_scale": 1.0,
+    "transform_position": (0, 0),
     "transform_rotation": 0.0,
     "font_size": 16,
     "text_color": (255, 255, 255),
@@ -25,17 +26,18 @@ ENGINE_DEFAULT_THEME = CoshTheme(
     )
 
 # Button
+# TODO: Use the colors in _state_storage and use a helper function to just adjust the values based on a factor.
 def _button_default_hover(node_id):
-    animate("background_color", node_id, (117, 156, 195), 0.1, "ease_in")
+    animate("background_color", node_id, (117, 156, 195), 0.075, "ease_in")
 
 def _button_default_unhover(node_id):
-    animate("background_color", node_id, (86, 115, 143), 0.1, "ease_in")
+    animate("background_color", node_id, (86, 115, 143), 0.075, "ease_in")
 
 def _button_default_click(node_id):
-    animate("background_color", node_id, (60, 85, 110), 0.1, "ease_in")
+    animate("background_color", node_id, (60, 85, 110), 0.05, "ease_in")
 
 def _button_default_release(node_id):
-    animate("background_color", node_id, (119, 161, 201), 0.1, "ease_in")
+    animate("background_color", node_id, (119, 161, 201), 0.05, "ease_in")
 
 # Checkbox
 def _checkbox_default_hover(node_id):
