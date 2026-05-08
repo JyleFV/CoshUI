@@ -197,6 +197,9 @@ def process_events():
         if data.id is None: 
             continue
 
+        if data.mouse_filter == CoshMouseFilter.IGNORE:
+            continue
+
         actions = CoshUI._action_map.get(data.id, {})
         was_hovered = CoshUI.get_state(data.id, "_was_hovered", False)
 
@@ -215,7 +218,7 @@ def process_events():
             CoshUI.set_state(data.id, "_was_hovered", True)
             if not was_hovered and "on_hover" in actions:
                 actions["on_hover"]()
-            if data.mouse_filter:
+            if data.mouse_filter == CoshMouseFilter.STOP:
                 consumed_hover = True
         else:
             CoshUI.set_state(data.id, "_was_hovered", False)
@@ -227,7 +230,7 @@ def process_events():
             if "on_click" in actions:
                 actions["on_click"]()
             CoshUI._focused_id = data.id
-            if data.mouse_filter:
+            if data.mouse_filter == CoshMouseFilter.STOP:
                 consumed_click = True
 
 # ================ Layouting and Rendering ================
@@ -309,8 +312,8 @@ def preload_images(img_paths : str | list):
 
 # ================ Helper Functions ================
 
-# def adjust_color(color : tuple, scalar : int):
-#     return tuple(value * scalar for value in color)
+def adjust_brightness_value(rgb, factor):
+    return tuple(max(0, min(255, int(c * factor))) for c in rgb)
 
 # def get_nested_attr(node : Node, n_property : str):
 #     parts = n_property.split('.')

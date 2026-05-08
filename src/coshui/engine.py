@@ -128,8 +128,8 @@ class CoshLifecycle:
             CoshLifecycle.reconcile(node)
             CoshLifecycle.register_events(node)
 
-        CoshLifecycle.apply_theme(node)
         CoshLifecycle.apply_styling(node)
+        CoshLifecycle.apply_theme(node)
 
     @staticmethod
     def apply_styling(node):
@@ -142,7 +142,7 @@ class CoshLifecycle:
             for name in class_names:
                 if name not in CoshUI._style_class.keys():
                     close_match = difflib.get_close_matches(name, CoshUI._style_class.keys(), n=1)
-                    raise CoshUIError(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else "Unknown"}`?")   
+                    raise CoshUIError(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")   
                 merged_style = merge_styles(merged_style, CoshUI._style_class.get(name))
 
             node.style = merge_styles(merged_style, node.style)

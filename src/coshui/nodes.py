@@ -4,7 +4,7 @@ from collections.abc import Callable
 import math
 
 from .cui_error import warn
-from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshPositioning, CoshOverflow, CoshTextAlign, CoshTextJustify, CoshTextOverflow, RenderContext
+from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshPositioning, CoshOverflow, CoshMouseFilter, CoshTextAlign, CoshTextJustify, CoshTextOverflow, RenderContext
 
 @dataclass
 class Node(ABC):
@@ -26,7 +26,7 @@ class Node(ABC):
     on_click : Callable | None = None
     on_release : Callable | None = None
     _was_hovered : bool = False
-    mouse_filter : bool = True # Currently a bool, if True, it will capture mouse events, if False, it will ignore mouse events.
+    mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
     positioning : CoshPositioning = CoshPositioning.RELATIVE
 
     def __post_init__(self):

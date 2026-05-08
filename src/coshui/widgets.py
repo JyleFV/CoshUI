@@ -5,6 +5,7 @@ from .engine import CoshUI
 from .cui_error import CoshUIError, warn
 from .types import RenderContext
 from .nodes import Element, TextNode
+from .utility import Ref
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 
 # ======================== Widgets ========================
@@ -65,6 +66,7 @@ class Checkbox(Element):
     checked : bool =  False
     checked_color : tuple | None = None
     unchecked_color : tuple | None = None
+    bind : Ref | None = None
 
     def __post_init__(self):
         if self.id is None:
@@ -78,6 +80,8 @@ class Checkbox(Element):
         stored_checked = CoshUI.get_state(self.id, "checked")
         if stored_checked is not None:
             self.checked = stored_checked
+            if self.bind is not None:
+                self.bind.value = self.checked
         else:
             CoshUI.set_state(self.id, "checked", self.checked)
 

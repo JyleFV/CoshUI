@@ -57,6 +57,11 @@ class CoshPositioning(Enum):
     RELATIVE = 0
     ABSOLUTE = 1
 
+class CoshMouseFilter(Enum):
+    STOP = 0
+    PASS = 1
+    IGNORE = 2
+
 class CoshDirection(Enum):
     ROW = 0
     COLUMN = 1
@@ -108,7 +113,7 @@ class RenderContext(NamedTuple):
     border : tuple | None = None
     alpha : int = 0
     # Interaction
-    mouse_filter : bool = True
+    mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
     # Text
     text : str | None = None
     text_color : tuple = (255, 255, 255)
@@ -152,4 +157,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['CoshPositioning', 'CoshOverflow', 'CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']
+__all__ = ['CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']
