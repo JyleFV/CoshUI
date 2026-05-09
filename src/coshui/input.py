@@ -1,5 +1,7 @@
 class CoshInput:
     _mouse_position : tuple = (0, 0)
+    _prev_mouse_position : tuple = (0, 0)
+    _mouse_delta : tuple = (0, 0)
     _prev_mouse_pressed : bool = False
     _current_mouse_pressed : bool = False
     _text_buffer = []

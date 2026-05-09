@@ -21,10 +21,6 @@ class Node(ABC):
     classes : str | None = None 
     id : str | None = None
     z_index : int = 0
-    on_hover : Callable | None = None
-    on_unhover : Callable | None = None
-    on_click : Callable | None = None
-    on_release : Callable | None = None
     _was_hovered : bool = False
     mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
     positioning : CoshPositioning = CoshPositioning.RELATIVE

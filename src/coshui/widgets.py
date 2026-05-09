@@ -3,7 +3,7 @@ import os
 
 from .engine import CoshUI
 from .cui_error import CoshUIError, warn
-from .types import RenderContext
+from .types import RenderContext, _expand_slider, _expand_dropdown, _expand_modal
 from .nodes import Element, TextNode
 from .utility import Ref
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
@@ -23,16 +23,16 @@ class Button(TextNode):
         if self.font is None:
             self.font = CoshUI._default_font
 
-        if self.on_hover is None:
-            self.on_hover = lambda: _button_default_hover(self.id) # TODO ALL 4 HERE
-        if self.on_unhover is None:
-            self.on_unhover = lambda: _button_default_unhover(self.id)
-        if self.on_click is None:
-            self.on_click = lambda: _button_default_click(self.id)
-        if self.on_release is None:
-            self.on_release = lambda: _button_default_release(self.id)
-
         super().__post_init__()
+
+        if CoshUI._get_signal(self.id, "hover_enter"):
+            _button_default_hover(self.id)
+        if CoshUI._get_signal(self.id, "hover_exit"):
+            _button_default_unhover(self.id)
+        if CoshUI._get_signal(self.id, "clicked"):
+            _button_default_click(self.id)
+        if CoshUI._get_signal(self.id, "released"):
+            _button_default_release(self.id)
 
 @dataclass
 class Label(TextNode):
@@ -53,14 +53,6 @@ class InputField(TextNode):
     pass
 
 @dataclass
-class Dropdown(TextNode):
-    pass
-
-@dataclass
-class Slider(Element):
-    pass
-
-@dataclass
 class Checkbox(Element):
     """ NOTE: Checkboxes don't support background_color animations as background_color is a direct representation of it's functional state """
     checked : bool =  False
@@ -72,8 +64,8 @@ class Checkbox(Element):
         if self.id is None:
             raise CoshUIError("Widget `Checkbox` has to have an id.")
 
-        if self.on_click is None:
-            self.on_click = lambda: _checkbox_default_click(self.id)
+        if CoshUI._get_signal(self.id, "clicked"):
+            _checkbox_default_click(self.id)
 
         super().__post_init__()       
 
@@ -107,6 +99,45 @@ class Image(Element):
         data["image_src"] = self.src
         return RenderContext(**data)
 
-# ======================== Widgets ========================
+# Literally just a filler datatype
+@dataclass
+class Box(Element):
+    def get_render_data(self):
+        return RenderContext(**self.get_base_render_data())
 
+# ======================== Atomic Widgets ========================
 
+# ======================== Composite Widgets ========================
+
+@dataclass
+class Dropdown(TextNode):
+    pass
+
+@dataclass
+class Slider(Element):
+    min_value : float = 0.0
+    max_value : float = 100.0
+    step : float = 1.0
+    bind : Ref | None = None
+    thumb_size : int | None = None
+    thumb_color : tuple | None = None
+    track_color : tuple | None = None
+    
+    def __post_init__(self):
+        if self.id is None:
+            raise CoshUIError("Slider must have an id.")
+        
+        super().__post_init__()
+
+        value = CoshUI.get_state(self.id, "value")
+        if value is None:
+            value = self.min_value
+            CoshUI.set_state(self.id, "value", value)
+            if self.bind is not None:
+                self.bind.value = float(value)
+
+    def get_render_data(self):
+        return None
+
+CoshUI._expander_registry[Slider] = _expand_slider
+CoshUI._expander_registry[Dropdown] = _expand_dropdown

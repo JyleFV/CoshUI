@@ -28,9 +28,11 @@ class CoshUI:
     _font_library : dict = { "Inter" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf") }
     _render_stack : list = []
     _default_font : str = _font_library.get("Inter")
+    # ---------------- Composite Widgets ----------------
+    _expander_registry : dict = {}
     # ---------------- Input & Event-related ----------------
     _focused_id = None
-    _action_map : dict = {} # For events
+    _signals : dict = {} # New Events FORMAT: { node_id : set() }
     _active_tweens : set = set()
     # ---------------- Theme-related ----------------
     _theme_registry : dict = { "DEFAULT" : CoshTheme(
@@ -38,7 +40,8 @@ class CoshUI:
             label={ "width" : 175, "height" : 65, "font_size" : 18 },
             container={},
             checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
-            image={ "width" : 150, "height" : 150 }
+            image={ "width" : 150, "height" : 150 },
+            slider={ "thumb_size" : 20, "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
         )
     }
     _active_theme = _theme_registry.get("DEFAULT")
@@ -54,6 +57,16 @@ class CoshUI:
         if not node_id in cls._state_storage:
             cls._state_storage[node_id] = {}
         cls._state_storage[node_id][key] = value
+    
+    @classmethod
+    def _emit_signal(cls, node_id, signal_name):
+        if node_id not in cls._signals:
+            cls._signals[node_id] = set()
+        cls._signals[node_id].add(signal_name)
+
+    @classmethod
+    def _get_signal(cls, node_id, signal_name):
+        return signal_name in cls._signals.get(node_id, set())
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
@@ -64,7 +77,7 @@ class CoshUIRenderer:
         self.root = Container(sizing=CoshSizing.FIXED, width=screen_w, height=screen_h)
 
     def __enter__(self):
-        from .utility import update
+        from .utility import update, process_events
 
         if CoshUI._active_renderer:
             raise CoshUIError("Cannot nest renderer objects.")
@@ -81,21 +94,27 @@ class CoshUIRenderer:
         if delta > 0.1:
             delta = 1/60
         
+        CoshUI._signals.clear()
+        process_events()
+
         update(delta)
         self.backend.poll_input()
 
         CoshUI._active_renderer = True
         CoshUI._active_ids.clear()
         CoshUI._widget_counter = 0
+        CoshUI._render_stack.clear()
         CoshUI._stack.clear()  
         self.root.children.clear()
         CoshUI._stack.append(self.root)
         return self
 
     def __exit__(self, *args):
-        from .utility import measure, layout, render, process_events
+        from .utility import measure, layout, render
         CoshUI._stack.pop()
         CoshUI._active_renderer = False
+
+        CoshLifecycle.expand(self.root)
 
         CoshLifecycle.bake(self.root)
 
@@ -104,12 +123,8 @@ class CoshUIRenderer:
         render(self.root)
 
         CoshUI._render_stack.sort(key=lambda d: d.z_index)
-        process_events()
         self.backend.flush(CoshUI._render_stack)
-
-        CoshUI._action_map.clear()
-        CoshUI._render_stack.clear()
-
+        
         # Clean up stale nodes
         stale = set(CoshUI._state_storage.keys()) - CoshUI._active_ids
         for key in stale:
@@ -126,7 +141,6 @@ class CoshLifecycle:
                 raise CoshUIError(f"A node with id `{id}` already exists.")
             CoshUI._active_ids.add(node.id)
             CoshLifecycle.reconcile(node)
-            CoshLifecycle.register_events(node)
 
         CoshLifecycle.apply_styling(node)
         CoshLifecycle.apply_theme(node)
@@ -165,19 +179,6 @@ class CoshLifecycle:
                 "transform_rotation": node.style.transform_rotation,
                 "_was_hovered": node._was_hovered
             }
-
-    @staticmethod
-    def register_events(node):
-        events = ["on_click", "on_release", "on_hover", "on_unhover"]
-        node_events = {}
-
-        for event in events:
-            callback = getattr(node, event, None)
-            if callable(callback):
-                node_events[event] = callback
-
-        if node_events:
-            CoshUI._action_map[node.id] = node_events
 
     @staticmethod
     def apply_theme(node):
@@ -230,3 +231,13 @@ class CoshLifecycle:
         # Clean the entire tree
         for child in node.children:
             CoshLifecycle.bake(child)
+    
+    @staticmethod
+    def expand(node):
+        for i, child in enumerate(node.children):
+            if type(child) in CoshUI._expander_registry:
+                expander = CoshUI._expander_registry[type(child)]
+                expanded = expander(child)
+                node.children[i] = expanded
+            else:
+                CoshLifecycle.expand(child)

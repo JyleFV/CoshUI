@@ -172,4 +172,6 @@ class PygameBackend(CoshBackend):
     def poll_input(self):
         CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
         CoshInput._mouse_position = pygame.mouse.get_pos()
+        CoshInput._mouse_delta = (CoshInput._mouse_position[0] - CoshInput._prev_mouse_position[0], CoshInput._mouse_position[1] - CoshInput._prev_mouse_position[1])
+        CoshInput._prev_mouse_position = CoshInput._mouse_position
         CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]

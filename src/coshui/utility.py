@@ -185,9 +185,7 @@ def process_events():
 
     if CoshInput.get_mouse_just_released():
         if CoshUI._focused_id:
-            actions = CoshUI._action_map.get(CoshUI._focused_id, {})
-            if "on_release" in actions:
-                actions["on_release"]()
+            CoshUI._emit_signal(CoshUI._focused_id, "released")
             CoshUI._focused_id = None
     
     consumed_hover = False
@@ -200,38 +198,48 @@ def process_events():
         if data.mouse_filter == CoshMouseFilter.IGNORE:
             continue
 
-        actions = CoshUI._action_map.get(data.id, {})
         was_hovered = CoshUI.get_state(data.id, "_was_hovered", False)
 
         scale = data.transform_scale
         sw, sh = data.width * scale, data.height * scale
         ox, oy = (data.width - sw) / 2, (data.height - sh) / 2
-        
+
         tx = data.x + data.transform_x + ox
         ty = data.y + data.transform_y + oy
-        
-        hovered = point_in_rect(mx, my, tx, ty, sw, sh)
 
-        # The property `mouse_filter` works like MOUSE_FILTER_STOP (when True) and MOUSE_FILTER_PASS (when False) in Godot
-        # This is due to the consumed_[hover/click] booleans being toggled AFTER the action was done.
+        if data.clip_rect:
+            effective_rect = intersect_rect(
+                (tx, ty, sw, sh),
+                data.clip_rect
+            )
+            if effective_rect is None:
+                continue
+        else:
+            effective_rect = (tx, ty, sw, sh)
+
+        hovered = point_in_rect(mx, my, *effective_rect)
+
         if hovered and not consumed_hover:
             CoshUI.set_state(data.id, "_was_hovered", True)
-            if not was_hovered and "on_hover" in actions:
-                actions["on_hover"]()
+            CoshUI._emit_signal(data.id, "hovered")
+            if not was_hovered:
+                CoshUI._emit_signal(data.id, "hover_enter")
             if data.mouse_filter == CoshMouseFilter.STOP:
                 consumed_hover = True
         else:
             CoshUI.set_state(data.id, "_was_hovered", False)
-            if was_hovered and "on_unhover" in actions:
-                actions["on_unhover"]()
+            if was_hovered:
+                CoshUI._emit_signal(data.id, "hover_exit")
 
         # Click Logic
-        if hovered and not consumed_click and CoshInput.get_mouse_just_pressed():
-            if "on_click" in actions:
-                actions["on_click"]()
-            CoshUI._focused_id = data.id
-            if data.mouse_filter == CoshMouseFilter.STOP:
-                consumed_click = True
+        if hovered and not consumed_click:
+            if CoshInput.get_mouse_just_pressed():
+                CoshUI._emit_signal(data.id, "clicked")
+                CoshUI._focused_id = data.id
+                if data.mouse_filter == CoshMouseFilter.STOP:
+                    consumed_click = True
+            if CoshInput.get_mouse_down():
+                CoshUI._emit_signal(data.id, "pressed")
 
 # ================ Layouting and Rendering ================
 
@@ -254,6 +262,13 @@ def set_default_font(name : str):
         raise CoshUIError("That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments.") from None
 
 # ================ Fonts ================
+
+# ================ Signal Events ================
+
+def get_signal(node_id : str, signal_name : str):
+    return CoshUI._get_signal(node_id, signal_name)
+
+# ================ Signal Events ================
 
 # ================ Nodes ================
 
@@ -340,6 +355,15 @@ def resolve_border_radius(value : int | float | tuple) -> tuple:
 
 def point_in_rect(px, py, rx, ry, rw, rh):
     return (rx <= px <= rx + rw and ry <= py <= ry + rh)
+
+def intersect_rect(r1, r2):
+    x = max(r1[0], r2[0])
+    y = max(r1[1], r2[1])
+    w = min(r1[0] + r1[2], r2[0] + r2[2]) - x
+    h = min(r1[1] + r1[3], r2[1] + r2[3]) - y
+    if w <= 0 or h <= 0:
+        return None
+    return (x, y, w, h)
 
 def merge_styles(base : CoshStyling, override : CoshStyling) -> CoshStyling:
     return CoshStyling(

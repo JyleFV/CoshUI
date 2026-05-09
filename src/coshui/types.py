@@ -157,4 +157,83 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
+# Composite Widgets
+
+def _expand_slider(node):
+    # TODO: Change the magic numbers to a default theme (thumb_size, thumb_color, background_color, border_radius, etc.).
+    from .engine import CoshUI
+    from .nodes import Container
+    from .widgets import Box
+    from .input import CoshInput
+
+    saved_stack = CoshUI._stack.copy()
+    CoshUI._stack.clear()
+
+    value = CoshUI.get_state(node.id, "value") or node.min_value
+    
+    # Handle drag
+    if CoshUI._focused_id == f"{node.id}::thumb" and CoshInput.get_mouse_down():
+        delta_x = CoshInput._mouse_delta[0]
+        value_range = node.max_value - node.min_value
+        value_change = (delta_x / node.layout.width) * value_range
+        value = max(node.min_value, min(node.max_value, value + value_change))
+        # snap to step
+        value = round(value / node.step) * node.step
+        CoshUI.set_state(node.id, "value", value)
+        if node.bind:
+            node.bind.value = value
+
+    ratio = (value - node.min_value) / (node.max_value - node.min_value)
+    thumb_size = node.thumb_size
+    thumb_x = ratio * (node.layout.width - thumb_size)
+
+    thumb = Box(
+        id=f"{node.id}::thumb",
+        width=thumb_size,
+        height=thumb_size,
+        x=thumb_x,
+        positioning=CoshPositioning.ABSOLUTE,
+        style=CoshStyling(background_color=node.thumb_color, border_radius=node.style.border_radius)
+    )
+
+    track = Container(
+        id=f"{node.id}::track",
+        width=node.layout.width,
+        height=node.layout.height if node.layout.height else thumb_size,
+        style=CoshStyling(background_color=node.track_color, border_radius=node.style.border_radius),
+        sizing=CoshSizing.FIXED
+    )
+
+    track.children.append(thumb)
+    CoshUI._stack = saved_stack
+    return track
+
+def _expand_dropdown(node):
+    pass
+
+def _expand_modal(node):
+    from .engine import CoshUI
+    from .nodes import Container
+    from .widgets import Button
+    
+    saved_stack = CoshUI._stack.copy()
+    CoshUI._stack.clear()
+
+    header = Container(
+        id=f"{node.id}::header"
+    )
+
+    exit = Button(
+        id=f"{node.id}::exit"
+    )
+
+    header.children.append(exit)
+
+    content = Container(
+        id=f"{node.id}::content"
+    )
+
+    CoshUI._stack = saved_stack
+    return content
+
 __all__ = ['CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']
