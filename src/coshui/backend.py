@@ -24,3 +24,7 @@ class CoshBackend(ABC):
     @abstractmethod
     def poll_input(self):
         pass
+
+    @abstractmethod
+    def measure_text(self):
+        pass

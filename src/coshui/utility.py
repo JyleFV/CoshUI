@@ -28,8 +28,8 @@ def measure(node : Node):
         measure(child)
     node.measure()
 
-# NOTE: Align is currently the equivalent of CSS's `align-items`
-# TODO: Separate Align to `AlignContent` and `AlignItems` to make the library more flexible
+# TODO: SPACE_BETWEEN, SPACE_AROUND, SPACE_EVENLY, and STRETCH
+# TODO: AUTO and FILL "chicken vs egg" problem
 def layout(node : Node, x: float = 0.0, y: float = 0.0):
     node.layout.true_position = (x, y)
 
@@ -190,18 +190,22 @@ def update(delta : float):
 
     CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
 
-def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None):
+def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
     if not is_root:
         data = node.get_render_data()
         if data:
+            node_alpha = data.alpha if data.alpha is not None else 255
+            blended_alpha = int((accumulated_alpha / 255) * node_alpha)
             data = data._replace(
                 transform_x=data.transform_x + offset_x,
                 transform_y=data.transform_y + offset_y,
                 z_index=data.z_index + z_offset,
-                clip_rect=clip_rect
-                # TODO: Make children inherit scale from the parent as well.
+                clip_rect=clip_rect,
+                alpha=blended_alpha
             )
             CoshUI._render_stack.append(data)
+    else:
+        blended_alpha = accumulated_alpha
 
     child_clip = None
     if hasattr(node, 'overflow') and node.overflow == CoshOverflow.HIDDEN:
@@ -210,7 +214,7 @@ def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset
     tx, ty = node.style.transform_position
     child_z_offset = z_offset + node.z_index
     for child in node.children:
-        render(child, offset_x + tx, offset_y + ty, child_z_offset, clip_rect=child_clip or clip_rect)
+        render(child, offset_x + tx, offset_y + ty, child_z_offset, clip_rect=child_clip or clip_rect, accumulated_alpha=blended_alpha)
 
 def process_events():
     mx, my = CoshInput._mouse_position

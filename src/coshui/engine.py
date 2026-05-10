@@ -37,17 +37,19 @@ class CoshUI:
     # ---------------- Theme-related ----------------
     _theme_registry : dict = { "DEFAULT" : CoshTheme(
             button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
-            label={ "width" : 175, "height" : 65, "font_size" : 18 },
+            label={ "font_size" : 18 },
             container={},
             checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
             image={ "width" : 150, "height" : 150 },
-            modal={ "width": 200, "height" : 200 },
+            modal={ "width": 200, "height" : 200, "header_color" : (60, 60, 80), "header_border_radius" : (7.5, 7.5, 0, 0), "content_color" : (80, 80, 100), "content_border_radius" : (0, 0, 7.5, 7.5) }, 
             slider={ "thumb_size" : 20, "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
         )
     }
     _active_theme = _theme_registry.get("DEFAULT")
     # ----------------Class System ----------------
     _style_class : dict = {}
+    # ---------------- Text Measuring ----------------
+    _measure_text : callable = None
     
     @classmethod
     def get_state(cls, node_id, key, default=None):
@@ -75,6 +77,7 @@ class CoshUIRenderer:
         self.backend = backend
         screen_w, screen_h = self.backend.get_size()
         self.root = Container(width=screen_w, height=screen_h)
+        CoshUI._measure_text = self.backend.measure_text
 
     def __enter__(self):
         from .utility import update, process_events
@@ -93,7 +96,6 @@ class CoshUIRenderer:
 
         if delta > 0.1:
             delta = 1/60
-        
 
         update(delta)
         self.backend.poll_input()

@@ -215,6 +215,7 @@ def _expand_modal(node):
     from .engine import CoshUI
     from .input import CoshInput
     from .nodes import Container
+    from .utility import measure
 
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
@@ -245,7 +246,7 @@ def _expand_modal(node):
         width=node.width,
         height=25,
         layout=CoshLayout(padding=10),
-        style=CoshStyling(background_color=(60, 60, 80), border_radius=(7.5, 7.5, 0, 0), alpha=node.style.alpha)
+        style=CoshStyling(background_color=node.header_color, border_radius=node.header_border_radius, alpha=node.style.alpha)
     )
 
     content = Container(
@@ -257,12 +258,14 @@ def _expand_modal(node):
         justify=node.justify,
         gap=node.gap,
         layout=CoshLayout(padding=node.layout.padding),
-        style=CoshStyling(background_color=(80, 80, 100), border_radius=(0, 0, 7.5, 7.5), alpha=node.style.alpha),
+        style=CoshStyling(background_color=node.content_color, border_radius=node.content_border_radius, alpha=node.style.alpha),
         overflow=node.overflow
     )
 
-
     content.children.extend(node.children)
+
+    measure(content)
+    header.layout.width = content.layout.width
 
     root.children.append(header)
     root.children.append(content)

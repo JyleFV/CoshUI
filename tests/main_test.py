@@ -42,15 +42,15 @@ def main():
 
                 if settings_open:
                     with Container(id="overlay", align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(), positioning=CoshPositioning.ABSOLUTE, z_index=10):
-                        with Container(id="settings_card", direction=CoshDirection.COLUMN, gap=20, align=CoshAlign.CENTER, classes="card", layout=CoshLayout(padding=30), z_index=11):
+                        with Container(id="settings_card", direction=CoshDirection.COLUMN, width=350, gap=40, align=CoshAlign.CENTER, classes="card", layout=CoshLayout(padding=30), z_index=11):
                             Label(id="settings_title", text="Settings", font_size=32)
-                            with Container(id="row_sfx", gap=20, align=CoshAlign.CENTER):
-                                Label(id="lbl_sfx", text="SFX", font_size=20)
+                            with Container(id="row_sfx", sizing=CoshSizing.FILL, gap=20, align=CoshAlign.CENTER):
+                                Label(id="lbl_sfx", text="SFX", font_size=20, text_align=CoshTextAlign.CENTER)
                                 Checkbox(id="cb_sfx", checked=is_checked.value, bind=is_checked, z_index=12)
-                            with Container(id="row_vol", gap=20, align=CoshAlign.CENTER):
+                            with Container(id="row_vol", sizing=CoshSizing.FILL, gap=20, align=CoshAlign.CENTER, justify=CoshJustify.SPACE_BETWEEN):
                                 Label(id="lbl_vol", text=f"Volume: {int(vol.value)}", font_size=20)
                                 Slider(id="sldr_vol", width=200, bind=vol, min_value=0, max_value=100, z_index=12)
-                            with Container(id="row_brightness", gap=20, align=CoshAlign.CENTER):
+                            with Container(id="row_brightness", sizing=CoshSizing.FILL, gap=20, align=CoshAlign.CENTER, justify=CoshJustify.SPACE_BETWEEN):
                                 Label(id="lbl_brightness", text=f"Brightness: {int(brightness.value)}", font_size=20)
                                 Slider(id="sldr_brightness", width=200, bind=brightness, min_value=0, max_value=100, z_index=12)
                             Button(id="close_btn", text="Close", classes="btn_danger", width=150, z_index=12)

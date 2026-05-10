@@ -69,7 +69,7 @@ class PygameBackend(CoshBackend):
         except ValueError:
             raise CoshUIError(f"Value in border radius is the wrong type")
 
-    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip):
+    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip, alpha):
         safe_font_size = font_size if font_size is not None else 16
         safe_scale = scale if scale is not None else 1.0
 
@@ -81,6 +81,7 @@ class PygameBackend(CoshBackend):
             _font_cache[cache_key] = font
 
         text_surface = font.render(text, True, color)
+        text_surface.set_alpha(alpha)
         text_w, text_h = text_surface.get_size()
 
         # Clipping Logic
@@ -149,6 +150,9 @@ class PygameBackend(CoshBackend):
         # TODO: add font paths from CoshUI._temp_fonts and put it in _font_cache.
 
         for data in render_stack:
+            if data.alpha <= 0:
+                continue
+
             scale = data.transform_scale
             scaled_w = data.width * scale
             scaled_h = data.height * scale
@@ -161,7 +165,7 @@ class PygameBackend(CoshBackend):
                 self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border, data.clip_rect)
             
             if data.text:
-                self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify, data.clip_rect, data.text_overflow)
+                self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify, data.clip_rect, data.text_overflow, data.alpha)
 
             if data.image_src:
                 self._draw_image(data.image_src, true_x, true_y, scaled_w, scaled_h, data.alpha, data.clip_rect)
@@ -169,6 +173,14 @@ class PygameBackend(CoshBackend):
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()
     
+    def measure_text(self, text, font_path, font_size) -> tuple:
+        cache_key = (font_path, font_size)
+        font = _font_cache.get(cache_key)
+        if font is None:
+            font = pygame.font.Font(font_path, font_size)
+            _font_cache[cache_key] = font
+        return font.size(text)
+
     def poll_input(self):
         CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
         CoshInput._mouse_position = pygame.mouse.get_pos()

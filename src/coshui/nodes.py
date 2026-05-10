@@ -112,14 +112,14 @@ class Container(ParentNode):
         match self.direction:
             case CoshDirection.ROW:
                 if self.layout.width is CoshSizing.AUTO:
-                    self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                    self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
                 if self.layout.height is CoshSizing.AUTO:
-                    self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
+                    self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
             case CoshDirection.COLUMN:
                 if self.layout.width is CoshSizing.AUTO:
-                    self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
+                    self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
                 if self.layout.height is CoshSizing.AUTO:
-                    self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                    self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
 
 @dataclass
 class Grid(ParentNode):
@@ -132,8 +132,8 @@ class Grid(ParentNode):
             return
 
         rows = math.ceil(len(self.children) / self.column_count)
-        max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0)
-        max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0)
+        max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
+        max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
 
         if self.layout.width is CoshSizing.AUTO:
             self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
@@ -144,10 +144,15 @@ class Grid(ParentNode):
 class Modal(ParentNode):
     positioning : CoshPositioning = CoshPositioning.ABSOLUTE
     direction : CoshDirection = CoshDirection.ROW
+    header_color : tuple | None = None
+    header_border_radius : tuple | None = None
+    content_color : tuple | None = None
+    content_border_radius : tuple | None = None
 
     def __post_init__(self):
         if self.id is None:
             raise CoshUIError("Modal must have an id.")
+
         super().__post_init__()
 
     def measure(self):
@@ -171,6 +176,18 @@ class TextNode(Element):
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
+
+    def measure(self):
+        from .engine import CoshUI
+        if CoshUI._measure_text is None:
+            return
+        if self.layout.width is CoshSizing.AUTO or self.layout.height is CoshSizing.AUTO:
+            font_path = CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font
+            w, h = CoshUI._measure_text(self.text, font_path, self.font_size or 16)
+            if self.layout.width is CoshSizing.AUTO:
+                self.layout.width = w
+            if self.layout.height is CoshSizing.AUTO:
+                self.layout.height = h
 
     def get_render_data(self):
         from .engine import CoshUI
