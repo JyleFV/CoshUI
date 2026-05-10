@@ -33,6 +33,17 @@ def measure(node : Node):
 def layout(node : Node, x: float = 0.0, y: float = 0.0):
     node.layout.true_position = (x, y)
 
+    if node.layout.width is CoshSizing.AUTO:
+        node.layout.width = 0.0
+    if node.layout.height is CoshSizing.AUTO:
+        node.layout.height = 0.0
+
+    for child in node.children:
+        if child.layout.width is CoshSizing.AUTO:
+            child.layout.width = 0.0
+        if child.layout.height is CoshSizing.AUTO:
+            child.layout.height = 0.0
+
     if isinstance(node, Container):
         relative_children = [c for c in node.children if c.positioning != CoshPositioning.ABSOLUTE]
         absolute_children = [c for c in node.children if c.positioning == CoshPositioning.ABSOLUTE]
@@ -112,8 +123,28 @@ def layout(node : Node, x: float = 0.0, y: float = 0.0):
                 cursor_y += child.layout.height + (child.layout.margin * 2) + node.gap
         
         for child in absolute_children:
-            layout(child, x + node.layout.padding + child.layout.true_position[0], 
-                          y + node.layout.padding + child.layout.true_position[1])
+            if node.direction == CoshDirection.ROW:
+                match node.align:
+                    case CoshAlign.START:  base_y = y + node.layout.padding
+                    case CoshAlign.CENTER: base_y = y + (node.layout.height / 2) - ((child.layout.height + child.layout.margin * 2) / 2)
+                    case CoshAlign.END:    base_y = y + node.layout.height - node.layout.padding - (child.layout.height + child.layout.margin * 2)
+                    case _:                base_y = y + node.layout.padding
+                match node.justify:
+                    case CoshJustify.CENTER: base_x = x + (node.layout.width / 2) - ((child.layout.width + child.layout.margin * 2) / 2)
+                    case CoshJustify.END:    base_x = x + node.layout.width - node.layout.padding - (child.layout.width + child.layout.margin * 2)
+                    case _:                  base_x = x + node.layout.padding
+            else:
+                match node.align:
+                    case CoshAlign.START:  base_x = x + node.layout.padding
+                    case CoshAlign.CENTER: base_x = x + (node.layout.width / 2) - ((child.layout.width + child.layout.margin * 2) / 2)
+                    case CoshAlign.END:    base_x = x + node.layout.width - node.layout.padding - (child.layout.width + child.layout.margin * 2)
+                    case _:                base_x = x + node.layout.padding
+                match node.justify:
+                    case CoshJustify.CENTER: base_y = y + (node.layout.height / 2) - ((child.layout.height + child.layout.margin * 2) / 2)
+                    case CoshJustify.END:    base_y = y + node.layout.height - node.layout.padding - (child.layout.height + child.layout.margin * 2)
+                    case _:                  base_y = y + node.layout.padding
+
+            layout(child, base_x + child.layout.true_position[0], base_y + child.layout.true_position[1])
 
     if isinstance(node, Grid):
         relative_children = [c for c in node.children if c.positioning != CoshPositioning.ABSOLUTE]
@@ -177,8 +208,9 @@ def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset
         child_clip = (node.layout.true_position[0], node.layout.true_position[1], node.layout.width, node.layout.height)
 
     tx, ty = node.style.transform_position
+    child_z_offset = z_offset + node.z_index
     for child in node.children:
-        render(child, offset_x + tx, offset_y + ty, z_offset, clip_rect=child_clip or clip_rect)
+        render(child, offset_x + tx, offset_y + ty, child_z_offset, clip_rect=child_clip or clip_rect)
 
 def process_events():
     mx, my = CoshInput._mouse_position
@@ -266,24 +298,19 @@ def set_default_font(name : str):
 # ================ Signal Events ================
 
 def get_signal(node_id : str, signal_name : str):
+    # TODO: Add this robust check in the future:
+    # signals = ["clicked", "released", "hover_enter", "hover_exit", "hovered", "pressed"]
+    # if node_id not in CoshUI._signals:
+    #     close_match = difflib.get_close_matches(node_id, CoshUI._signals, n=1)
+    #     raise CoshUIError(f"`{node_id}` not found in signals registry. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+    
+    # if signal_name not in signals:
+    #     close_match = difflib.get_close_matches(signal_name, signals, n=1)
+    #     raise CoshUIError(f"`{signal_name}` is not a valid signal. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+
     return CoshUI._get_signal(node_id, signal_name)
 
 # ================ Signal Events ================
-
-# ================ Nodes ================
-
-# def get_node(node_name : str):
-#     """
-#     Returns the passed in node.
-#     """
-    
-#     node = CoshUI._node_map.get(node_name)
-#     if node is None:
-#         close_match = difflib.get_close_matches(node_name, CoshUI._node_map.keys(), n=1)
-#         raise CoshUIError(f"Node `{node_name}` doesn't exist. Did you mean `{close_match[0] if close_match else ""}`?")
-#     return node
-
-# ================ Nodes ================
 
 # ================ Styling Classes ================
 
@@ -329,20 +356,6 @@ def preload_images(img_paths : str | list):
 
 def adjust_brightness_value(rgb, factor):
     return tuple(max(0, min(255, int(c * factor))) for c in rgb)
-
-# def get_nested_attr(node : Node, n_property : str):
-#     parts = n_property.split('.')
-#     obj = node
-#     for part in parts:
-#         obj = getattr(obj, part)
-#     return obj
-
-# def set_nested_attr(node : Node, n_property : str, value):
-#     parts = n_property.split('.')
-#     obj = node
-#     for part in parts[:-1]:
-#         obj = getattr(obj, part)
-#     setattr(obj, parts[-1], value)
 
 def resolve_border_radius(value : int | float | tuple) -> tuple: 
     match value:

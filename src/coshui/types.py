@@ -91,9 +91,8 @@ class CoshAlign(Enum):
     STRETCH = 3
 
 class CoshSizing(Enum):
-    FIXED = 0
-    FIT = 1
-    FILL = 2
+    FILL = 0
+    AUTO = 1
 
 class RenderContext(NamedTuple):
     # Node-specific
@@ -160,7 +159,6 @@ def is_valid_border(border):
 # Composite Widgets
 
 def _expand_slider(node):
-    # TODO: Change the magic numbers to a default theme (thumb_size, thumb_color, background_color, border_radius, etc.).
     from .engine import CoshUI
     from .nodes import Container
     from .widgets import Box
@@ -169,7 +167,7 @@ def _expand_slider(node):
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
 
-    value = CoshUI.get_state(node.id, "value") or node.min_value
+    value = CoshUI.get_state(node.id, "value") or (node.value if node.value is not None else node.min_value)
     
     # Handle drag
     if CoshUI._focused_id == f"{node.id}::thumb" and CoshInput.get_mouse_down():
@@ -193,7 +191,8 @@ def _expand_slider(node):
         height=thumb_size,
         x=thumb_x,
         positioning=CoshPositioning.ABSOLUTE,
-        style=CoshStyling(background_color=node.thumb_color, border_radius=node.style.border_radius)
+        style=CoshStyling(background_color=node.thumb_color, border_radius=node.style.border_radius),
+        z_index=node.z_index
     )
 
     track = Container(
@@ -201,7 +200,7 @@ def _expand_slider(node):
         width=node.layout.width,
         height=node.layout.height if node.layout.height else thumb_size,
         style=CoshStyling(background_color=node.track_color, border_radius=node.style.border_radius),
-        sizing=CoshSizing.FIXED
+        z_index=node.z_index
     )
 
     track.children.append(thumb)
@@ -212,28 +211,63 @@ def _expand_dropdown(node):
     pass
 
 def _expand_modal(node):
+    # TODO: Change magic numbers to theme styles.
     from .engine import CoshUI
+    from .input import CoshInput
     from .nodes import Container
-    from .widgets import Button
-    
+
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
 
+    pos = CoshUI.get_state(node.id, "drag_pos") or (0, 0)
+
+    if CoshUI._focused_id == f"{node.id}::header" and CoshInput.get_mouse_down():
+        pos = (
+            pos[0] + CoshInput._mouse_delta[0],
+            pos[1] + CoshInput._mouse_delta[1]
+        )
+        CoshUI.set_state(node.id, "drag_pos", pos)
+
+    root = Container(
+        id=f"{node.id}::root",
+        direction=CoshDirection.COLUMN,
+        x=pos[0],
+        y=pos[1],
+        sizing=node.sizing,
+        layout=node.layout,
+        positioning=node.positioning,
+        z_index=node.z_index,
+        mouse_filter=CoshMouseFilter.PASS
+    )
+
     header = Container(
-        id=f"{node.id}::header"
+        id=f"{node.id}::header",
+        width=node.width,
+        height=25,
+        layout=CoshLayout(padding=10),
+        style=CoshStyling(background_color=(60, 60, 80), border_radius=(7.5, 7.5, 0, 0), alpha=node.style.alpha)
     )
-
-    exit = Button(
-        id=f"{node.id}::exit"
-    )
-
-    header.children.append(exit)
 
     content = Container(
-        id=f"{node.id}::content"
+        id=f"{node.id}::content",
+        direction=node.direction,
+        width=node.width,
+        height=node.height,
+        align=node.align,
+        justify=node.justify,
+        gap=node.gap,
+        layout=CoshLayout(padding=node.layout.padding),
+        style=CoshStyling(background_color=(80, 80, 100), border_radius=(0, 0, 7.5, 7.5), alpha=node.style.alpha),
+        overflow=node.overflow
     )
 
+
+    content.children.extend(node.children)
+
+    root.children.append(header)
+    root.children.append(content)
+
     CoshUI._stack = saved_stack
-    return content
+    return root
 
 __all__ = ['CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshDirection', 'CoshSizing','lerp_float', 'lerp_tuple', 'ease_linear', 'ease_in', 'ease_out', 'ease_in_out']

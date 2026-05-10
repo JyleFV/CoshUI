@@ -1,0 +1,40 @@
+from coshui import *
+import pygame
+
+WIDTH, HEIGHT = 800, 800
+FPS = 60
+BLACK = (0, 0, 0)
+
+def main():
+    global settings_open
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("CoshUI Test")
+    clock = pygame.time.Clock()
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        screen.fill(BLACK)
+        
+        with CoshUIRenderer(PygameBackend(screen)):
+            with Container(id="unroot", sizing=CoshSizing.FILL, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
+                Label(id="title", text="My App", font_size=52)
+                with Modal(id="modal", z_index=10, direction=CoshDirection.COLUMN, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, gap=20):
+                    Label(id="modal_lbl", text="Hello from Modal!", font_size=24)
+                    Button(id="modal_btn", text="Click Me")
+                    Slider(id="modal_slider", width=100, z_index=11)
+        
+        if get_signal("modal_btn", "clicked"):
+            animate("background_color", "modal::content", (255, 100, 100), 0.5, "ease_in")
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()

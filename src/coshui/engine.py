@@ -41,6 +41,7 @@ class CoshUI:
             container={},
             checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
             image={ "width" : 150, "height" : 150 },
+            modal={ "width": 200, "height" : 200 },
             slider={ "thumb_size" : 20, "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
         )
     }
@@ -71,10 +72,9 @@ class CoshUI:
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
         from .nodes import Container
-        from .types import CoshSizing
         self.backend = backend
         screen_w, screen_h = self.backend.get_size()
-        self.root = Container(sizing=CoshSizing.FIXED, width=screen_w, height=screen_h)
+        self.root = Container(width=screen_w, height=screen_h)
 
     def __enter__(self):
         from .utility import update, process_events
@@ -94,8 +94,6 @@ class CoshUIRenderer:
         if delta > 0.1:
             delta = 1/60
         
-        CoshUI._signals.clear()
-        process_events()
 
         update(delta)
         self.backend.poll_input()
@@ -103,14 +101,13 @@ class CoshUIRenderer:
         CoshUI._active_renderer = True
         CoshUI._active_ids.clear()
         CoshUI._widget_counter = 0
-        CoshUI._render_stack.clear()
         CoshUI._stack.clear()  
         self.root.children.clear()
         CoshUI._stack.append(self.root)
         return self
 
     def __exit__(self, *args):
-        from .utility import measure, layout, render
+        from .utility import measure, layout, render, process_events
         CoshUI._stack.pop()
         CoshUI._active_renderer = False
 
@@ -123,8 +120,11 @@ class CoshUIRenderer:
         render(self.root)
 
         CoshUI._render_stack.sort(key=lambda d: d.z_index)
+        CoshUI._signals.clear()
+        process_events()
         self.backend.flush(CoshUI._render_stack)
-        
+        CoshUI._render_stack.clear()
+
         # Clean up stale nodes
         stale = set(CoshUI._state_storage.keys()) - CoshUI._active_ids
         for key in stale:
@@ -138,7 +138,10 @@ class CoshLifecycle:
         
         if node.id:
             if node.id in CoshUI._active_ids:
-                raise CoshUIError(f"A node with id `{id}` already exists.")
+                # import traceback
+                # traceback.print_stack()
+                # print(f"COLLISION: {node.id}, active_ids: {CoshUI._active_ids}")
+                raise CoshUIError(f"A node with id `{node.id}` already exists.")
             CoshUI._active_ids.add(node.id)
             CoshLifecycle.reconcile(node)
 
@@ -234,8 +237,11 @@ class CoshLifecycle:
     
     @staticmethod
     def expand(node):
+        from .nodes import Modal
         for i, child in enumerate(node.children):
             if type(child) in CoshUI._expander_registry:
+                if isinstance(child, Modal):
+                    CoshLifecycle.expand(child)
                 expander = CoshUI._expander_registry[type(child)]
                 expanded = expander(child)
                 node.children[i] = expanded

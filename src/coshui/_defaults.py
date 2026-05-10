@@ -1,11 +1,12 @@
 from .animation import animate
 from .engine import CoshUI
 from .themes import CoshTheme
+from .types import CoshSizing
 from .utility import adjust_brightness_value
 
 ENGINE_DEFAULTS = {
-    "width": 0.0,
-    "height": 0.0,
+    "width": CoshSizing.AUTO,
+    "height": CoshSizing.AUTO,
     "margin": 0.0,
     "padding": 0.0,
     "gap": 0.0,
@@ -18,19 +19,11 @@ ENGINE_DEFAULTS = {
     "text_color": (255, 255, 255),
 }
 
-ENGINE_DEFAULT_THEME = CoshTheme(
-        button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
-        label={ "width" : 175, "height" : 65, "font_size" : 18 },
-        container={},
-        checkbox={ "width" : 25, "height" : 25, "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
-        image={ "width" : 150, "height" : 150 }
-    )
-
 # Button
 # TODO: Use the colors in _state_storage and use a helper function to just adjust the values based on a factor.
 def _button_default_hover(node_id):
     current = CoshUI.get_state(node_id, "background_color")
-    
+
     original = CoshUI.get_state(node_id, "_orig_bg") or current
     if not CoshUI.get_state(node_id, "_orig_bg"):
         CoshUI.set_state(node_id, "_orig_bg", original)

@@ -10,16 +10,19 @@ class CoshTheme:
     button : dict = field(default_factory=lambda: {...})
     label : dict = field(default_factory=lambda: {...})
     container : dict = field(default_factory=lambda: {...})
+    modal : dict = field(default_factory=lambda: {...})
     checkbox : dict = field(default_factory=lambda: {...})
     image : dict = field(default_factory=lambda: {...})
     slider : dict = field(default_factory=lambda: {...})
 
     def get_for(self, node):
-        from .nodes import Container
+        from .nodes import Container, Modal
         from .widgets import Button, Label, Checkbox, Image, Slider
 
         if isinstance(node, Container):
             return self.container
+        if isinstance(node, Modal):
+            return self.modal
         if isinstance(node, Button): 
             return self.button
         if isinstance(node, Label):

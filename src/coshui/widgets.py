@@ -4,7 +4,7 @@ import os
 from .engine import CoshUI
 from .cui_error import CoshUIError, warn
 from .types import RenderContext, _expand_slider, _expand_dropdown, _expand_modal
-from .nodes import Element, TextNode
+from .nodes import Element, TextNode, Modal
 from .utility import Ref
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 
@@ -118,6 +118,7 @@ class Slider(Element):
     min_value : float = 0.0
     max_value : float = 100.0
     step : float = 1.0
+    value : float | None = None
     bind : Ref | None = None
     thumb_size : int | None = None
     thumb_color : tuple | None = None
@@ -131,7 +132,8 @@ class Slider(Element):
 
         value = CoshUI.get_state(self.id, "value")
         if value is None:
-            value = self.min_value
+            value = self.value if self.value is not None else (self.bind.value if self.bind is not None else self.min_value)
+            value = max(self.min_value, min(self.max_value, value))
             CoshUI.set_state(self.id, "value", value)
             if self.bind is not None:
                 self.bind.value = float(value)
@@ -141,3 +143,4 @@ class Slider(Element):
 
 CoshUI._expander_registry[Slider] = _expand_slider
 CoshUI._expander_registry[Dropdown] = _expand_dropdown
+CoshUI._expander_registry[Modal] = _expand_modal

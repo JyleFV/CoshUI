@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from collections.abc import Callable
 import math
 
-from .cui_error import warn
+from .cui_error import warn, CoshUIError
 from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshPositioning, CoshOverflow, CoshMouseFilter, CoshTextAlign, CoshTextJustify, CoshTextOverflow, RenderContext
 
 @dataclass
@@ -13,7 +13,7 @@ class Node(ABC):
     layout : CoshLayout = field(default_factory=lambda: CoshLayout())
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
-    sizing : CoshSizing = CoshSizing.FIT
+    sizing : CoshSizing = CoshSizing.AUTO
     width : float | None = None 
     height : float | None = None
     x : float | None = None
@@ -29,17 +29,22 @@ class Node(ABC):
         from .engine import CoshLifecycle
         CoshLifecycle.register_node(self)
 
-        # These flat parameters take precedence over CoshLayout's width and height for most nodes (ones that don't override __post_init__), which feels weird :/.
-        if self.width is not None:
-            self.layout.width = self.width
-        if self.height is not None:
-            self.layout.height = self.height
-        
+        if self.positioning == CoshPositioning.ABSOLUTE and self.sizing == CoshSizing.FILL:
+            warn("`sizing=CoshSizing.FILL` has no effect on absolute children. Use explicit `width` and `height` instead.")
+
+        if self.sizing == CoshSizing.FILL:
+            if not all(dim is None for dim in (self.width, self.height)):
+                warn("`sizing` is set to `CoshSizing.FILL`. Explicit `width` and `height` values will be ignored.")
+        else:
+            if self.width is not None:
+                self.layout.width = self.width
+            if self.height is not None:
+                self.layout.height = self.height
+
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning != CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
             warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
         
-        # Just like width and height, the x and y flat parameters take precedence over CoshLayout's true_position tuple.
         self.layout.true_position = (self.x if self.x is not None else 0.0, self.y if self.y is not None else 0.0)
 
     @abstractmethod
@@ -101,16 +106,20 @@ class Container(ParentNode):
     direction : CoshDirection = CoshDirection.ROW
 
     def measure(self):
-        if self.sizing != CoshSizing.FIT:
+        if self.sizing == CoshSizing.FILL:
             return
-        
+
         match self.direction:
             case CoshDirection.ROW:
-                self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
-                self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
+                if self.layout.width is CoshSizing.AUTO:
+                    self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                if self.layout.height is CoshSizing.AUTO:
+                    self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
             case CoshDirection.COLUMN:
-                self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
-                self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                if self.layout.width is CoshSizing.AUTO:
+                    self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0) + (self.layout.padding * 2)
+                if self.layout.height is CoshSizing.AUTO:
+                    self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
 
 @dataclass
 class Grid(ParentNode):
@@ -119,30 +128,39 @@ class Grid(ParentNode):
     column_count : int = 1
 
     def measure(self):
-        if self.sizing != CoshSizing.FIT:
+        if self.sizing == CoshSizing.FILL:
             return
-        
+
         rows = math.ceil(len(self.children) / self.column_count)
         max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children), default=0)
         max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children), default=0)
-        
-        self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
-        self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
+
+        if self.layout.width is CoshSizing.AUTO:
+            self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
+        if self.layout.height is CoshSizing.AUTO:
+            self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
 
 @dataclass
 class Modal(ParentNode):
-    pass
+    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
+    direction : CoshDirection = CoshDirection.ROW
+
+    def __post_init__(self):
+        if self.id is None:
+            raise CoshUIError("Modal must have an id.")
+        super().__post_init__()
+
+    def measure(self):
+        pass
 
 @dataclass
 class Element(Node):
     """Base Element node that widgets inherit from. Mostly useless except for the use of clarity for developers and passing the measure() abstract method."""
     
-    sizing : CoshSizing = CoshSizing.FIXED
+    sizing : CoshSizing = CoshSizing.AUTO
 
     def measure(self):
-        if self.sizing == CoshSizing.FIT:
-            warn("`CoshSizing.FIT` is not supported on elements and will be ignored. Use `CoshSizing.FIXED` or `CoshSizing.FILL` instead.")
-            
+        pass
 
 @dataclass
 class TextNode(Element):
