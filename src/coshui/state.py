@@ -1,0 +1,63 @@
+import os
+
+from .themes import CoshTheme
+
+# DEFAULT VALUES
+DEFAULT_THEME = CoshTheme(
+            button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
+            label={ "font_size" : 18 },
+            checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
+            image={ "width" : 150, "height" : 150 },
+            modal={ "width": 200, "height" : 200, "header_color" : (60, 60, 80), "header_border_radius" : (7.5, 7.5, 0, 0), "content_color" : (80, 80, 100), "content_border_radius" : (0, 0, 7.5, 7.5) }, 
+            slider={ "thumb_size" : 20, "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
+        )
+
+DEFAULT_FONT = os.path.join(os.path.dirname(__file__), "assets", "fonts", "inter.ttf")
+
+class CoshUI:
+    #----------------  Lifecycle ----------------
+    _stack : list = []
+    _active_ids : set = set()
+    _active_renderer : bool = False
+    _last_time : float = 0.0
+    _widget_counter : int = 0
+    _state_storage : dict = {} # New source of truth FORMAT: { node_id : { "example_color": (255, 255, 255) }, node_id : {} }
+    # ---------------- Render-related ----------------
+    _style_dirty : set = set() 
+    _temp_paths : set = set()
+    _font_library : dict = { "Inter" : DEFAULT_FONT }
+    _render_stack : list = []
+    _default_font : str = _font_library.get("Inter")
+    # ---------------- Composite Widgets ----------------
+    _expander_registry : dict = {}
+    # ---------------- Input & Event-related ----------------
+    _focused_id = None
+    _signals : dict = {} # New Events FORMAT: { node_id : { "mouse_left" : set(), "mouse_right" : set() } }
+    _active_tweens : set = set()
+    # ---------------- Theme-related ----------------
+    _theme_registry : dict = { "DEFAULT" : DEFAULT_THEME }
+    _active_theme = _theme_registry.get("DEFAULT")
+    # ----------------Class System ----------------
+    _style_class : dict = {}
+    # ---------------- Text Measuring ----------------
+    _measure_text : callable = None
+
+    @classmethod
+    def get_state(cls, node_id, key, default=None):
+        return cls._state_storage.get(node_id, {}).get(key, default)
+
+    @classmethod
+    def set_state(cls, node_id, key, value):
+        if not node_id in cls._state_storage:
+            cls._state_storage[node_id] = {}
+        cls._state_storage[node_id][key] = value
+    
+    @classmethod
+    def _emit_signal(cls, node_id, signal_name):
+        if node_id not in cls._signals:
+            cls._signals[node_id] = set()
+        cls._signals[node_id].add(signal_name)
+
+    @classmethod
+    def _get_signal(cls, node_id, signal_name):
+        return signal_name in cls._signals.get(node_id, set())

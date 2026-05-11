@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from collections.abc import Callable
-import math
 
-from .cui_error import warn, CoshUIError
-from .types import CoshLayout, CoshStyling, CoshDirection, CoshSizing, CoshAlign, CoshJustify, CoshPositioning, CoshOverflow, CoshMouseFilter, CoshTextAlign, CoshTextJustify, CoshTextOverflow, RenderContext
+from .types import *
+from .cui_error import warn
+from .lifecycle import CoshLifecycle
 
 @dataclass
 class Node(ABC):
@@ -14,8 +13,9 @@ class Node(ABC):
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
     sizing : CoshSizing = CoshSizing.AUTO
-    width : float | None = None 
+    width : float | None = None
     height : float | None = None
+    margin : float | None = None
     x : float | None = None
     y : float | None = None
     classes : str | None = None 
@@ -26,7 +26,6 @@ class Node(ABC):
     positioning : CoshPositioning = CoshPositioning.RELATIVE
 
     def __post_init__(self):
-        from .engine import CoshLifecycle
         CoshLifecycle.register_node(self)
 
         if self.positioning == CoshPositioning.ABSOLUTE and self.sizing == CoshSizing.FILL:
@@ -40,6 +39,9 @@ class Node(ABC):
                 self.layout.width = self.width
             if self.height is not None:
                 self.layout.height = self.height
+
+        if self.margin:
+            self.layout.margin = self.margin
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning != CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
@@ -82,81 +84,29 @@ class ParentNode(Node):
     justify : CoshJustify = CoshJustify.START
     align : CoshAlign = CoshAlign.START
     overflow : CoshOverflow = CoshOverflow.VISIBLE
+    padding : float | None = None
     gap : float = 0.0
     src : str | None = None
 
+    def __post_init__(self):
+        if self.padding:
+            self.layout.padding = self.padding
+
+        super().__post_init__()
+
     def __enter__(self):
-        from .engine import CoshUI
+        from .state import CoshUI
         CoshUI._stack.append(self)
         return self
 
     def __exit__(self, *args):
-        from .engine import CoshUI
+        from .state import CoshUI
         CoshUI._stack.pop()
 
     def get_render_data(self) -> RenderContext:
         data = self.get_base_render_data()
         data["image_src"] = self.src
         return RenderContext(**data)
-
-@dataclass
-class Container(ParentNode):
-    """The base Container Node, simple but the most customizable."""
-
-    direction : CoshDirection = CoshDirection.ROW
-
-    def measure(self):
-        if self.sizing == CoshSizing.FILL:
-            return
-
-        match self.direction:
-            case CoshDirection.ROW:
-                if self.layout.width is CoshSizing.AUTO:
-                    self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
-                if self.layout.height is CoshSizing.AUTO:
-                    self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
-            case CoshDirection.COLUMN:
-                if self.layout.width is CoshSizing.AUTO:
-                    self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
-                if self.layout.height is CoshSizing.AUTO:
-                    self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
-
-@dataclass
-class Grid(ParentNode):
-    """A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row."""
-    
-    column_count : int = 1
-
-    def measure(self):
-        if self.sizing == CoshSizing.FILL:
-            return
-
-        rows = math.ceil(len(self.children) / self.column_count)
-        max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
-        max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
-
-        if self.layout.width is CoshSizing.AUTO:
-            self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
-        if self.layout.height is CoshSizing.AUTO:
-            self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
-
-@dataclass
-class Modal(ParentNode):
-    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
-    direction : CoshDirection = CoshDirection.ROW
-    header_color : tuple | None = None
-    header_border_radius : tuple | None = None
-    content_color : tuple | None = None
-    content_border_radius : tuple | None = None
-
-    def __post_init__(self):
-        if self.id is None:
-            raise CoshUIError("Modal must have an id.")
-
-        super().__post_init__()
-
-    def measure(self):
-        pass
 
 @dataclass
 class Element(Node):
@@ -178,7 +128,7 @@ class TextNode(Element):
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
 
     def measure(self):
-        from .engine import CoshUI
+        from .state import CoshUI
         if CoshUI._measure_text is None:
             return
         if self.layout.width is CoshSizing.AUTO or self.layout.height is CoshSizing.AUTO:
@@ -190,7 +140,7 @@ class TextNode(Element):
                 self.layout.height = h
 
     def get_render_data(self):
-        from .engine import CoshUI
+        from .state import CoshUI
         data = self.get_base_render_data()
         data["text"] = self.text
         data["font"] = CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font

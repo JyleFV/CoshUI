@@ -1,12 +1,74 @@
-from dataclasses import dataclass
 import os
+import math
+from dataclasses import dataclass
 
-from .engine import CoshUI
-from .cui_error import CoshUIError, warn
-from .types import RenderContext, _expand_slider, _expand_dropdown, _expand_modal
-from .nodes import Element, TextNode, Modal
+from .types import *
 from .utility import Ref
+from .state import CoshUI
+from .cui_error import CoshUIError, warn
+from .node_definitions import Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
+
+# ======================== Parent Nodes ========================
+
+@dataclass
+class Container(ParentNode):
+    """The base Container Node, simple but the most customizable."""
+
+    direction : CoshDirection = CoshDirection.ROW
+
+    def measure(self):
+        if self.sizing == CoshSizing.FILL:
+            return
+
+        match self.direction:
+            case CoshDirection.ROW:
+                if self.layout.width is CoshSizing.AUTO:
+                    self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                if self.layout.height is CoshSizing.AUTO:
+                    self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
+            case CoshDirection.COLUMN:
+                if self.layout.width is CoshSizing.AUTO:
+                    self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
+                if self.layout.height is CoshSizing.AUTO:
+                    self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+
+@dataclass
+class Grid(ParentNode):
+    """A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row."""
+    
+    column_count : int = 1
+
+    def measure(self):
+        if self.sizing == CoshSizing.FILL:
+            return
+
+        rows = math.ceil(len(self.children) / self.column_count)
+        max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
+        max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
+
+        if self.layout.width is CoshSizing.AUTO:
+            self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
+        if self.layout.height is CoshSizing.AUTO:
+            self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
+
+@dataclass
+class Modal(ParentNode):
+    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
+    direction : CoshDirection = CoshDirection.ROW
+    header_color : tuple | None = None
+    header_border_radius : tuple | None = None
+    content_color : tuple | None = None
+    content_border_radius : tuple | None = None
+
+    def __post_init__(self):
+        if self.id is None:
+            raise CoshUIError("Modal must have an id.")
+
+        super().__post_init__()
+
+    def measure(self):
+        pass
 
 # ======================== Widgets ========================
 
@@ -140,7 +202,3 @@ class Slider(Element):
 
     def get_render_data(self):
         return None
-
-CoshUI._expander_registry[Slider] = _expand_slider
-CoshUI._expander_registry[Dropdown] = _expand_dropdown
-CoshUI._expander_registry[Modal] = _expand_modal

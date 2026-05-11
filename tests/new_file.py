@@ -31,9 +31,9 @@ def main():
             #         Button(id="quit_btn", text="Quit")
 
         with CoshUIRenderer(PygameBackend(screen)):
-            with Container(id="root", sizing=CoshSizing.FILL, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
+            with Container(id="root", sizing=FILL, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
                 Label(id="title", text="My App", font_size=52)
-                with Modal(id="modal", z_index=10, direction=CoshDirection.COLUMN, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, gap=20, style=CoshStyling(alpha=100)):
+                with Modal(id="modal", z_index=10, direction=CoshDirection.COLUMN, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, gap=20):
                     Label(id="modal_lbl", text="Hello from Modal!", font_size=24)
                     Button(id="modal_btn", text="Click Me")
                     Slider(id="modal_slider", width=100, z_index=11)
@@ -43,6 +43,9 @@ def main():
         
         # if get_signal("modal_btn", "released"):
         #     animate("scale", "modal::content", 1.0, 0.5, "ease_in")
+
+        if get_signal("modal_btn", "clicked"):
+            print("hello world!")
 
         pygame.display.flip()
         clock.tick(FPS)

@@ -1,5 +1,7 @@
+import os
+
 from .animation import animate
-from .engine import CoshUI
+from .state import CoshUI
 from .themes import CoshTheme
 from .types import CoshSizing
 from .utility import adjust_brightness_value
@@ -19,8 +21,6 @@ ENGINE_DEFAULTS = {
     "text_color": (255, 255, 255),
 }
 
-# Button
-# TODO: Use the colors in _state_storage and use a helper function to just adjust the values based on a factor.
 def _button_default_hover(node_id):
     current = CoshUI.get_state(node_id, "background_color")
 
@@ -48,11 +48,5 @@ def _button_default_release(node_id):
         animate("background_color", node_id, original, 0.05, "ease_in")
 
 # Checkbox
-def _checkbox_default_hover(node_id):
-    pass
-
-def _checkbox_default_unhover(node_id):
-    pass
-
 def _checkbox_default_click(node_id):
     CoshUI.set_state(node_id, "checked", not CoshUI.get_state(node_id, "checked", False))

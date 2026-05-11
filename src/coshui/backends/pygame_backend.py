@@ -139,7 +139,7 @@ class PygameBackend(CoshBackend):
         self.surface.set_clip(None)
 
     def flush(self, render_stack : list[RenderContext]):
-        from ..engine import CoshUI
+        from ..state import CoshUI
 
         if CoshUI._temp_paths:
             for path in CoshUI._temp_paths:

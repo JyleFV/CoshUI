@@ -1,8 +1,30 @@
 import difflib
 
-from .types import ease_in, ease_in_out, ease_linear, ease_out, lerp_float, lerp_tuple
-from .engine import CoshUI
+from .state import CoshUI
 from .cui_error import CoshUIError
+
+# Helpers
+
+def lerp_float(start_value : float | int, end_value, time):
+    return start_value + time * (end_value - start_value)
+
+def lerp_tuple(start_tup, end_tup, time):
+    return tuple(lerp_float(s, e, time) for s, e in zip(start_tup, end_tup))
+
+def ease_linear(t : float):
+    return t
+
+def ease_in(t : float):
+    return t * t
+
+def ease_out(t : float):
+    return 1 - (1 - t) * (1 - t)
+
+def ease_in_out(t : float):
+    if t < 0.5:
+        return 2 * t * t
+    else:
+        return 1 - pow(-2 * t + 2, 2) / 2 
 
 EASING_MAP = {
         "linear" : ease_linear,
