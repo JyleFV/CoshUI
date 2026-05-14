@@ -1,3 +1,5 @@
+from .state import CoshUI
+
 from .core import CoshUIRenderer
 
 Renderer = CoshUIRenderer # so that if users just do "import coshui", it'll look like 'with coshui.Renderer(coshui.PygameBackend(screen)):'.
@@ -44,4 +46,4 @@ from .animation import animate
 from .backends.pygame_backend import PygameBackend
 
 
-__all__ = ["LEFT", "RIGHT", "CoshMouseFilter", "CoshPositioning", "CoshTextOverflow", "CoshOverflow", "get_signal", "create_theme", "set_theme", "add_font", "add_class", "CoshTextAlign", "CoshTextJustify", "CoshAlign", "CoshJustify", "CoshDirection", "FILL", "AUTO", "CoshStyling", "Container", "Grid", "Modal", "PygameBackend", "CoshUIRenderer", "CoshTheme", "animate", "Ref", "Button", "Image", "Label", "InputField", "Checkbox", "Slider", "set_default_font"]
+__all__ = ["CoshUI", "LEFT", "RIGHT", "CoshMouseFilter", "CoshPositioning", "CoshTextOverflow", "CoshOverflow", "get_signal", "create_theme", "set_theme", "add_font", "add_class", "CoshTextAlign", "CoshTextJustify", "CoshAlign", "CoshJustify", "CoshDirection", "FILL", "AUTO", "CoshStyling", "Container", "Grid", "Modal", "PygameBackend", "CoshUIRenderer", "CoshTheme", "animate", "Ref", "Button", "Image", "Label", "InputField", "Checkbox", "Slider", "set_default_font"]

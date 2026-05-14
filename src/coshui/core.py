@@ -61,7 +61,7 @@ class CoshUIRenderer:
         CoshLifecycle.expand(self.root)
 
         measure(self.root)
-        layout(self.root, self.root.layout.true_position[0], self.root.layout.true_position[1]) # index 0 is x, index 1 is y
+        layout(self.root, self.root._x, self.root._y)
         render(self.root)
 
         CoshUI._render_stack.sort(key=lambda d: d.z_index)

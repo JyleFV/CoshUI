@@ -51,9 +51,9 @@ def main():
                                 Label(id="lbl_vol", text=f"Volume: {int(vol.value)}", font_size=20)
                                 Slider(id="sldr_vol", width=200, bind=vol, min_value=0, max_value=100, z_index=12)
                             with Container(id="row_brightness", gap=20, align=CoshAlign.CENTER):
-                                Label(id="lbl_brightness", text=f"Brightness: {int(brightness.value)}", font_size=20)
+                                Label(id="lbl_brightness", text=f"Brightness: {int(brightness.value)}", classes="btn_primary", font_size=20, width=100)
                                 Slider(id="sldr_brightness", width=200, bind=brightness, min_value=0, max_value=100, z_index=12)
-                            Button(id="close_btn", text="Close", classes="btn_danger", width=150, z_index=12)
+                            Button(id="close_btn", text="Close", width=150, z_index=12)
 
         if get_signal("settings_btn", "clicked") or get_signal("close_btn", "clicked"):
             settings_open = not settings_open

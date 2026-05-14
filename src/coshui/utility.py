@@ -1,11 +1,14 @@
-from typing import TypeVar, Generic
+from __future__ import annotations
+from typing import TypeVar, Generic, TYPE_CHECKING
 import difflib
 import os
 
 from .cui_error import CoshUIError
 from .state import CoshUI
-from .themes import CoshTheme
 from .types import *
+
+if TYPE_CHECKING:
+    from .themes import CoshTheme
 
 T = TypeVar('T')
 class Ref(Generic[T]):
@@ -34,7 +37,7 @@ def add_font(name : str, path : str):
 def set_default_font(name : str):
     try:
         path = os.path.abspath(CoshUI._font_library[name])
-        CoshUI._default_font = (name, path)
+        CoshUI._default_font = CoshUI._font_library.get(name)
     except KeyError:
         raise CoshUIError("That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments.") from None
 

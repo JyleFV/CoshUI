@@ -5,14 +5,6 @@ from enum import Enum
 from .cui_error import CoshUIError
 
 @dataclass
-class CoshLayout:
-    true_position : tuple = (0, 0) 
-    width : float | None = None
-    height : float | None = None
-    padding : float = 0.0
-    margin : float = 0.0
-
-@dataclass
 class CoshStyling:
     background_color : tuple | None = None
     alpha : int | None = None
@@ -139,4 +131,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['RenderContext', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshLayout', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['RenderContext', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

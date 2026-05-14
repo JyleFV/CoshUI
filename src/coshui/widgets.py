@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import os
 import math
 from dataclasses import dataclass
@@ -8,6 +10,9 @@ from .state import CoshUI
 from .cui_error import CoshUIError, warn
 from .node_definitions import Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
+
+if TYPE_CHECKING:
+    from .utility import Ref
 
 # ======================== Parent Nodes ========================
 
@@ -23,15 +28,15 @@ class Container(ParentNode):
 
         match self.direction:
             case CoshDirection.ROW:
-                if self.layout.width is CoshSizing.AUTO:
-                    self.layout.width = (sum(child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
-                if self.layout.height is CoshSizing.AUTO:
-                    self.layout.height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
+                if self.width is CoshSizing.AUTO:
+                    self.width = (sum(child.width + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.padding * 2)
+                if self.height is CoshSizing.AUTO:
+                    self.height = max((child.height + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.padding * 2)
             case CoshDirection.COLUMN:
-                if self.layout.width is CoshSizing.AUTO:
-                    self.layout.width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.layout.padding * 2)
-                if self.layout.height is CoshSizing.AUTO:
-                    self.layout.height = (sum(child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.layout.padding * 2)
+                if self.width is CoshSizing.AUTO:
+                    self.width = max((child.width + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.padding * 2)
+                if self.height is CoshSizing.AUTO:
+                    self.height = (sum(child.height + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.padding * 2)
 
 @dataclass
 class Grid(ParentNode):
@@ -44,31 +49,13 @@ class Grid(ParentNode):
             return
 
         rows = math.ceil(len(self.children) / self.column_count)
-        max_child_width = max((child.layout.width + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
-        max_child_height = max((child.layout.height + (child.layout.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
+        max_child_width = max((child.width + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
+        max_child_height = max((child.height + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
 
-        if self.layout.width is CoshSizing.AUTO:
-            self.layout.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.layout.padding * 2)
-        if self.layout.height is CoshSizing.AUTO:
-            self.layout.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.layout.padding * 2)
-
-@dataclass
-class Modal(ParentNode):
-    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
-    direction : CoshDirection = CoshDirection.ROW
-    header_color : tuple | None = None
-    header_border_radius : tuple | None = None
-    content_color : tuple | None = None
-    content_border_radius : tuple | None = None
-
-    def __post_init__(self):
-        if self.id is None:
-            raise CoshUIError("Modal must have an id.")
-
-        super().__post_init__()
-
-    def measure(self):
-        pass
+        if self.width is CoshSizing.AUTO:
+            self.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.padding * 2)
+        if self.height is CoshSizing.AUTO:
+            self.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.padding * 2)
 
 # ======================== Widgets ========================
 
@@ -81,9 +68,6 @@ class Button(TextNode):
             auto_id = f"_{hash(__class__)}_{CoshUI._widget_counter}"
             self.id = auto_id
             CoshUI._widget_counter += 1
-
-        if self.font is None:
-            self.font = CoshUI._default_font
 
         super().__post_init__()
 
@@ -104,15 +88,8 @@ class Label(TextNode):
             auto_id = f"_{hash(self.text)}_{CoshUI._widget_counter}"
             self.id = auto_id
             CoshUI._widget_counter += 1
-        
-        if self.font is None:
-            self.font = CoshUI._default_font
 
         super().__post_init__()
-
-@dataclass
-class InputField(TextNode):
-    pass
 
 @dataclass
 class Checkbox(Element):
@@ -170,6 +147,28 @@ class Box(Element):
 # ======================== Atomic Widgets ========================
 
 # ======================== Composite Widgets ========================
+
+@dataclass
+class Modal(ParentNode):
+    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
+    direction : CoshDirection = CoshDirection.ROW
+    header_color : tuple | None = None
+    header_border_radius : tuple | None = None
+    content_color : tuple | None = None
+    content_border_radius : tuple | None = None
+
+    def __post_init__(self):
+        if self.id is None:
+            raise CoshUIError("Modal must have an id.")
+
+        super().__post_init__()
+
+    def measure(self):
+        pass
+
+@dataclass
+class InputField(TextNode):
+    pass
 
 @dataclass
 class Dropdown(TextNode):

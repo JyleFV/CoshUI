@@ -1,8 +1,5 @@
-import os
-
 from .animation import animate
 from .state import CoshUI
-from .themes import CoshTheme
 from .types import CoshSizing
 from .utility import adjust_brightness_value
 

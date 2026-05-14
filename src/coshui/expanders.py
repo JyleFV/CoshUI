@@ -1,6 +1,6 @@
 from .state import CoshUI
 from .input import CoshInput
-from .types import CoshPositioning, CoshStyling, CoshLayout, CoshDirection, CoshMouseFilter
+from .types import CoshPositioning, CoshStyling, CoshDirection, CoshMouseFilter
 from .pipeline import measure
 
 def _expand_slider(node):
@@ -14,7 +14,7 @@ def _expand_slider(node):
     if CoshUI._focused_id == f"{node.id}::thumb" and CoshInput.get_mouse_down():
         delta_x = CoshInput._mouse_delta[0]
         value_range = node.max_value - node.min_value
-        value_change = (delta_x / node.layout.width) * value_range
+        value_change = (delta_x / node.width) * value_range
         value = max(node.min_value, min(node.max_value, value + value_change))
         # snap to step
         value = round(value / node.step) * node.step
@@ -24,7 +24,7 @@ def _expand_slider(node):
 
     ratio = (value - node.min_value) / (node.max_value - node.min_value)
     thumb_size = node.thumb_size
-    thumb_x = ratio * (node.layout.width - thumb_size)
+    thumb_x = ratio * (node.width - thumb_size)
 
     thumb = Box(
         id=f"{node.id}::thumb",
@@ -38,8 +38,8 @@ def _expand_slider(node):
 
     track = Container(
         id=f"{node.id}::track",
-        width=node.layout.width,
-        height=node.layout.height if node.layout.height else thumb_size,
+        width=node.width,
+        height=node.height if node.height else thumb_size,
         style=CoshStyling(background_color=node.track_color, border_radius=node.style.border_radius),
         z_index=node.z_index
     )
@@ -73,7 +73,6 @@ def _expand_modal(node):
         x=pos[0],
         y=pos[1],
         sizing=node.sizing,
-        layout=node.layout,
         positioning=node.positioning,
         z_index=node.z_index,
         mouse_filter=CoshMouseFilter.PASS
@@ -83,7 +82,7 @@ def _expand_modal(node):
         id=f"{node.id}::header",
         width=node.width,
         height=25,
-        layout=CoshLayout(padding=10),
+        padding=10,
         style=CoshStyling(background_color=node.header_color, border_radius=node.header_border_radius, alpha=node.style.alpha)
     )
 
@@ -95,7 +94,7 @@ def _expand_modal(node):
         align=node.align,
         justify=node.justify,
         gap=node.gap,
-        layout=CoshLayout(padding=node.layout.padding),
+        padding=node.padding,
         style=CoshStyling(background_color=node.content_color, border_radius=node.content_border_radius, alpha=node.style.alpha),
         overflow=node.overflow
     )
@@ -103,7 +102,7 @@ def _expand_modal(node):
     content.children.extend(node.children)
 
     measure(content)
-    header.layout.width = content.layout.width
+    header.width = content.width
 
     root.children.append(header)
     root.children.append(content)

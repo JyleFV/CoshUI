@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 from .types import *
+from .state import CoshUI
 from .cui_error import warn
 from .lifecycle import CoshLifecycle
 
@@ -9,7 +10,6 @@ from .lifecycle import CoshLifecycle
 class Node(ABC):
     """ This is the top layer of every UI element in the library, it holds all necessary values that all elements need."""
 
-    layout : CoshLayout = field(default_factory=lambda: CoshLayout())
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
     sizing : CoshSizing = CoshSizing.AUTO
@@ -21,9 +21,11 @@ class Node(ABC):
     classes : str | None = None 
     id : str | None = None
     z_index : int = 0
-    _was_hovered : bool = False
     mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
     positioning : CoshPositioning = CoshPositioning.RELATIVE
+    _was_hovered : bool = False
+    _x : float = 0.0
+    _y : float = 0.0
 
     def __post_init__(self):
         CoshLifecycle.register_node(self)
@@ -34,20 +36,13 @@ class Node(ABC):
         if self.sizing == CoshSizing.FILL:
             if not all(dim is None for dim in (self.width, self.height)):
                 warn("`sizing` is set to `CoshSizing.FILL`. Explicit `width` and `height` values will be ignored.")
-        else:
-            if self.width is not None:
-                self.layout.width = self.width
-            if self.height is not None:
-                self.layout.height = self.height
-
-        if self.margin:
-            self.layout.margin = self.margin
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning != CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
             warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
         
-        self.layout.true_position = (self.x if self.x is not None else 0.0, self.y if self.y is not None else 0.0)
+        self._x = self.x if self.x is not None else 0.0
+        self._y = self.y if self.y is not None else 0.0
 
     @abstractmethod
     def measure(self):
@@ -58,16 +53,15 @@ class Node(ABC):
         pass
 
     def get_base_render_data(self) -> dict:
-        x, y = self.layout.true_position
         transform_x, transform_y = self.style.transform_position
         return {
             "id" : self.id,
-            "x" : x,
-            "y" : y,
+            "x" : self._x,
+            "y" : self._y,
             "transform_x" : transform_x,
             "transform_y" : transform_y,
-            "width" : self.layout.width,
-            "height" : self.layout.height,
+            "width" : self.width,
+            "height" : self.height,
             "background_color" : self.style.background_color,
             "z_index" : self.z_index,
             "border_radius" : self.style.border_radius,
@@ -85,22 +79,14 @@ class ParentNode(Node):
     align : CoshAlign = CoshAlign.START
     overflow : CoshOverflow = CoshOverflow.VISIBLE
     padding : float | None = None
-    gap : float = 0.0
+    gap : float | None = None
     src : str | None = None
 
-    def __post_init__(self):
-        if self.padding:
-            self.layout.padding = self.padding
-
-        super().__post_init__()
-
     def __enter__(self):
-        from .state import CoshUI
         CoshUI._stack.append(self)
         return self
 
     def __exit__(self, *args):
-        from .state import CoshUI
         CoshUI._stack.pop()
 
     def get_render_data(self) -> RenderContext:
@@ -111,8 +97,6 @@ class ParentNode(Node):
 @dataclass
 class Element(Node):
     """Base Element node that widgets inherit from. Mostly useless except for the use of clarity for developers and passing the measure() abstract method."""
-    
-    sizing : CoshSizing = CoshSizing.AUTO
 
     def measure(self):
         pass
@@ -128,22 +112,20 @@ class TextNode(Element):
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
 
     def measure(self):
-        from .state import CoshUI
         if CoshUI._measure_text is None:
             return
-        if self.layout.width is CoshSizing.AUTO or self.layout.height is CoshSizing.AUTO:
+        if self.width is CoshSizing.AUTO or self.height is CoshSizing.AUTO:
             font_path = CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font
             w, h = CoshUI._measure_text(self.text, font_path, self.font_size or 16)
-            if self.layout.width is CoshSizing.AUTO:
-                self.layout.width = w
-            if self.layout.height is CoshSizing.AUTO:
-                self.layout.height = h
+            if self.width is CoshSizing.AUTO:
+                self.width = w
+            if self.height is CoshSizing.AUTO:
+                self.height = h
 
     def get_render_data(self):
-        from .state import CoshUI
         data = self.get_base_render_data()
         data["text"] = self.text
-        data["font"] = CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font
+        data["font"] = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
         data["font_size"] = self.font_size
         data["text_color"] = self.text_color
         data["text_align"] = self.text_align
