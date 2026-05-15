@@ -30,8 +30,9 @@ def main():
                     Label(id="modal_lbl", text="Hello from Modal!", font_size=24)
                     Button(id="modal_btn", text="Click Me")
                     Slider(id="modal_slider", width=100, z_index=11)
+                    Checkbox(id="cb")
 
-        if get_signal("modal_btn", "pressed"):
+        if get_signal("modal_btn", CLICKED):
             counter += 1
             print(f"hello world! counter: {counter}")
 

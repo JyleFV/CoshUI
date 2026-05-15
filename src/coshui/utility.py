@@ -151,3 +151,8 @@ def merge_styles(base : CoshStyling, override : CoshStyling) -> CoshStyling:
         transform_rotation=override.transform_rotation if override.transform_rotation is not None else base.transform_rotation,
         transform_scale=override.transform_scale if override.transform_scale is not None else base.transform_scale
     )
+
+def print_tree(node):
+    print(f"Node: {node.__class__.__name__} with node_id: {node.id}\n")
+    for child in node.children:
+        print_tree(child)

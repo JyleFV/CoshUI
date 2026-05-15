@@ -3,6 +3,7 @@ from .state import CoshUI
 from .types import CoshSizing
 from .utility import adjust_brightness_value
 
+# TODO: Add all properties
 ENGINE_DEFAULTS = {
     "width": CoshSizing.AUTO,
     "height": CoshSizing.AUTO,
@@ -16,6 +17,7 @@ ENGINE_DEFAULTS = {
     "transform_rotation": 0.0,
     "font_size": 16,
     "text_color": (255, 255, 255),
+    "thumb_size": 20
 }
 
 def _button_default_hover(node_id):

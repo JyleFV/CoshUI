@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from .types import *
 from .state import CoshUI
-from .cui_error import warn
+from .cui_error import CoshUIError, warn
 from .lifecycle import CoshLifecycle
 
 @dataclass
@@ -97,6 +97,12 @@ class ParentNode(Node):
 @dataclass
 class Element(Node):
     """Base Element node that widgets inherit from. Mostly useless except for the use of clarity for developers and passing the measure() abstract method."""
+
+    def __post_init__(self):
+        if self.id is None:
+            raise CoshUIError(f"Widget `{self.__class__.__name__}` must have an id.")
+        
+        super().__post_init__()
 
     def measure(self):
         pass

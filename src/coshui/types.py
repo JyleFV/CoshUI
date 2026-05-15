@@ -44,6 +44,14 @@ class CoshMouseButton(Enum):
     LEFT = 0
     RIGHT = 1
 
+class CoshSignals(Enum):
+    CLICKED = 0
+    RELEASED = 1
+    PRESSED = 2
+    HOVERED = 3
+    HOVER_ENTER = 4
+    HOVER_EXIT = 5
+
 class CoshTextOverflow(Enum):
     HIDDEN = 0  
     VISIBLE = 1
@@ -131,4 +139,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['RenderContext', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['RenderContext', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

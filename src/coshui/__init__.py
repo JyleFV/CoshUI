@@ -1,5 +1,3 @@
-from .state import CoshUI
-
 from .core import CoshUIRenderer
 
 Renderer = CoshUIRenderer # so that if users just do "import coshui", it'll look like 'with coshui.Renderer(coshui.PygameBackend(screen)):'.
@@ -8,7 +6,7 @@ from .widgets import Container, Grid, Modal, Button, Label, InputField, Checkbox
 
 from .utility import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme
 
-from .types import CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton
+from .types import CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
 
 ALIGN_START = CoshAlign.START
 ALIGN_CENTER = CoshAlign.CENTER
@@ -33,6 +31,13 @@ IGNORE = CoshMouseFilter.IGNORE
 STOP = CoshMouseFilter.STOP
 PASS = CoshMouseFilter.PASS
 
+CLICKED = CoshSignals.CLICKED
+RELEASED = CoshSignals.RELEASED
+PRESSED = CoshSignals.PRESSED
+HOVERED = CoshSignals.HOVERED
+HOVER_ENTER = CoshSignals.HOVER_ENTER
+HOVER_EXIT = CoshSignals.HOVER_EXIT
+
 RELATIVE = CoshPositioning.RELATIVE
 ABSOLUTE = CoshPositioning.ABSOLUTE
 
@@ -46,4 +51,4 @@ from .animation import animate
 from .backends.pygame_backend import PygameBackend
 
 
-__all__ = ["CoshUI", "LEFT", "RIGHT", "CoshMouseFilter", "CoshPositioning", "CoshTextOverflow", "CoshOverflow", "get_signal", "create_theme", "set_theme", "add_font", "add_class", "CoshTextAlign", "CoshTextJustify", "CoshAlign", "CoshJustify", "CoshDirection", "FILL", "AUTO", "CoshStyling", "Container", "Grid", "Modal", "PygameBackend", "CoshUIRenderer", "CoshTheme", "animate", "Ref", "Button", "Image", "Label", "InputField", "Checkbox", "Slider", "set_default_font"]
+__all__ = ["CLICKED", "RELEASED", "PRESSED", "HOVERED", "HOVER_ENTER", "HOVER_EXIT", "LEFT", "RIGHT", "CoshMouseFilter", "CoshPositioning", "CoshTextOverflow", "CoshOverflow", "get_signal", "create_theme", "set_theme", "add_font", "add_class", "CoshTextAlign", "CoshTextJustify", "CoshAlign", "CoshJustify", "CoshDirection", "FILL", "AUTO", "CoshStyling", "Container", "Grid", "Modal", "PygameBackend", "CoshUIRenderer", "CoshTheme", "animate", "Ref", "Button", "Image", "Label", "InputField", "Checkbox", "Slider", "set_default_font"]

@@ -12,9 +12,10 @@ from .cui_error import CoshUIError
 from .backend import CoshBackend
 from .lifecycle import CoshLifecycle
 from .state import CoshUI
+from .utility import print_tree
 from .expanders import _expand_slider, _expand_dropdown, _expand_modal
 from .widgets import Slider, Dropdown, Modal, Container
-from .pipeline import measure, layout, render, process_events, update
+from .pipeline import measure, layout, render, process_events, update, finalize_defaults
 
 class CoshUIRenderer:
     def __init__(self, backend : CoshBackend):
@@ -59,6 +60,7 @@ class CoshUIRenderer:
         CoshUI._active_renderer = False
 
         CoshLifecycle.expand(self.root)
+        finalize_defaults(self.root)
 
         measure(self.root)
         layout(self.root, self.root._x, self.root._y)

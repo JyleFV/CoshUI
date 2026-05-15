@@ -2,6 +2,11 @@ import os
 
 from .themes import CoshTheme
 
+# TODO: Separate Composite Widgets 
+# ex. 
+# slider={ "thumb" : {...}, "track" : {...} } 
+# modal={ "root" : {...}, "header" : {...}, "content" : {...} }
+
 # DEFAULT VALUES
 DEFAULT_THEME = CoshTheme(
             button={ "width" : 100, "height" : 30, "background_color" : (86, 115, 143), "border" : ((255, 255, 255), 1), "border_radius" : 5, "font_size" : 18 },
@@ -9,7 +14,7 @@ DEFAULT_THEME = CoshTheme(
             checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
             image={ "width" : 150, "height" : 150 },
             modal={ "header_color" : (60, 60, 80), "header_border_radius" : (7.5, 7.5, 0, 0), "content_color" : (80, 80, 100), "content_border_radius" : (0, 0, 7.5, 7.5) }, 
-            slider={ "thumb_size" : 20, "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
+            slider={ "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
         )
 
 COURIER = os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime.ttf")
@@ -34,7 +39,7 @@ class CoshUI:
     _expander_registry : dict = {}
     # ---------------- Input & Event-related ----------------
     _focused_id = None
-    _signals : dict = {} # FORMAT: { node_id : { "mouse_left" : set(), "mouse_right" : set() } }
+    _signals : dict = {} # FORMAT: { node_id : set() }
     _active_tweens : set = set()
     # ---------------- Theme-related ----------------
     _theme_registry : dict = { "DEFAULT" : DEFAULT_THEME }
@@ -55,11 +60,11 @@ class CoshUI:
         cls._state_storage[node_id][key] = value
     
     @classmethod
-    def _emit_signal(cls, node_id, signal_name):
+    def _emit_signal(cls, node_id, signal):
         if node_id not in cls._signals:
             cls._signals[node_id] = set()
-        cls._signals[node_id].add(signal_name)
+        cls._signals[node_id].add(signal)
 
     @classmethod
-    def _get_signal(cls, node_id, signal_name):
-        return signal_name in cls._signals.get(node_id, set())
+    def _get_signal(cls, node_id, signal):
+        return signal in cls._signals.get(node_id, set())

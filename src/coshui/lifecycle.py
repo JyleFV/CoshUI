@@ -68,30 +68,6 @@ class CoshLifecycle:
                 node.style.background_color = node.checked_color
             else:
                 node.style.background_color = node.unchecked_color
-
-    @staticmethod
-    def finalize(node):
-        from ._defaults import ENGINE_DEFAULTS
-        targets = [node, node.style, node]
-        
-        for key, fallback in ENGINE_DEFAULTS.items():
-            for target in targets:
-                # We only apply the fallback if the attribute exists AND is None
-                if hasattr(target, key) and getattr(target, key) is None:
-                    setattr(target, key, fallback)
-
-        if node.id:
-            if node.id not in CoshUI._state_storage:
-                CoshUI._state_storage[node.id] = {}
-
-            CoshUI._state_storage[node.id].update({
-                "background_color": node.style.background_color,
-                "alpha": node.style.alpha,
-                "transform_position": node.style.transform_position,
-                "transform_scale": node.style.transform_scale,
-                "transform_rotation": node.style.transform_rotation,
-                "_was_hovered": node._was_hovered
-            })
     
     @staticmethod
     def expand(node):
@@ -116,4 +92,3 @@ class CoshLifecycle:
         
         CoshLifecycle.apply_styling(node)
         CoshLifecycle.apply_theme(node)
-        CoshLifecycle.finalize(node)

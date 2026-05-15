@@ -3,6 +3,7 @@ from .input import CoshInput
 from .node_definitions import Node
 from .widgets import Container, Grid
 from .utility import intersect_rect, point_in_rect
+from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
 def measure(node : Node):
@@ -204,7 +205,7 @@ def process_events():
 
     if CoshInput.get_mouse_just_released():
         if CoshUI._focused_id:
-            CoshUI._emit_signal(CoshUI._focused_id, "released")
+            CoshUI._emit_signal(CoshUI._focused_id, CoshSignals.RELEASED)
             CoshUI._focused_id = None
     
     consumed_hover = False
@@ -240,22 +241,47 @@ def process_events():
 
         if hovered and not consumed_hover:
             CoshUI.set_state(data.id, "_was_hovered", True)
-            CoshUI._emit_signal(data.id, "hovered")
+            CoshUI._emit_signal(data.id, CoshSignals.HOVERED)
             if not was_hovered:
-                CoshUI._emit_signal(data.id, "hover_enter")
+                CoshUI._emit_signal(data.id, CoshSignals.HOVER_ENTER)
             if data.mouse_filter == CoshMouseFilter.STOP:
                 consumed_hover = True
         else:
             CoshUI.set_state(data.id, "_was_hovered", False)
             if was_hovered:
-                CoshUI._emit_signal(data.id, "hover_exit")
+                CoshUI._emit_signal(data.id, CoshSignals.HOVER_EXIT)
 
         # Click Logic
         if hovered and not consumed_click:
             if CoshInput.get_mouse_just_pressed():
-                CoshUI._emit_signal(data.id, "clicked")
+                CoshUI._emit_signal(data.id, CoshSignals.CLICKED)
                 CoshUI._focused_id = data.id
                 if data.mouse_filter == CoshMouseFilter.STOP:
                     consumed_click = True
             if CoshInput.get_mouse_down():
-                CoshUI._emit_signal(data.id, "pressed")
+                CoshUI._emit_signal(data.id, CoshSignals.PRESSED)
+
+def finalize_defaults(node):
+    targets = [node, node.style, node]
+    
+    for key, fallback in ENGINE_DEFAULTS.items():
+        for target in targets:
+            # We only apply the fallback if the attribute exists AND is None
+            if hasattr(target, key) and getattr(target, key) is None:
+                setattr(target, key, fallback)
+
+    if node.id:
+        if node.id not in CoshUI._state_storage:
+            CoshUI._state_storage[node.id] = {}
+
+        CoshUI._state_storage[node.id].update({
+            "background_color": node.style.background_color,
+            "alpha": node.style.alpha,
+            "transform_position": node.style.transform_position,
+            "transform_scale": node.style.transform_scale,
+            "transform_rotation": node.style.transform_rotation,
+            "_was_hovered": node._was_hovered
+        })
+
+    for child in node.children:
+        finalize_defaults(child)

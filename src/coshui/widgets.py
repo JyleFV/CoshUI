@@ -63,33 +63,21 @@ class Grid(ParentNode):
 @dataclass
 class Button(TextNode):
     def __post_init__(self):
-        if self.id is None:
-            warn("Please keep in mind to add ids to nodes. It's not required (for some nodes) but it's best practice.")
-            auto_id = f"_{hash(__class__)}_{CoshUI._widget_counter}"
-            self.id = auto_id
-            CoshUI._widget_counter += 1
-
         super().__post_init__()
 
-        if CoshUI._get_signal(self.id, "hover_enter"):
+        if CoshUI._get_signal(self.id, CoshSignals.HOVER_ENTER):
             _button_default_hover(self.id)
-        if CoshUI._get_signal(self.id, "hover_exit"):
+        if CoshUI._get_signal(self.id, CoshSignals.HOVER_EXIT):
             _button_default_unhover(self.id)
-        if CoshUI._get_signal(self.id, "clicked"):
+        if CoshUI._get_signal(self.id, CoshSignals.CLICKED):
             _button_default_click(self.id)
-        if CoshUI._get_signal(self.id, "released"):
+        if CoshUI._get_signal(self.id, CoshSignals.RELEASED):
             _button_default_release(self.id)
 
+# This is basically nothing since TextNode is just what Label is
 @dataclass
 class Label(TextNode):
-    def __post_init__(self):
-        if self.id is None:
-            warn("Please keep in mind to add ids to nodes. It's not required (for some nodes) but it's best practice.")
-            auto_id = f"_{hash(self.text)}_{CoshUI._widget_counter}"
-            self.id = auto_id
-            CoshUI._widget_counter += 1
-
-        super().__post_init__()
+    pass
 
 @dataclass
 class Checkbox(Element):
@@ -100,10 +88,7 @@ class Checkbox(Element):
     bind : Ref | None = None
 
     def __post_init__(self):
-        if self.id is None:
-            raise CoshUIError("Widget `Checkbox` has to have an id.")
-
-        if CoshUI._get_signal(self.id, "clicked"):
+        if CoshUI._get_signal(self.id, CoshSignals.CLICKED):
             _checkbox_default_click(self.id)
 
         super().__post_init__()       
@@ -124,14 +109,14 @@ class Image(Element):
     src : str | None = None
     
     def __post_init__(self):
+        super().__post_init__()
+
         if self.src:
             self.src = os.path.abspath(self.src)
             if not os.path.isfile(self.src):
                 raise CoshUIError(f"Image path `{self.src}` does not exist or is not a file.")
         else:
             raise CoshUIError(f"Expected path value in `src` field.")
-        
-        super().__post_init__()
 
     def get_render_data(self):
         data = self.get_base_render_data()
@@ -159,7 +144,7 @@ class Modal(ParentNode):
 
     def __post_init__(self):
         if self.id is None:
-            raise CoshUIError("Modal must have an id.")
+            raise CoshUIError("ParentNode `Modal` must have an id.")
 
         super().__post_init__()
 
@@ -186,9 +171,6 @@ class Slider(Element):
     track_color : tuple | None = None
     
     def __post_init__(self):
-        if self.id is None:
-            raise CoshUIError("Slider must have an id.")
-        
         super().__post_init__()
 
         value = CoshUI.get_state(self.id, "value")

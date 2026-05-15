@@ -1,10 +1,12 @@
 from .state import CoshUI
 from .input import CoshInput
-from .types import CoshPositioning, CoshStyling, CoshDirection, CoshMouseFilter
-from .pipeline import measure
+from .types import CoshPositioning, CoshStyling, CoshDirection, CoshMouseFilter, CoshAlign
+from .pipeline import measure, finalize_defaults
+from ._defaults import ENGINE_DEFAULTS
+from .lifecycle import CoshLifecycle
+from .widgets import Container, Box
 
 def _expand_slider(node):
-    from .widgets import Container, Box
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
 
@@ -23,7 +25,9 @@ def _expand_slider(node):
             node.bind.value = value
 
     ratio = (value - node.min_value) / (node.max_value - node.min_value)
-    thumb_size = node.thumb_size
+    # "It ain't much but it's honest work" - Terrarizer May 15, 2026
+    # Nah but seriously though, why is this so ugly 🤮
+    thumb_size = node.thumb_size if node.thumb_size is not None else node.height if node.height is not None else ENGINE_DEFAULTS["thumb_size"]
     thumb_x = ratio * (node.width - thumb_size)
 
     thumb = Box(
@@ -41,6 +45,7 @@ def _expand_slider(node):
         width=node.width,
         height=node.height if node.height else thumb_size,
         style=CoshStyling(background_color=node.track_color, border_radius=node.style.border_radius),
+        align=CoshAlign.CENTER,
         z_index=node.z_index
     )
 
@@ -53,7 +58,6 @@ def _expand_dropdown(node):
 
 def _expand_modal(node):
     # TODO: Change magic numbers to theme styles.
-    from .widgets import Container
 
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
@@ -101,7 +105,9 @@ def _expand_modal(node):
 
     content.children.extend(node.children)
 
+    finalize_defaults(content)
     measure(content)
+
     header.width = content.width
 
     root.children.append(header)
