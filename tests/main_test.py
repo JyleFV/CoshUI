@@ -30,7 +30,7 @@ def main():
         screen.fill(BLACK)
 
         with CoshUIRenderer(PygameBackend(screen)):
-            with Container(id="root", align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
+            with Container(id="root", width=FILL, height=FILL, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
                 with Container(id="main_col", direction=CoshDirection.COLUMN, gap=16, align=CoshAlign.CENTER):
                     Label(id="title", text="My App", font_size=52)
                     Button(id="play_btn", text="Play", classes="btn_primary", width=200)
@@ -55,10 +55,10 @@ def main():
                                 Slider(id="sldr_brightness", width=200, bind=brightness, min_value=0, max_value=100, z_index=12)
                             Button(id="close_btn", text="Close", width=150, z_index=12)
 
-        if get_signal("settings_btn", "clicked") or get_signal("close_btn", "clicked"):
+        if get_signal("settings_btn", CLICKED) or get_signal("close_btn", CLICKED):
             settings_open = not settings_open
 
-        if get_signal("quit_btn", "clicked"):
+        if get_signal("quit_btn", CLICKED):
             running = False
 
         pygame.display.flip()

@@ -20,7 +20,7 @@ with CoshUIRenderer(PygameBackend(screen)): # This uses the Pygame backend thus 
         Button(text="Start", id="start_btn", width=100, height=50)
     
 # Uses CoshUI's built-in event system and animation system to track click events end animate Nodes.
-if get_signal("start_btn", "clicked"):
+if get_signal("start_btn", CLICKED):
     print("Hello World!")
     # Gradually turns main_container's background color to dirty white.
     animate("background_color", "main_container", (200, 200, 200), 1.5, "ease_in_out") 
