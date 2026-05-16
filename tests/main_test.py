@@ -30,7 +30,7 @@ def main():
         screen.fill(BLACK)
 
         with CoshUIRenderer(PygameBackend(screen)):
-            with Container(id="root", sizing=FILL, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
+            with Container(id="root", align=CoshAlign.CENTER, justify=CoshJustify.CENTER, style=CoshStyling(background_color=(30, 28, 80))):
                 with Container(id="main_col", direction=CoshDirection.COLUMN, gap=16, align=CoshAlign.CENTER):
                     Label(id="title", text="My App", font_size=52)
                     Button(id="play_btn", text="Play", classes="btn_primary", width=200)

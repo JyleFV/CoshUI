@@ -8,7 +8,7 @@ class CoshUIWarning(UserWarning):
     pass
 
 def _coshui_warning_handler(message, category, filename, lineno, file=None, line=None):
-    if category == CoshUIWarning:
+    if issubclass(category, CoshUIWarning):
         print(f"\033[93mCoshUIWarning: {message}\033[0m")  # yellow
     else:
         warnings._showwarning_orig(message, category, filename, lineno, file, line)

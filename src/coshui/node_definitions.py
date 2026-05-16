@@ -12,7 +12,6 @@ class Node(ABC):
 
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
-    sizing : CoshSizing = CoshSizing.AUTO
     width : float | None = None
     height : float | None = None
     margin : float | None = None
@@ -30,15 +29,11 @@ class Node(ABC):
     def __post_init__(self):
         CoshLifecycle.register_node(self)
 
-        if self.positioning == CoshPositioning.ABSOLUTE and self.sizing == CoshSizing.FILL:
-            warn("`sizing=CoshSizing.FILL` has no effect on absolute children. Use explicit `width` and `height` instead.")
-
-        if self.sizing == CoshSizing.FILL:
-            if not all(dim is None for dim in (self.width, self.height)):
-                warn("`sizing` is set to `CoshSizing.FILL`. Explicit `width` and `height` values will be ignored.")
+        if self.positioning is CoshPositioning.ABSOLUTE and any(size is CoshSizing.FILL for size in (self.width, self.height)):
+            warn("`FILL` sizing has no effect on absolute children. Use an explicit `width` and `height` values instead.")
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
-        if self.positioning != CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
+        if self.positioning is not CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
             warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
         
         self._x = self.x if self.x is not None else 0.0
@@ -101,11 +96,15 @@ class Element(Node):
     def __post_init__(self):
         if self.id is None:
             raise CoshUIError(f"Widget `{self.__class__.__name__}` must have an id.")
-        
+
         super().__post_init__()
 
     def measure(self):
         pass
+
+@dataclass
+class Widget(Element):
+    pass
 
 @dataclass
 class TextNode(Element):

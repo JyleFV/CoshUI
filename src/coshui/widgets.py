@@ -8,7 +8,7 @@ from .types import *
 from .utility import Ref
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
-from .node_definitions import Element, TextNode, ParentNode
+from .node_definitions import Element, TextNode, ParentNode, Widget
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 
 if TYPE_CHECKING:
@@ -23,20 +23,33 @@ class Container(ParentNode):
     direction : CoshDirection = CoshDirection.ROW
 
     def measure(self):
-        if self.sizing == CoshSizing.FILL:
+        if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
+            warn(f"Container has `AUTO` sizing with no children, setting sizing to `FILL`.")
+            if self.width is CoshSizing.AUTO:
+                self.width = CoshSizing.FILL
+            if self.height is CoshSizing.AUTO:
+                self.height = CoshSizing.FILL
+
+        relative_children = [child for child in self.children if child.positioning is not CoshPositioning.ABSOLUTE]
+        if not relative_children:
             return
 
         match self.direction:
             case CoshDirection.ROW:
-                if self.width is CoshSizing.AUTO:
-                    self.width = (sum(child.width + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.padding * 2)
-                if self.height is CoshSizing.AUTO:
-                    self.height = max((child.height + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.padding * 2)
+                children_width = sum(child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL)
+                total_gap = self.gap * max(0, len(relative_children) - 1)
+                auto_width = children_width + total_gap + (self.padding * 2)
+                auto_height = max([child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL], default=0) + (self.padding * 2)
             case CoshDirection.COLUMN:
-                if self.width is CoshSizing.AUTO:
-                    self.width = max((child.width + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0) + (self.padding * 2)
-                if self.height is CoshSizing.AUTO:
-                    self.height = (sum(child.height + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL) + (self.gap * (len(self.children) - 1))) + (self.padding * 2)
+                children_height = sum(child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL)
+                total_gap = self.gap * max(0, len(relative_children) - 1)
+                auto_height = children_height + total_gap + (self.padding * 2)
+                auto_width = max([child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL], default=0) + (self.padding * 2)
+
+        if self.width is CoshSizing.AUTO:
+            self.width = auto_width
+        if self.height is CoshSizing.AUTO:
+            self.height = auto_height
 
 @dataclass
 class Grid(ParentNode):
@@ -45,17 +58,29 @@ class Grid(ParentNode):
     column_count : int = 1
 
     def measure(self):
-        if self.sizing == CoshSizing.FILL:
+        relative_children = [child for child in self.children if child.positioning is not CoshPositioning.ABSOLUTE]
+        if not relative_children:
             return
 
-        rows = math.ceil(len(self.children) / self.column_count)
-        max_child_width = max((child.width + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
-        max_child_height = max((child.height + (child.margin * 2) for child in self.children if child.sizing != CoshSizing.FILL), default=0)
+        rows = math.ceil(len(relative_children) / self.column_count)
 
+        col_widths = [0.0] * self.column_count
+        row_heights = [0.0] * rows
+
+        for index, child in enumerate(relative_children):
+            col = index % self.column_count
+            row = index // self.column_count
+
+            child_width = (child.width + (child.margin * 2)) if child.width is not CoshSizing.FILL else 0.0
+            child_height = (child.height + (child.margin * 2)) if child.height is not CoshSizing.FILL else 0.0
+
+            col_widths[col] = max(col_widths[col], child_width)
+            row_heights[row] = max(row_heights[row], child_height)
+        
         if self.width is CoshSizing.AUTO:
-            self.width = (max_child_width * self.column_count) + (self.gap * (self.column_count - 1)) + (self.padding * 2)
+            self.width = sum(col_widths) + (self.gap * (self.column_count - 1)) + (self.padding * 2)
         if self.height is CoshSizing.AUTO:
-            self.height = (max_child_height * rows) + (self.gap * (rows - 1)) + (self.padding * 2)
+            self.height = sum(row_heights) + (self.gap * (rows - 1)) + (self.padding * 2)
 
 # ======================== Widgets ========================
 

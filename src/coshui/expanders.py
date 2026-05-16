@@ -76,7 +76,6 @@ def _expand_modal(node):
         direction=CoshDirection.COLUMN,
         x=pos[0],
         y=pos[1],
-        sizing=node.sizing,
         positioning=node.positioning,
         z_index=node.z_index,
         mouse_filter=CoshMouseFilter.PASS

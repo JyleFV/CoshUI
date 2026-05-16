@@ -86,7 +86,7 @@ class PygameBackend(CoshBackend):
 
         # Clipping Logic
         container_rect = pygame.Rect(*clip_rect) if clip_rect else None
-        node_rect = pygame.Rect(x, y, w, h) if text_clip == CoshTextOverflow.HIDDEN else None
+        node_rect = pygame.Rect(x, y, w, h) if text_clip is CoshTextOverflow.HIDDEN else None
 
         final_rect = None
 
