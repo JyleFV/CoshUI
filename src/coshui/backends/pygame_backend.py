@@ -1,8 +1,15 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+from ..state import CoshUI
 from ..backend import CoshBackend
-from ..types import RenderContext, CoshTextAlign, CoshTextJustify, CoshTextOverflow
+from ..types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
 from ..utility import resolve_border_radius
 from ..cui_error import CoshUIError
 from ..input import CoshInput
+
+if TYPE_CHECKING:
+    from ..types import RenderContext
 
 try:
     import pygame
@@ -22,52 +29,49 @@ class PygameBackend(CoshBackend):
 
     # Create a context manager to hold all these values so it's not so messy.
     def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border, clip_rect):
-        try:
-            if alpha <= 0:
-                return
+        if alpha <= 0:
+            return
 
-            if clip_rect:
-                self.surface.set_clip(pygame.Rect(*clip_rect))
+        if clip_rect:
+            self.surface.set_clip(pygame.Rect(*clip_rect))
 
-            tl, tr, br, bl = resolve_border_radius(border_radius)
-            
-            if alpha < 255:
-                # Create a temporary surface with per-pixel alpha
-                temp = pygame.Surface((w, h), pygame.SRCALPHA)
-                pygame.draw.rect(temp, (*color, alpha), (0, 0, w, h),
+        tl, tr, br, bl = resolve_border_radius(border_radius)
+        
+        if alpha < 255:
+            # Create a temporary surface with per-pixel alpha
+            temp = pygame.Surface((w, h), pygame.SRCALPHA)
+            pygame.draw.rect(temp, (*color, alpha), (0, 0, w, h),
+                border_top_left_radius=int(tl),
+                border_top_right_radius=int(tr),
+                border_bottom_right_radius=int(br),
+                border_bottom_left_radius=int(bl),
+            )
+            if border is not None:
+                border_color, border_width = border
+                pygame.draw.rect(temp, border_color, (0, 0, w, h), border_width,
                     border_top_left_radius=int(tl),
                     border_top_right_radius=int(tr),
                     border_bottom_right_radius=int(br),
-                    border_bottom_left_radius=int(bl),
+                    border_bottom_left_radius=int(bl)
                 )
-                if border is not None:
-                    border_color, border_width = border
-                    pygame.draw.rect(temp, border_color, (0, 0, w, h), border_width,
-                        border_top_left_radius=int(tl),
-                        border_top_right_radius=int(tr),
-                        border_bottom_right_radius=int(br),
-                        border_bottom_left_radius=int(bl)
-                    )
-                self.surface.blit(temp, (x, y))
-            else:
-                # No alpha, draw directly for performance
-                pygame.draw.rect(self.surface, color, (x, y, w, h),
+            self.surface.blit(temp, (x, y))
+        else:
+            # No alpha, draw directly for performance
+            pygame.draw.rect(self.surface, color, (x, y, w, h),
+                border_top_left_radius=int(tl),
+                border_top_right_radius=int(tr),
+                border_bottom_right_radius=int(br),
+                border_bottom_left_radius=int(bl),
+            )
+            if border is not None:
+                border_color, border_width = border
+                pygame.draw.rect(self.surface, border_color, (x, y, w, h), border_width,
                     border_top_left_radius=int(tl),
                     border_top_right_radius=int(tr),
                     border_bottom_right_radius=int(br),
-                    border_bottom_left_radius=int(bl),
+                    border_bottom_left_radius=int(bl),               
                 )
-                if border is not None:
-                    border_color, border_width = border
-                    pygame.draw.rect(self.surface, border_color, (x, y, w, h), border_width,
-                        border_top_left_radius=int(tl),
-                        border_top_right_radius=int(tr),
-                        border_bottom_right_radius=int(br),
-                        border_bottom_left_radius=int(bl),               
-                    )
-            self.surface.set_clip(None)
-        except ValueError:
-            raise CoshUIError(f"Value in border radius is the wrong type")
+        self.surface.set_clip(None)
 
     def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip, alpha):
         safe_font_size = font_size if font_size is not None else 16
@@ -139,16 +143,6 @@ class PygameBackend(CoshBackend):
         self.surface.set_clip(None)
 
     def flush(self, render_stack : list[RenderContext]):
-        from ..state import CoshUI
-
-        if CoshUI._temp_paths:
-            for path in CoshUI._temp_paths:
-                image = pygame.image.load(path).convert_alpha()
-                _image_cache[path] = image
-            CoshUI._temp_paths.clear()
-
-        # TODO: add font paths from CoshUI._temp_fonts and put it in _font_cache.
-
         for data in render_stack:
             if data.alpha <= 0:
                 continue

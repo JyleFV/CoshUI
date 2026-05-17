@@ -31,7 +31,6 @@ class CoshUI:
     _state_storage : dict = {} # FORMAT: { node_id : { "example_color": (255, 255, 255) }, node_id : {} }
     # ---------------- Render-related ----------------
     _style_dirty : set = set() 
-    _temp_paths : set = set()
     _font_library : dict = { "Courier" : COURIER, "Inter" : INTER, "Ubuntu" : UBUNTUMONO }
     _render_stack : list = []
     _default_font : str = _font_library.get("Inter")

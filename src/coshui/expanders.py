@@ -53,12 +53,28 @@ def _expand_slider(node):
     CoshUI._stack = saved_stack
     return track
 
+# TODO: Too lazy to work on this right now so I'll leave a todo for now.
 def _expand_dropdown(node):
-    pass
+    saved_stack = CoshUI._stack.copy()
+    CoshUI._stack.clear()
+
+    root = Container(id=f"{node.id}::root")
+
+    selector = Container(id=f"{node.id}::selector")
+
+    children = []
+    for i in range(len(node.list)):
+        item = Container(id=f"{node.id}::item_{i}")
+        children.append(item)
+
+    selector.children.extend(children)
+
+    root.children.append(selector)
+
+    CoshUI._stack = saved_stack
+    return root
 
 def _expand_modal(node):
-    # TODO: Change magic numbers to theme styles.
-
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
 
