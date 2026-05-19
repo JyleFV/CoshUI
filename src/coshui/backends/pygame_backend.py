@@ -1,11 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from ..state import CoshUI
 from ..backend import CoshBackend
 from ..types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
 from ..utility import resolve_border_radius
-from ..cui_error import CoshUIError
 from ..input import CoshInput
 
 if TYPE_CHECKING:

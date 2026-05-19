@@ -137,19 +137,23 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
         for child in absolute_children:
             if node.direction is CoshDirection.ROW:
                 match node.align:
+                    case CoshAlign.START:  base_y = y + node.padding
                     case CoshAlign.CENTER: base_y = y + (node.height / 2) - ((child.height + child.margin * 2) / 2)
                     case CoshAlign.END:    base_y = y + node.height - node.padding - (child.height + child.margin * 2)
                     case _:                base_y = y + node.padding
                 match node.justify:
+                    case CoshJustify.START:  base_x = x + node.padding
                     case CoshJustify.CENTER: base_x = x + (node.width / 2) - ((child.width + child.margin * 2) / 2)
                     case CoshJustify.END:    base_x = x + node.width - node.padding - (child.width + child.margin * 2)
                     case _:                  base_x = x + node.padding
             else:
                 match node.align:
+                    case CoshAlign.START:  base_x = x + node.padding
                     case CoshAlign.CENTER: base_x = x + (node.width / 2) - ((child.width + child.margin * 2) / 2)
                     case CoshAlign.END:    base_x = x + node.width - node.padding - (child.width + child.margin * 2)
-                    case _:                  base_x = x + node.padding
+                    case _:                base_x = x + node.padding
                 match node.justify:
+                    case CoshJustify.START:  base_y = y + node.padding
                     case CoshJustify.CENTER: base_y = y + (node.height / 2) - ((child.height + child.margin * 2) / 2)
                     case CoshJustify.END:    base_y = y + node.height - node.padding - (child.height + child.margin * 2)
                     case _:                  base_y = y + node.padding
@@ -176,51 +180,53 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             uniform_cell_width = max(0.0, available_width / node.column_count)
             uniform_cell_height = max(0.0, available_height / total_rows)
 
-            col_widths = [0.0] * node.column_count
+            column_widths = [0.0] * node.column_count
             row_heights = [0.0] * total_rows
 
             # 3. Establish track sizes (Respect child's hardcoded sizes if they exceed the uniform cell size)
-            for r_idx, row in enumerate(rows):
-                for c_idx, child in enumerate(row):
+            for row_index, row in enumerate(rows):
+                for column_index, child in enumerate(row):
                     # If child is FILL (or converted to FILL), its intrinsic size contribution is 0,
                     # but it will be safely caught by the uniform cell fallback size.
-                    c_width = (child.width + child.margin * 2) if child.width is not CoshSizing.FILL else 0.0
-                    c_height = (child.height + child.margin * 2) if child.height is not CoshSizing.FILL else 0.0
+                    child_width = (child.width + child.margin * 2) if child.width is not CoshSizing.FILL else 0.0
+                    child_height = (child.height + child.margin * 2) if child.height is not CoshSizing.FILL else 0.0
                     
                     # The track must be at least as big as the uniform cell slot allocation
-                    col_widths[c_idx] = max(col_widths[c_idx], c_width, uniform_cell_width)
-                    row_heights[r_idx] = max(row_heights[r_idx], c_height, uniform_cell_height)
+                    column_widths[column_index] = max(column_widths[column_index], child_width, uniform_cell_width)
+                    row_heights[row_index] = max(row_heights[row_index], child_height, uniform_cell_height)
 
             # 4. Calculate alignment boundaries
-            total_grid_content_width = sum(col_widths) + total_col_gaps
+            total_grid_content_width = sum(column_widths) + total_col_gaps
             total_grid_content_height = sum(row_heights) + total_row_gaps
 
             match node.align:
                 case CoshAlign.START:  start_y = y + node.padding
                 case CoshAlign.CENTER: start_y = y + (node.height / 2) - (total_grid_content_height / 2)
                 case CoshAlign.END:    start_y = y + node.height - node.padding - total_grid_content_height
+                case _:  start_y = y + node.padding
 
             match node.justify:
                 case CoshJustify.START:  start_x = x + node.padding
                 case CoshJustify.CENTER: start_x = x + (node.width / 2) - (total_grid_content_width / 2)
                 case CoshJustify.END:    start_x = x + node.width - node.padding - total_grid_content_width
+                case _:  start_x = x + node.padding
 
             # 5. Position and expand FILL elements
             current_y = start_y
-            for r_idx, row in enumerate(rows):
+            for row_index, row in enumerate(rows):
                 current_x = start_x
                 
-                for c_idx, child in enumerate(row):
+                for column_index, child in enumerate(row):
                     # Now that we have a concrete track size, give FILL elements their size allocation!
                     if child.width is CoshSizing.FILL:
-                        child.width = col_widths[c_idx] - (child.margin * 2)
+                        child.width = column_widths[column_index] - (child.margin * 2)
                     if child.height is CoshSizing.FILL:
-                        child.height = row_heights[r_idx] - (child.margin * 2)
+                        child.height = row_heights[row_index] - (child.margin * 2)
 
                     layout(child, current_x + child.margin, current_y + child.margin)
-                    current_x += col_widths[c_idx] + node.gap
+                    current_x += column_widths[column_index] + node.gap
 
-                current_y += row_heights[r_idx] + node.gap
+                current_y += row_heights[row_index] + node.gap
 
         for child in absolute_children:
             layout(child, x + node.padding + child._x, y + node.padding + child._y)
@@ -229,7 +235,13 @@ def update(delta : float):
     for tween in CoshUI._active_tweens:
         tween.update(delta)
 
+    completed = [tween for tween in CoshUI._active_tweens if tween.finished]
+
     CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
+
+    for tween in completed:
+        if tween.on_complete is not None:
+            tween.on_complete()
 
 def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
     if not is_root:

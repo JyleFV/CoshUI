@@ -58,6 +58,13 @@ class Grid(ParentNode):
     column_count : int = 1
 
     def measure(self):
+        if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
+            warn(f"Grid has `AUTO` sizing with no children, setting sizing to `FILL`.")
+            if self.width is CoshSizing.AUTO:
+                self.width = CoshSizing.FILL
+            if self.height is CoshSizing.AUTO:
+                self.height = CoshSizing.FILL
+
         relative_children = [child for child in self.children if child.positioning is not CoshPositioning.ABSOLUTE]
         if not relative_children:
             return
@@ -77,10 +84,13 @@ class Grid(ParentNode):
             col_widths[col] = max(col_widths[col], child_width)
             row_heights[row] = max(row_heights[row], child_height)
         
+        min_content_width = sum(col_widths) + (self.gap * max(0, self.column_count - 1)) + (self.padding * 2)
+        min_content_height = sum(row_heights) + (self.gap * max(0, rows - 1)) + (self.padding * 2)
+        
         if self.width is CoshSizing.AUTO:
-            self.width = sum(col_widths) + (self.gap * (self.column_count - 1)) + (self.padding * 2)
+            self.width = min_content_width
         if self.height is CoshSizing.AUTO:
-            self.height = sum(row_heights) + (self.gap * (rows - 1)) + (self.padding * 2)
+            self.height = min_content_height
 
 # ======================== Widgets ========================
 

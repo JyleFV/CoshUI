@@ -71,50 +71,109 @@ from .themes import CoshTheme
 
 from .animation import animate
 
-from .backends.pygame_backend import PygameBackend
-from .backends.raylib_backend import RaylibBackend
+def __getattr__(name):
+    if name == "PygameBackend":
+        from .backends.pygame_backend import PygameBackend
+        return PygameBackend
+    if name == "RaylibBackend":
+        from .backends.raylib_backend import RaylibBackend
+        return RaylibBackend
+    raise AttributeError(f"module 'coshui' has no attribute {name!r}")
 
 # TODO: Add the different flat variables
 __all__ = [
-    "CLICKED", 
-    "RELEASED", 
-    "PRESSED", 
-    "HOVERED", 
-    "HOVER_ENTER", 
-    "HOVER_EXIT", 
-    "LEFT", 
-    "RIGHT", 
-    "CoshMouseFilter", 
-    "CoshPositioning", 
-    "CoshTextOverflow", 
-    "CoshOverflow", 
-    "get_signal", 
-    "create_theme", 
+    # Core
+    "CoshUIRenderer",
+    "animate",
+    "Ref",
+
+    # Widgets
+    "Container",
+    "Grid",
+    "Modal",
+    "Button",
+    "Label",
+    "InputField",
+    "Checkbox",
+    "Image",
+    "Slider",
+
+    # Backends
+    "PygameBackend",
+    "RaylibBackend",
+
+    # Themes
+    "CoshTheme",
+    "create_theme",
     "set_theme",
-    "add_font", 
-    "add_class", 
-    "CoshTextAlign", 
-    "CoshTextJustify", 
-    "CoshAlign", 
-    "CoshJustify", 
-    "CoshDirection", 
-    "FILL", 
-    "AUTO", 
-    "CoshStyling", 
-    "Container", 
-    "Grid", 
-    "Modal", 
-    "PygameBackend", 
-    "RaylibBackend", 
-    "CoshUIRenderer", 
-    "CoshTheme", 
-    "animate", 
-    "Ref", 
-    "Button", 
-    "Image", 
-    "Label", 
-    "InputField", 
-    "Checkbox", 
-    "Slider", 
-    "set_default_font"
+
+    # Utility
+    "get_signal",
+    "add_font",
+    "add_class",
+    "set_default_font",
+
+    # Types (raw enums)
+    "CoshStyling",
+
+    # Align
+    "ALIGN_START",
+    "ALIGN_CENTER",
+    "ALIGN_END",
+    "ALIGN_STRETCH",
+
+    # Justify
+    "JUSTIFY_START",
+    "JUSTIFY_CENTER",
+    "JUSTIFY_END",
+    "JUSTIFY_SPACE_BETWEEN",
+    "JUSTIFY_SPACE_AROUND",
+    "JUSTIFY_SPACE_EVENLY",
+
+    # Text Overflow
+    "TEXT_VISIBLE",
+    "TEXT_HIDDEN",
+
+    # Text Align
+    "TEXT_ALIGN_TOP",
+    "TEXT_ALIGN_CENTER",
+    "TEXT_ALIGN_BOTTOM",
+
+    # Text Justify
+    "TEXT_JUSTIFY_LEFT",
+    "TEXT_JUSTIFY_CENTER",
+    "TEXT_JUSTIFY_RIGHT",
+
+    # Overflow
+    "VISIBLE",
+    "HIDDEN",
+
+    # Mouse Buttons
+    "MOUSE_LEFT",
+    "MOUSE_RIGHT",
+
+    # Mouse Filters
+    "IGNORE",
+    "STOP",
+    "PASS",
+
+    # Signals
+    "CLICKED",
+    "RELEASED",
+    "PRESSED",
+    "HOVERED",
+    "HOVER_ENTER",
+    "HOVER_EXIT",
+
+    # Direction
+    "ROW",
+    "COLUMN",
+
+    # Positioning
+    "RELATIVE",
+    "ABSOLUTE",
+
+    # Sizing
+    "FILL",
+    "AUTO",
 ]

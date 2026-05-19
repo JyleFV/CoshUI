@@ -63,16 +63,19 @@ class RaylibBackend(CoshBackend):
 
 
     def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip, alpha):
+        FONT_LOAD_SIZE = 128
+
         safe_font_size = font_size if font_size is not None else 16
         safe_scale = scale if scale is not None else 1.0
         scaled_font_size = max(1, int(safe_font_size * safe_scale))
 
-        cache_key = (font_path, scaled_font_size)
+        cache_key = font_path
         font = _font_cache.get(cache_key)
         if font is None:
-            font = raylibpy.load_font_ex(font_path, scaled_font_size, None, 0)
+            font = raylibpy.load_font_ex(font_path, FONT_LOAD_SIZE, None, 0)
+            raylibpy.set_texture_filter(font.texture, raylibpy.TEXTURE_FILTER_BILINEAR)
             _font_cache[cache_key] = font
-
+            
         r, g, b = color
         rl_color = raylibpy.Color(r, g, b, int(alpha))
         spacing = 1.0

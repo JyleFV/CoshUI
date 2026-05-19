@@ -43,17 +43,17 @@ import coshui as cui
 
 # 1. Write your UI Structure 
 with cui.CoshUIRenderer(...):
-    with cui.Container(id="main_container", width=FILL, height=FILL, direction=ROW, align=ALIGN_CENTER, justify=JUSTIFY_CENTER, gap=5.0):
+    with cui.Container(id="main_container", width=cui.FILL, height=cui.FILL, direction=cui.ROW, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=5.0):
         cui.Label(id="menu_label", text="CoshUI", width=200, height=50, font_size=64)
         cui.Button(id="print_btn", text="Print Hello World!")
         cui.Button(id="color_btn", text="Change Container Color!")
 
 # 2. Listen for the `CLICKED` signal that gets emitted by the Button Node.
-if cui.get_signal("print_btn", CLICKED):
+if cui.get_signal("print_btn", cui.CLICKED):
     print("Hello World!")
 
 # 3. Animate the container's background color using the built in animation system.
-if cui.get_signal("color_btn", CLICKED):
+if cui.get_signal("color_btn", cui.CLICKED):
     cui.animate("background_color", "main_container", (200, 200, 200), 1.5, "ease_in_out") 
 ```
 

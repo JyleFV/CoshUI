@@ -1,5 +1,5 @@
 import raylibpy as rl
-from coshui import *
+import coshui as cui
 
 WIDTH, HEIGHT = 800, 800
 FPS = 60
@@ -10,24 +10,26 @@ def main():
 
     print((rl.get_screen_width(), rl.get_screen_height()))
 
-    add_class("label_color", CoshStyling(background_color=(100, 255, 100)))
+    cui.add_class("label_color", cui.CoshStyling(background_color=(100, 255, 100)))
 
     while not rl.window_should_close():
         rl.clear_background(rl.BLACK)
         rl.begin_drawing()
         
-        with CoshUIRenderer(RaylibBackend()):
-            with Container(id="container_1", width=FILL, height=FILL, style=CoshStyling(background_color=(80, 75, 255)), align=CoshAlign.CENTER, justify=CoshJustify.CENTER):
-                with Container(id="main_container", direction=CoshDirection.COLUMN, align=CoshAlign.CENTER, justify=CoshJustify.CENTER, gap=15):
-                    Label(id="main_label", text="CoshUI Menu", font_size=48)
-                    Button(id="settings_button", text="Settings")
-                    Button(id="quit_button", text="Quit")
+        with cui.CoshUIRenderer(cui.RaylibBackend()):
+            with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
+                with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15):
+                    cui.Label(id="main_label", text="CoshUI Menu", font_size=52)
+                    cui.Button(id="settings_button", text="Settings")
+                    cui.Button(id="quit_button", text="Quit")
         
         rl.end_drawing()
 
-        if get_signal("root3", CLICKED):
-            animate("background_color", "root", (100, 100, 100), 1.5, "ease_in")
-
+        if cui.get_signal("settings_button", cui.CLICKED):
+            cui.animate("scale", "main_label", 1.2, 0.25, "ease_in")
+        if cui.get_signal("settings_button", cui.RELEASED):
+            cui.animate("scale", "main_label", 1.0, 0.25, "ease_in")
+            
     rl.close_window()
 
 if __name__ == "__main__":

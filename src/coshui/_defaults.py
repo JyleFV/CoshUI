@@ -5,19 +5,19 @@ from .utility import adjust_brightness_value
 
 # TODO: Add all properties
 ENGINE_DEFAULTS = {
-    "width": CoshSizing.AUTO,
-    "height": CoshSizing.AUTO,
-    "margin": 0.0,
-    "padding": 0.0,
-    "gap": 0.0,
-    "alpha": 255,
-    "border_radius": 0,
-    "transform_scale": 1.0,
-    "transform_position": (0, 0),
-    "transform_rotation": 0.0,
-    "font_size": 16,
-    "text_color": (255, 255, 255),
-    "thumb_size": 20
+    "width" : CoshSizing.AUTO,
+    "height" : CoshSizing.AUTO,
+    "margin" : 0.0,
+    "padding" : 0.0,
+    "gap" : 0.0,
+    "alpha" : 255,
+    "border_radius" : 0,
+    "transform_scale" : 1.0,
+    "transform_position" : (0, 0),
+    "transform_rotation" : 0.0,
+    "font_size" : 16,
+    "text_color" : (255, 255, 255),
+    "thumb_size" : 20
 }
 
 def _button_default_hover(node_id):

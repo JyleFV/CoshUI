@@ -1,4 +1,5 @@
 import difflib
+from typing import Callable, Optional
 
 from .state import CoshUI
 from .cui_error import CoshUIError
@@ -48,7 +49,7 @@ PROPERTY_TYPE_MAP = {
 }
 
 class Tween:
-    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : callable):
+    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : callable, on_complete : Optional[Callable] = None):
         self.property = n_property
         self.target_id = target_id
 
@@ -68,6 +69,7 @@ class Tween:
         self.time = 0
         self.duration = duration
         self.easing = easing
+        self.on_complete = on_complete
         self.finished = False
 
     def update(self, delta):
@@ -90,7 +92,7 @@ class Tween:
         self.time = 0
         self.finished = False
 
-def animate(n_property : str, target_id : str, end_value, duration : float, easing : str):
+def animate(n_property : str, target_id : str, end_value, duration : float, easing : str, on_complete : Optional[Callable] = None):
     """
     Animates a node property over time. 
     
@@ -102,6 +104,7 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
     :param end_value: The final target value to reach by the end of the animation.
     :param duration: Animation length in seconds.
     :param easing: The easing curve name. Defaults to 'linear' if not passed.
+    :param on_complete: A callable that gets called once the tween is finished.
 
     .. note ::
         **Best Practice:** Call this inside a callable passed to event fields. 
@@ -129,5 +132,5 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
         CoshUI._active_tweens.remove(existing_tween)
 
     ease_fn = EASING_MAP.get(easing, ease_linear)
-    tween = Tween(n_property, target_id, end_value, duration, ease_fn)
+    tween = Tween(n_property, target_id, end_value, duration, ease_fn, on_complete)
     CoshUI._active_tweens.add(tween)

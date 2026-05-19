@@ -45,12 +45,17 @@ class CoshMouseButton(Enum):
     RIGHT = 1
 
 class CoshSignals(Enum):
+    # Mouse Buttons
     CLICKED = 0
     RELEASED = 1
     PRESSED = 2
     HOVERED = 3
     HOVER_ENTER = 4
     HOVER_EXIT = 5
+    # Keyboard Keys
+    KEY_CLICKED = 6
+    KEY_RELEASED = 7
+    KEY_PRESSED = 8
 
 class CoshTextOverflow(Enum):
     HIDDEN = 0  
