@@ -3,7 +3,7 @@
 # CoshUI
 ### The Python-first, Declarative-Mode, Backend Agnostic, UI Library.
 
-![CoshUI Logo](https://raw.githubusercontent.com/Terrarizer03/CoshUI/main/assets/coshui_logo.png)
+![CoshUI Logo](/assets/coshui_logo.png)
 
 </div>
 
@@ -57,7 +57,7 @@ if cui.get_signal("color_btn", cui.CLICKED):
     cui.animate("background_color", "main_container", (200, 200, 200), 1.5, "ease_in_out") 
 ```
 
-To learn more, check out our [examples](/examples/examples.md) or visit the [website]()
+To learn more, check out our [examples](/examples/examples.md) or visit the [website](https://terrarizer03.github.io/coshui-docs/)
 
 ## Author
 **Main Developer and Maintainer:** Jyle Frazier (Terra) U. Villareal
