@@ -5,7 +5,7 @@ WIDTH, HEIGHT = 800, 800
 FPS = 60
 
 def main():
-    rl.init_window(WIDTH, HEIGHT, "CoshUI Test")
+    rl.init_window(WIDTH, HEIGHT, "Raylib CoshUI Test")
     rl.set_target_fps(FPS)
 
     print((rl.get_screen_width(), rl.get_screen_height()))
@@ -29,7 +29,10 @@ def main():
             cui.animate("scale", "main_label", 1.2, 0.25, "ease_in")
         if cui.get_signal("settings_button", cui.RELEASED):
             cui.animate("scale", "main_label", 1.0, 0.25, "ease_in")
-            
+
+        if cui.get_signal("quit_button", cui.CLICKED):
+            rl.close_window()
+
     rl.close_window()
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ counter = 0
 def main():
     py.init()
     screen = py.display.set_mode((WIDTH, HEIGHT))
-    py.display.set_caption("CoshUI Test")
+    py.display.set_caption("Pygame CoshUI Test")
     clock = py.time.Clock()
 
     cui.add_class("label_color", cui.CoshStyling(background_color=(100, 255, 100)))
@@ -33,6 +33,9 @@ def main():
             cui.animate("scale", "main_label", 1.2, 0.25, "ease_in")
         if cui.get_signal("settings_button", cui.RELEASED):
             cui.animate("scale", "main_label", 1.0, 0.25, "ease_in")
+
+        if cui.get_signal("quit_button", cui.CLICKED):
+            running = False
 
         py.display.flip()
         clock.tick(FPS)
