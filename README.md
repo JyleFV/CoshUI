@@ -60,8 +60,8 @@ if cui.get_signal("color_btn", cui.CLICKED):
 To learn more, check out our [examples](/examples/examples.md) or visit the [website](https://terrarizer03.github.io/coshui-docs/)
 
 ## Author
-**Main Developer and Maintainer:** Jyle Frazier (Terra) U. Villareal
+**Main Developer and Maintainer:** Jyle Frazier (Terra) Villareal
 
 ## Contact
-- Socials: [GitHub](https://github.com/Terrarizer03) • [X/Twitter](https://x.com/Terrarizer_) • [Ko-fi](https://ko-fi.com/terrarizer) • [YouTube](https://www.youtube.com/@terrarizer3) • [Twitch](https://www.twitch.tv/terrarizer_)
-- Email: terrarizer0399@gmail.com
+- Socials: [GitHub](https://github.com/JyleFV) • [X/Twitter](https://x.com/JyleFV)
+- Email: jylefraziervillareal@gmail.com
