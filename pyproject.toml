@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coshui"
-version = "0.2.1"
+version = "0.2.2"
 authors = [{name = "Jyle Frazier Villareal", email = "jylefraziervillareal@gmail.com"}]
 description = "A Python-first — Declarative-Mode — Backend-Agnostic — UI Library"
 readme = "README.md"
@@ -29,6 +29,6 @@ where = ["src"]
 coshui = ["assets/fonts/*.ttf"]
 
 [project.urls]
-Homepage = "https://github.com/Terrarizer03/CoshUI"
-Repository = "https://github.com/Terrarizer03/CoshUI"
-Documentation = "https://terrarizer03.github.io/CoshUI" 
+Homepage = "https://github.com/JyleFV/CoshUI"
+Repository = "https://github.com/JyleFV/CoshUI"
+Documentation = "https://terrarizer03.github.io/coshui-docs"

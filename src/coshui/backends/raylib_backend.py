@@ -206,25 +206,30 @@ def _draw_asymmetric_rect(x, y, w, h, top_left, top_right, bottom_right, bottom_
 
 def _draw_asymmetric_rect_filled(x, y, w, h, top_left, top_right, bottom_right, bottom_left, color):
     segments = 16
+    
+    top_left_rounded = round(top_left)
+    top_right_rounded = round(top_right)
+    bottom_right_rounded = round(bottom_right)
+    bottom_left_rounded = round(bottom_left)
 
     if top_left > 0:
-        raylibpy.draw_circle_sector(raylibpy.Vector2(x + top_left, y + top_left), top_left, 180, 270, segments, color)
+        raylibpy.draw_circle_sector(raylibpy.Vector2(x + top_left_rounded, y + top_left_rounded), top_left_rounded, 180, 270, segments, color)
     if top_right > 0:
-        raylibpy.draw_circle_sector(raylibpy.Vector2(x + w - top_right, y + top_right), top_right, 270, 360, segments, color)
+        raylibpy.draw_circle_sector(raylibpy.Vector2(x + w - top_right_rounded, y + top_right_rounded), top_right_rounded, 270, 360, segments, color)
     if bottom_right > 0:
-        raylibpy.draw_circle_sector(raylibpy.Vector2(x + w - bottom_right, y + h - bottom_right), bottom_right, 0, 90, segments, color)
+        raylibpy.draw_circle_sector(raylibpy.Vector2(x + w - bottom_right_rounded, y + h - bottom_right_rounded), bottom_right_rounded, 0, 90, segments, color)
     if bottom_left > 0:
-        raylibpy.draw_circle_sector(raylibpy.Vector2(x + bottom_left, y + h - bottom_left), bottom_left, 90, 180, segments, color)
+        raylibpy.draw_circle_sector(raylibpy.Vector2(x + bottom_left_rounded, y + h - bottom_left_rounded), bottom_left_rounded, 90, 180, segments, color)
 
-    top_h = max(top_left, top_right)
-    if w - top_left - top_right > 0 and top_h > 0:
-        raylibpy.draw_rectangle(int(x + top_left), int(y), int(w - top_left - top_right), int(top_h), color)
+    top_h = max(top_left_rounded, top_right_rounded)
+    if w - top_left_rounded - top_right_rounded > 0 and top_h > 0:
+        raylibpy.draw_rectangle(int(x + top_left_rounded), int(y), int(w - top_left_rounded - top_right_rounded), int(top_h), color)
 
-    bot_h = max(bottom_left, bottom_right)
-    if w - bottom_left - bottom_right > 0 and bot_h > 0:
-        raylibpy.draw_rectangle(int(x + bottom_left), int(y + h - bot_h), int(w - bottom_left - bottom_right), int(bot_h), color)
+    bot_h = max(bottom_left_rounded, bottom_right_rounded)
+    if w - bottom_left_rounded - bottom_right_rounded > 0 and bot_h > 0:
+        raylibpy.draw_rectangle(int(x + bottom_left_rounded), int(y + h - bot_h), int(w - bottom_left_rounded - bottom_right_rounded), int(bot_h), color)
 
-    mid_y = y + max(top_left, top_right)
-    mid_h = h - max(top_left, top_right) - max(bottom_left, bottom_right)
+    mid_y = y + max(top_left_rounded, top_right_rounded)
+    mid_h = h - max(top_left_rounded, top_right_rounded) - max(bottom_left_rounded, bottom_right_rounded)
     if mid_h > 0:
         raylibpy.draw_rectangle(int(x), int(mid_y), int(w), int(mid_h), color)

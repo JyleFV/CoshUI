@@ -26,9 +26,13 @@ Use the following prefixes:
 ## Code Style
 
 - **No abbreviations in variable names**: `row_index` not `r_idx`
-- **Spaced dictionary colons**: `{ "key" : value }` not `{"key": value}`
+- **Spaced colons**: (`{ "key" : value }` / `text : str`) not (`{"key": value}` / `text: str`)
 - **Self documenting names**: code should read clearly without needing comments
 - Comments should explain **why**, not **what**
+
+> [!WARNING]
+> The spaced colons style for CoshUI is purely for styling purposes (cause I like them) but it's not compliant with PEP 8 standards, 
+> so if you have formatters while contributing to this project, make it ignore those warnings.
 
 ## Pull Requests
 
