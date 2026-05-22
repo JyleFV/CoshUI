@@ -12,7 +12,6 @@ from .cui_error import CoshUIError
 from .backend import CoshBackend
 from .lifecycle import CoshLifecycle
 from .state import CoshUI
-from .utility import print_tree
 from .expanders import _expand_slider, _expand_dropdown, _expand_modal
 from .widgets import Slider, Dropdown, Modal, Container
 from .pipeline import measure, layout, render, process_events, update, finalize_defaults

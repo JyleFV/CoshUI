@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..backend import CoshBackend
-
+from ..utility import intersect_rect
 from ..input import CoshInput
 from ..types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
 from ..utility import resolve_border_radius
@@ -23,17 +23,30 @@ class RaylibBackend(CoshBackend):
         if raylibpy is None:
             raise ImportError("raylibpy is not installed.")
 
-    def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border, clip_rect):
+    def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border, clip_rect, rotation=0.0):
         if alpha <= 0:
             return
-        
+
         if clip_rect:
             raylibpy.begin_scissor_mode(int(clip_rect[0]), int(clip_rect[1]), int(clip_rect[2]), int(clip_rect[3]))
 
         final_color = raylibpy.Color(color[0], color[1], color[2], int(alpha))
         top_left, top_right, bottom_right, bottom_left = resolve_border_radius(border_radius)
 
-        if top_left == top_right == bottom_right == bottom_left:
+        if rotation != 0.0:
+            origin = raylibpy.Vector2(w / 2, h / 2)
+            raylib_rotation = -rotation
+
+            if border is not None:
+                b_color, b_width = border
+                b_rl_color = raylibpy.Color(b_color[0], b_color[1], b_color[2], int(alpha))
+                border_rect = raylibpy.Rectangle(x + w / 2, y + h / 2, w + b_width * 2, h + b_width * 2)
+                border_origin = raylibpy.Vector2(w / 2 + b_width, h / 2 + b_width)
+                raylibpy.draw_rectangle_pro(border_rect, border_origin, raylib_rotation, b_rl_color)
+
+            rect = raylibpy.Rectangle(x + w / 2, y + h / 2, w, h)
+            raylibpy.draw_rectangle_pro(rect, origin, raylib_rotation, final_color)
+        elif top_left == top_right == bottom_right == bottom_left:
             rect = raylibpy.Rectangle(x, y, w, h)
             roundness = 0.0
             if top_left > 0 and min(w, h) > 0:
@@ -62,7 +75,7 @@ class RaylibBackend(CoshBackend):
             raylibpy.end_scissor_mode()
 
 
-    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip, alpha):
+    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip, alpha, rotation):
         FONT_LOAD_SIZE = 128
 
         safe_font_size = font_size if font_size is not None else 16
@@ -80,33 +93,48 @@ class RaylibBackend(CoshBackend):
         rl_color = raylibpy.Color(r, g, b, int(alpha))
         spacing = 1.0
 
-        text_size = raylibpy.measure_text_ex(font, text, scaled_font_size, spacing)
-        text_w, text_h = text_size.x, text_size.y
+        if text_clip is CoshTextOverflow.WRAP:
+            lines = []
+            words = text.split(' ')
+            current_line = ""
+            
+            for word in words:
+                test_line = f"{current_line} {word}".strip() if current_line else word
+                test_size = raylibpy.measure_text_ex(font, test_line, scaled_font_size, spacing)
+                
+                if test_size.x <= w:
+                    current_line = test_line
+                else:
+                    if not current_line:
+                        lines.append(word)
+                        current_line = ""
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+            if current_line:
+                lines.append(current_line)
+        else:
+            lines = [text]
 
-        match justify:
-            case CoshTextJustify.LEFT:
-                text_x = x
-            case CoshTextJustify.CENTER:
-                text_x = x + (w / 2) - (text_w / 2)
-            case CoshTextJustify.RIGHT:
-                text_x = x + w - text_w
+        single_line_metrics = raylibpy.measure_text_ex(font, "A", scaled_font_size, spacing)
+        line_height = single_line_metrics.y
+        total_text_h = len(lines) * line_height
 
         match align:
             case CoshTextAlign.TOP:
-                text_y = y
+                start_y = y
             case CoshTextAlign.CENTER:
-                text_y = y + (h / 2) - (text_h / 2)
+                start_y = y + (h / 2) - (total_text_h / 2)
             case CoshTextAlign.BOTTOM:
-                text_y = y + h - text_h
+                start_y = y + h - total_text_h
 
-        # Clipping
         final_clip = None
         if clip_rect:
             final_clip = clip_rect
-        if text_clip == CoshTextOverflow.HIDDEN:
+
+        if text_clip in (CoshTextOverflow.HIDDEN, CoshTextOverflow.WRAP):
             node_rect = (x, y, w, h)
             if final_clip:
-                from ..utility import intersect_rect
                 final_clip = intersect_rect(final_clip, node_rect)
             else:
                 final_clip = node_rect
@@ -114,13 +142,33 @@ class RaylibBackend(CoshBackend):
         if final_clip:
             raylibpy.begin_scissor_mode(int(final_clip[0]), int(final_clip[1]), int(final_clip[2]), int(final_clip[3]))
 
-        raylibpy.draw_text_ex(font, text, raylibpy.Vector2(text_x, text_y), scaled_font_size, spacing, rl_color)
+        for i, line_text in enumerate(lines):
+            line_size = raylibpy.measure_text_ex(font, line_text, scaled_font_size, spacing)
+            line_w = line_size.x
+            
+            match justify:
+                case CoshTextJustify.LEFT:
+                    text_x = x
+                case CoshTextJustify.CENTER:
+                    text_x = x + (w / 2) - (line_w / 2)
+                case CoshTextJustify.RIGHT:
+                    text_x = x + w - line_w
+
+            text_y = start_y + (i * line_height)
+            
+            if rotation != 0.0:
+                origin = raylibpy.Vector2(line_w / 2, line_height / 2)
+                raylib_rotation = -rotation
+                pos = raylibpy.Vector2(text_x + line_w / 2, text_y + line_height / 2)
+                raylibpy.draw_text_pro(font, line_text, pos, origin, raylib_rotation, scaled_font_size, spacing, rl_color)
+            else:
+                raylibpy.draw_text_ex(font, line_text, raylibpy.Vector2(text_x, text_y), scaled_font_size, spacing, rl_color)
 
         if final_clip:
             raylibpy.end_scissor_mode()
 
 
-    def _draw_image(self, img_path, x, y, w, h, alpha, clip_rect):
+    def _draw_image(self, img_path, x, y, w, h, alpha, clip_rect, rotation):
         if alpha <= 0:
             return
 
@@ -134,9 +182,11 @@ class RaylibBackend(CoshBackend):
             raylibpy.begin_scissor_mode(int(clip_rect[0]), int(clip_rect[1]), int(clip_rect[2]), int(clip_rect[3]))
 
         src_rect = raylibpy.Rectangle(0, 0, texture.width, texture.height)
-        dst_rect = raylibpy.Rectangle(x, y, w, h)
+        dst_rect = raylibpy.Rectangle(x + w / 2, y + h / 2, w, h)
+        origin = raylibpy.Vector2(w / 2, h / 2)
+        raylib_rotation = -rotation
         color = raylibpy.Color(255, 255, 255, int(alpha))
-        raylibpy.draw_texture_pro(texture, src_rect, dst_rect, raylibpy.Vector2(0, 0), 0.0, color)
+        raylibpy.draw_texture_pro(texture, src_rect, dst_rect, origin, raylib_rotation, color)
 
         if clip_rect:
             raylibpy.end_scissor_mode()
@@ -155,13 +205,13 @@ class RaylibBackend(CoshBackend):
             true_y = data.y + data.transform_y + offset_y
 
             if data.background_color:
-                self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border, data.clip_rect)
+                self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border, data.clip_rect, data.transform_rotation)
             
             if data.text:
-                self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify, data.clip_rect, data.text_overflow, data.alpha)
+                self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify, data.clip_rect, data.text_overflow, data.alpha, data.transform_rotation)
 
             if data.image_src:
-                self._draw_image(data.image_src, true_x, true_y, scaled_w, scaled_h, data.alpha, data.clip_rect)
+                self._draw_image(data.image_src, true_x, true_y, scaled_w, scaled_h, data.alpha, data.clip_rect, data.transform_rotation)
 
     def get_size(self):
         return (raylibpy.get_screen_width(), raylibpy.get_screen_height())

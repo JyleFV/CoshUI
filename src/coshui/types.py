@@ -118,6 +118,7 @@ class RenderContext(NamedTuple):
     background_color : tuple | None = None
     border_radius : int | tuple = 0
     transform_scale : float = 1.0
+    transform_rotation : float = 0.0
     border : tuple | None = None
     alpha : int = 0
     # Interaction

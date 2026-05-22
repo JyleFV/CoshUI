@@ -61,6 +61,7 @@ class Node(ABC):
             "z_index" : self.z_index,
             "border_radius" : self.style.border_radius,
             "alpha" : self.style.alpha,
+            "transform_rotation" : self.style.transform_rotation,
             "transform_scale" : self.style.transform_scale,
             "border" : self.style.border,
             "mouse_filter" : self.mouse_filter

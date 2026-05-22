@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TypeVar, Generic, TYPE_CHECKING
 import difflib
 import os
+import math
 
 from .cui_error import CoshUIError
 from .state import CoshUI
@@ -151,6 +152,22 @@ def merge_styles(base : CoshStyling, override : CoshStyling) -> CoshStyling:
         transform_rotation=override.transform_rotation if override.transform_rotation is not None else base.transform_rotation,
         transform_scale=override.transform_scale if override.transform_scale is not None else base.transform_scale
     )
+
+def get_local_mouse(mouse_x, mouse_y, node_x, node_y, node_w, node_h, angle):
+    center_x = node_x + (node_w / 2)
+    center_y = node_y + (node_h / 2)
+    
+    rad = math.radians(angle)
+    cos_a = math.cos(rad)
+    sin_a = math.sin(rad)
+
+    distance_x = mouse_x - center_x
+    distance_y = mouse_y - center_y
+    
+    local_dx = distance_x * cos_a - distance_y * sin_a
+    local_dy = distance_x * sin_a + distance_y * cos_a
+
+    return (center_x + local_dx, center_y + local_dy)
 
 def print_tree(node):
     print(f"Node: {node.__class__.__name__} with node_id: {node.id}\n")

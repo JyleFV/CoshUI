@@ -2,7 +2,7 @@ from .state import CoshUI
 from .input import CoshInput
 from .node_definitions import Node
 from .widgets import Container, Grid
-from .utility import intersect_rect, point_in_rect
+from .utility import intersect_rect, point_in_rect, get_local_mouse
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
@@ -290,23 +290,24 @@ def process_events():
         was_hovered = CoshUI.get_state(data.id, "_was_hovered", False)
 
         scale = data.transform_scale
-        sw, sh = data.width * scale, data.height * scale
-        ox, oy = (data.width - sw) / 2, (data.height - sh) / 2
+        scaled_width, scaled_height = data.width * scale, data.height * scale
+        ox, oy = (data.width - scaled_width) / 2, (data.height - scaled_height) / 2
 
         tx = data.x + data.transform_x + ox
         ty = data.y + data.transform_y + oy
 
-        if data.clip_rect:
-            effective_rect = intersect_rect(
-                (tx, ty, sw, sh),
-                data.clip_rect
-            )
-            if effective_rect is None:
-                continue
-        else:
-            effective_rect = (tx, ty, sw, sh)
+        finalized_mx, finalized_my = mx, my
+        if data.transform_rotation and data.transform_rotation != 0:
+            finalized_mx, finalized_my = get_local_mouse(mx, my, tx, ty, scaled_width, scaled_height, data.transform_rotation)
 
-        hovered = point_in_rect(mx, my, *effective_rect)
+        node_bounds = (tx, ty, scaled_width, scaled_height)
+        inside_node = point_in_rect(finalized_mx, finalized_my, *node_bounds)
+
+        inside_clip = True
+        if data.clip_rect:
+            inside_clip = point_in_rect(mx, my, *data.clip_rect)
+
+        hovered = inside_node and inside_clip
 
         if hovered and not consumed_hover:
             CoshUI.set_state(data.id, "_was_hovered", True)

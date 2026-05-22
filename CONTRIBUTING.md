@@ -25,7 +25,7 @@ Use the following prefixes:
 
 ## Code Style
 
-- **No abbreviations in variable names**: `row_index` not `r_idx`
+- **Try not to have confusing abbreviations in variable names**: `center_x` not `cx`
 - **Spaced colons**: (`{ "key" : value }` / `text : str`) not (`{"key": value}` / `text: str`)
 - **Self documenting names**: code should read clearly without needing comments
 - Comments should explain **why**, not **what**

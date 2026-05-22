@@ -18,17 +18,23 @@ def main():
         
         with cui.CoshUIRenderer(cui.RaylibBackend()):
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
-                with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, width=cui.AUTO, height=cui.AUTO, style=cui.CoshStyling(background_color=(255, 200, 200))):
+                with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52)
-                    cui.Button(id="settings_button", text="Settings")
-                    cui.Button(id="quit_button", text="Quit")
-        
+                    cui.Button(id="settings_button", text="Settings is a stupid thing to talk about and I don't like it", text_overflow=cui.TEXT_WRAP, height=50, text_justify=cui.TEXT_JUSTIFY_CENTER)
+                    cui.Button(id="quit_button", text="Quit", height=50, width=150, style=cui.CoshStyling(transform_rotation=45.0))
+                    cui.Image(id="test_image", src="assets/image.png", width=75, height=75, style=cui.CoshStyling(transform_rotation=45.0))
+
         rl.end_drawing()
 
         if cui.get_signal("settings_button", cui.CLICKED):
             cui.animate("scale", "main_label", 1.2, 0.25, "ease_in")
         if cui.get_signal("settings_button", cui.RELEASED):
             cui.animate("scale", "main_label", 1.0, 0.25, "ease_in")
+
+        if cui.get_signal("quit_button", cui.HOVERED):
+            cui.animate("rotation", "quit_button", 0.0, 0.5, "ease_in")
+        if cui.get_signal("quit_button", cui.HOVER_EXIT):
+            cui.animate("rotation", "quit_button", 45.0, 0.5, "ease_in")
 
         if cui.get_signal("quit_button", cui.CLICKED):
             break;

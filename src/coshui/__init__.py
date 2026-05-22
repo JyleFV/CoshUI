@@ -23,6 +23,7 @@ JUSTIFY_SPACE_EVENLY = CoshJustify.SPACE_EVENLY
 # Text Overflow
 TEXT_VISIBLE = CoshTextOverflow.VISIBLE
 TEXT_HIDDEN = CoshTextOverflow.HIDDEN
+TEXT_WRAP = CoshTextOverflow.WRAP
 
 # Text Align
 TEXT_ALIGN_TOP = CoshTextAlign.TOP
@@ -133,6 +134,7 @@ __all__ = [
     # Text Overflow
     "TEXT_VISIBLE",
     "TEXT_HIDDEN",
+    "TEXT_WRAP",
 
     # Text Align
     "TEXT_ALIGN_TOP",

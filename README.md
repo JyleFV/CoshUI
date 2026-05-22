@@ -21,12 +21,11 @@ pip install coshui
 
 Due to CoshUI being *backend-agnostic* you can use CoshUI with different dependencies which lets you use their specific backends.
 
-**For the Pygame Dependency:**
-```
+```bash
+# For the Pygame Dependency
 pip install coshui[pygame]
-```
-**For the Raylib Dependency:**
-```
+
+# For the Raylib Dependency
 pip install coshui[raylib]
 ```
 
