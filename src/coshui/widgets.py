@@ -192,7 +192,28 @@ class InputField(TextNode):
 
 @dataclass
 class Dropdown(TextNode):
-    pass
+    item_list : list | None = None
+    selector_index : int = 0
+    bind : Ref | None = None
+
+    def __post_init__(self):
+        if self.item_list is None:
+            raise CoshUIError("Widget `Dropdown` must have a valid `item_list`")
+
+        super().__post_init__()
+
+        stored_index = CoshUI.get_state(self.id, "selector_index")
+        if stored_index is not None:
+            self.selector_index = stored_index
+            if self.bind is not None:
+                self.bind.value = self.item_list[self.selector_index]
+        else:
+            CoshUI.set_state(self.id, "selector_index", self.selector_index)
+            if self.bind is not None:
+                self.bind.value = self.item_list[self.selector_index]
+
+    def get_render_data(self):
+        return None
 
 @dataclass
 class Slider(Element):

@@ -3,6 +3,9 @@
 Thanks for your interest in contributing to CoshUI! This document outlines 
 the process for contributing and the conventions we follow.
 
+> [!NOTE]
+> CoshUI is primarily developed on [GitLab](https://gitlab.com/jylefv/CoshUI). Please open issues and pull requests there.
+
 ## Getting Started
 
 1. Fork the repository

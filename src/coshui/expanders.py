@@ -1,10 +1,9 @@
 from .state import CoshUI
 from .input import CoshInput
-from .types import CoshPositioning, CoshStyling, CoshDirection, CoshMouseFilter, CoshAlign
+from .types import CoshPositioning, CoshStyling, CoshDirection, CoshMouseFilter, CoshAlign, CoshJustify, CoshSignals, CoshSizing
 from .pipeline import measure, finalize_defaults
 from ._defaults import ENGINE_DEFAULTS
-from .lifecycle import CoshLifecycle
-from .widgets import Container, Box
+from .widgets import Container, Label, Box
 
 def _expand_slider(node):
     saved_stack = CoshUI._stack.copy()
@@ -53,23 +52,115 @@ def _expand_slider(node):
     CoshUI._stack = saved_stack
     return track
 
-# TODO: Too lazy to work on this right now so I'll leave a todo for now.
 def _expand_dropdown(node):
     saved_stack = CoshUI._stack.copy()
     CoshUI._stack.clear()
 
-    root = Container(id=f"{node.id}::root")
+    open = CoshUI.get_state(node.id, "open") or False
+    selector_index = CoshUI.get_state(node.id, "selector_index") or node.selector_index
 
-    selector = Container(id=f"{node.id}::selector")
+    # Toggle open on selector click
+    if CoshUI._focused_id == f"{node.id}::selector" and CoshUI._get_signal(f"{node.id}::selector", CoshSignals.CLICKED):
+        open = not open
+        CoshUI.set_state(node.id, "open", open)
 
-    children = []
-    for i in range(len(node.list)):
-        item = Container(id=f"{node.id}::item_{i}")
-        children.append(item)
+    # Check if any item was clicked
+    for i in range(len(node.item_list)):
+        item_id = f"{node.id}::item_{i}"
+        if CoshUI._focused_id == item_id and CoshUI._get_signal(item_id, CoshSignals.CLICKED):
+            selector_index = i
+            CoshUI.set_state(node.id, "selector_index", selector_index)
+            CoshUI.set_state(node.id, "open", False)
+            open = False
+            if node.bind is not None:
+                node.bind.value = node.item_list[selector_index]
 
-    selector.children.extend(children)
+    root = Container(
+        id=f"{node.id}::root",
+        direction=CoshDirection.COLUMN,
+        z_index=node.z_index,
+        width=node.width
+    )
 
+    selector = Container(
+        id=f"{node.id}::selector",
+        height=node.height,
+        width=node.width,
+        align=CoshAlign.CENTER,
+        justify=CoshJustify.CENTER,
+        style=CoshStyling(
+            background_color=node.style.background_color,
+            border_radius=node.style.border_radius,
+            border=node.style.border,
+            alpha=node.style.alpha
+        ),
+        z_index=node.z_index
+    )
+
+    selector_label = Label(
+        id=f"{node.id}::selector_label",
+        text=str(node.item_list[selector_index]),
+        font=node.font,
+        font_size=node.font_size,
+        text_color=node.text_color,
+        width=CoshSizing.AUTO,
+        height=CoshSizing.AUTO,
+        mouse_filter=CoshMouseFilter.PASS,
+        z_index=node.z_index
+    )
+
+    selector.children.append(selector_label)
     root.children.append(selector)
+
+    if open:
+        options = [(i, item) for i, item in enumerate(node.item_list) if i != selector_index]
+
+        selection = Container(
+            id=f"{node.id}::selection_box",
+            direction=CoshDirection.COLUMN,
+            width=node.width,
+            positioning=CoshPositioning.ABSOLUTE,
+            y=node.height if node.height else ENGINE_DEFAULTS["height"],
+            style=CoshStyling(
+                background_color=node.style.background_color,
+                border_radius=node.style.border_radius,
+                border=node.style.border,
+                alpha=node.style.alpha
+            ),
+            z_index=node.z_index + 1
+        )
+
+        for i, item in options:
+            item_container = Container(
+                id=f"{node.id}::item_{i}",
+                width=node.width,
+                height=node.height,
+                align=CoshAlign.CENTER,
+                justify=CoshJustify.CENTER,
+                style=CoshStyling(
+                    background_color=node.style.background_color,
+                    border_radius=node.style.border_radius,
+                    alpha=node.style.alpha
+                ),
+                z_index=node.z_index + 1
+            )
+
+            item_label = Label(
+                id=f"{node.id}::item_label_{i}",
+                text=str(item),
+                font=node.font,
+                font_size=node.font_size,
+                text_color=node.text_color,
+                width=CoshSizing.AUTO,
+                height=CoshSizing.AUTO,
+                mouse_filter=CoshMouseFilter.PASS,
+                z_index=node.z_index + 1
+            )
+
+            item_container.children.append(item_label)
+            selection.children.append(item_container)
+
+        root.children.append(selection)
 
     CoshUI._stack = saved_stack
     return root

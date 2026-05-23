@@ -1,6 +1,6 @@
 from .core import CoshUIRenderer
 
-from .widgets import Container, Grid, Modal, Button, Label, InputField, Checkbox, Image, Slider
+from .widgets import Container, Grid, Modal, Button, Label, InputField, Checkbox, Image, Slider, Dropdown
 
 from .utility import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme
 
@@ -98,6 +98,7 @@ __all__ = [
     "Checkbox",
     "Image",
     "Slider",
+    "Dropdown",
 
     # Backends
     "PygameBackend",
