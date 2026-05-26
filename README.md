@@ -59,12 +59,12 @@ if cui.get_signal("color_btn", cui.CLICKED):
     cui.animate("background_color", "main_container", (200, 200, 200), 1.5, "ease_in_out")
 ```
 
-To learn more, check out the [examples](/examples/examples.md) or visit the [documentation](https://terrarizer03.github.io/coshui-docs/).
+To learn more, check out the [examples](https://gitlab.com/jylefv/CoshUI/-/blob/main/examples/examples.md) or visit the [documentation](https://terrarizer03.github.io/coshui-docs/).
 
 ## Contributing
 CoshUI is primarily developed on [GitLab](https://gitlab.com/jylefv/CoshUI). Please open issues and pull requests there.
 
-To learn more about how to contribute, check the [contributing](CONTRIBUTING.md) markdown.
+To learn more about how to contribute, check the [contributing](https://gitlab.com/jylefv/CoshUI/-/blob/main/CONTRIBUTING.md) markdown.
 
 ## Author
 **Main Developer and Maintainer:** Jyle Frazier (Terra) Villareal
