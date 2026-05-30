@@ -12,8 +12,8 @@ class Node(ABC):
 
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
-    width : float | None = None
-    height : float | None = None
+    width : float | CoshSizing | CoshPercentage | None = None
+    height : float | CoshSizing | CoshPercentage | None = None
     margin : float | None = None
     x : float | None = None
     y : float | None = None
@@ -29,8 +29,8 @@ class Node(ABC):
     def __post_init__(self):
         CoshLifecycle.register_node(self)
 
-        if self.positioning is CoshPositioning.ABSOLUTE and any(size is CoshSizing.FILL for size in (self.width, self.height)):
-            warn("`FILL` sizing has no effect on absolute children. Use an explicit `width` and `height` values instead.")
+        if self.positioning is CoshPositioning.ABSOLUTE and any(size is CoshSizing.FILL or isinstance(size, CoshPercentage) for size in (self.width, self.height)):
+            warn("`FILL` or `PERCENTAGE` sizing has no effect on absolute children. Use explicit `width` and `height` values instead.")
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning is not CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):

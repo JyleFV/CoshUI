@@ -23,10 +23,21 @@ def test_container_fill_and_auto_sizing():
     layout(parent, 0.0, 0.0)
 
     assert parent.width == 200
-    assert parent.height == 30 + (10 * 2)
-    assert child.width == 200 - (10 * 2) # 10 is padding
+    assert parent.height == 30 + (parent.padding * 2)
+    assert child.width == 200 - (parent.padding * 2)
     assert child._x == 10.0
     assert child._y == 10.0
+
+def test_container_percentage_sizing():
+    with cui.Container(width=800, height=800, padding=10) as parent:
+        child = cui.Container(width=cui.PERCENTAGE(50), height=cui.PERCENTAGE(75))
+    
+    finalize_defaults(parent)
+    measure(parent)
+    layout(parent, 0.0, 0.0)
+
+    assert child.width == ((parent.width) - (parent.padding * 2)) * 0.50
+    assert child.height == ((parent.width) - (parent.padding * 2)) * 0.75
 
 @pytest.fixture(autouse=True)
 def clear_coshui_state():

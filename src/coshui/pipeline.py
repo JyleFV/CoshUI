@@ -2,7 +2,7 @@ from .state import CoshUI
 from .input import CoshInput
 from .node_definitions import Node
 from .widgets import Container, Grid
-from .utility import intersect_rect, point_in_rect, get_local_mouse
+from .utility import point_in_rect, get_local_mouse
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
@@ -27,8 +27,14 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             distributed_gap = node.gap # Default Fallback
             
             available_width = node.width - (node.padding * 2) - total_gap
+            
+            for child in relative_children:
+                if isinstance(child.width, CoshPercentage):
+                    child.width = (node.width - (node.padding * 2)) * child.width.percentage
+                    available_width -= (child.width + child.margin * 2)
+
             fill_widgets = [child for child in relative_children if child.width is CoshSizing.FILL]
-            static_widgets = [child for child in relative_children if child.width is not CoshSizing.FILL]
+            static_widgets = [child for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)]
 
             for widget in static_widgets:
                 available_width -= (widget.width + widget.margin * 2)
@@ -36,10 +42,12 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             if fill_widgets:
                 shared_width = max(0, available_width / len(fill_widgets))
                 for child in fill_widgets:
-                    child.width = shared_width
+                        child.width = shared_width
 
             for child in relative_children:
-                if child.height is CoshSizing.FILL:
+                if isinstance(child.height, CoshPercentage):
+                    child.height = (node.height - (node.padding * 2) - (child.margin * 2)) * child.height.percentage
+                elif child.height is CoshSizing.FILL:
                     child.height = node.height - (node.padding * 2) - (child.margin * 2)
 
             raw_inner_width = node.width - (node.padding * 2)
@@ -74,6 +82,12 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             distributed_gap = node.gap # Default Fallback
 
             available_height = node.height - (node.padding * 2) - total_gap
+
+            for child in relative_children:
+                if isinstance(child.height, CoshPercentage):
+                    child.height = (node.height - (node.padding * 2)) * child.height.percentage
+                    available_height -= (child.height + child.margin * 2)
+
             fill_widgets = [child for child in relative_children if child.height is CoshSizing.FILL]
             static_widgets = [child for child in relative_children if child.height is not CoshSizing.FILL]
 
@@ -86,7 +100,9 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                     child.height = shared_height
 
             for child in relative_children:
-                if child.width is CoshSizing.FILL:
+                if isinstance(child.width, CoshPercentage):
+                    child.width = (node.width - (node.padding * 2) - (child.margin * 2)) * child.width.percentage
+                elif child.width is CoshSizing.FILL:
                     child.width = node.width - (node.padding * 2) - (child.margin * 2)
 
             raw_inner_height = node.height - (node.padding * 2)

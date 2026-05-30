@@ -46,9 +46,9 @@ import coshui as cui
 # Within your loop
 with cui.CoshUIRenderer(...):
     with cui.Container(id="main_container", width=cui.FILL, height=cui.FILL, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=20):
-            cui.Label(id="menu_label", text="CoshUI", width=200, height=50, font_size=64)
-            cui.Button(id="print_btn", text="Print Hello World!", width=210)
-            cui.Button(id="color_btn", text="Change Color!", width=210)
+        cui.Label(id="menu_label", text="CoshUI", width=200, height=50, font_size=64)
+        cui.Button(id="print_btn", text="Print Hello World!", width=210)
+        cui.Button(id="color_btn", text="Change Color!", width=210)
 
 # Listen for signals
 if cui.get_signal("print_btn", cui.CLICKED):

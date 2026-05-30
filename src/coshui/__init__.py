@@ -4,7 +4,7 @@ from .widgets import Container, Grid, Modal, Button, Label, InputField, Checkbox
 
 from .utility import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme
 
-from .types import CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
+from .types import CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
 
 # Align
 ALIGN_START = CoshAlign.START
@@ -67,6 +67,7 @@ ABSOLUTE = CoshPositioning.ABSOLUTE
 # Sizing
 FILL = CoshSizing.FILL
 AUTO = CoshSizing.AUTO
+PERCENTAGE = CoshPercentage
 
 from .themes import CoshTheme
 
@@ -179,4 +180,5 @@ __all__ = [
     # Sizing
     "FILL",
     "AUTO",
+    "PERCENTAGE"
 ]
