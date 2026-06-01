@@ -37,10 +37,10 @@ EASING_MAP = {
 # FORMAT: "name_to_be_called_in_animate" : ("property", datatype_in_lerp) 
 PROPERTY_MAP = {
         "alpha" : ("alpha", lerp_float),
-        "scale" : ("transform_scale", lerp_float),
-        "position" : ("transform_position", lerp_tuple),
+        "transform_scale" : ("transform_scale", lerp_float),
+        "transform_position" : ("transform_position", lerp_tuple),
         "background_color" : ("background_color", lerp_tuple),
-        "rotation" : ("transform_rotation", lerp_float)
+        "transform_rotation" : ("transform_rotation", lerp_float)
     }
 
 PROPERTY_TYPE_MAP = {

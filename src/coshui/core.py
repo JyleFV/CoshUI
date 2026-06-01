@@ -7,6 +7,7 @@ The CoshUI global namespace is private and should only be accessed
 by internal code, never outside."""
 
 import time
+import copy
 
 from .cui_error import CoshUIError
 from .backend import CoshBackend
@@ -78,6 +79,7 @@ class CoshUIRenderer:
         if isinstance(CoshUI._debugger, CoshDebug):
             CoshUI._debugger.ui_root = self.root
             CoshUI._debugger.render_stack = CoshUI._render_stack[:]
+            CoshUI._debugger.signals = copy.deepcopy(CoshUI._signals)
             CoshUI._debugger.render()
     
         self.backend.flush(CoshUI._render_stack)

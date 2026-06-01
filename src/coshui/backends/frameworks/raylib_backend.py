@@ -1,14 +1,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from ..backend import CoshBackend
-from ..utility import intersect_rect
-from ..input import CoshInput
-from ..types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
-from ..utility import resolve_border_radius
+from ...backend import CoshBackend
+from ...utility import intersect_rect
+from ...input import CoshInput
+from ...types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
+from ...utility import resolve_border_radius
 
 if TYPE_CHECKING:
-    from ..types import RenderContext
+    from ...types import RenderContext
 
 try:
     import raylibpy

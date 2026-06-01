@@ -8,8 +8,6 @@ def main():
     rl.init_window(WIDTH, HEIGHT, "Raylib CoshUI Test")
     rl.set_target_fps(FPS)
 
-    print((rl.get_screen_width(), rl.get_screen_height()))
-
     cui.add_class("label_color", cui.CoshStyling(background_color=(100, 255, 100)))
 
     while not rl.window_should_close():
@@ -27,16 +25,16 @@ def main():
         rl.end_drawing()
 
         if cui.get_signal("settings_button", cui.CLICKED):
-            cui.animate("scale", "main_label", 1.2, 0.25, "ease_in")
+            cui.animate("transform_scale", "main_label", 1.2, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 0, 0), 1.5, "ease_in")
         if cui.get_signal("settings_button", cui.RELEASED):
-            cui.animate("scale", "main_label", 1.0, 0.25, "ease_in")
+            cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
         if cui.get_signal("quit_button", cui.HOVERED):
-            cui.animate("rotation", "quit_button", 0.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
         if cui.get_signal("quit_button", cui.HOVER_EXIT):
-            cui.animate("rotation", "quit_button", 45.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
 
         if cui.get_signal("quit_button", cui.CLICKED):
             break;

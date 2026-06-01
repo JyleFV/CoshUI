@@ -31,16 +31,16 @@ def main():
                     cui.Image(id="test_image", src="assets/image.png", width=75, height=75, style=cui.CoshStyling(transform_rotation=45.0))
 
         if cui.get_signal("settings_button", cui.CLICKED):
-            cui.animate("scale", "main_label", 1.2, 0.25, "ease_in")
+            cui.animate("transform_scale", "main_label", 1.2, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 0, 0), 1.5, "ease_in")
         if cui.get_signal("settings_button", cui.RELEASED):
-            cui.animate("scale", "main_label", 1.0, 0.25, "ease_in")
+            cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
         if cui.get_signal("quit_button", cui.HOVERED):
-            cui.animate("rotation", "quit_button", 0.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
         if cui.get_signal("quit_button", cui.HOVER_EXIT):
-            cui.animate("rotation", "quit_button", 45.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
         if cui.get_signal("quit_button", cui.CLICKED):
             running = False
 
