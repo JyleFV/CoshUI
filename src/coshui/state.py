@@ -1,6 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import os
 
 from .themes import CoshTheme
+
+if TYPE_CHECKING:
+    from .debug import CoshDebug
 
 # TODO: Separate Composite Widgets 
 # ex. 
@@ -46,6 +51,8 @@ class CoshUI:
     _style_class : dict = {}
     # ---------------- Text Measuring ----------------
     _measure_text : callable = None
+    # ---------------- Debug ----------------
+    _debugger : None | CoshDebug = None
 
     @classmethod
     def get_state(cls, node_id, key, default=None):

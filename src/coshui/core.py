@@ -12,13 +12,19 @@ from .cui_error import CoshUIError
 from .backend import CoshBackend
 from .lifecycle import CoshLifecycle
 from .state import CoshUI
+from .types import CoshMode
+from .debug import CoshDebug
 from .expanders import _expand_slider, _expand_dropdown, _expand_modal
 from .widgets import Slider, Dropdown, Modal, Container
 from .pipeline import measure, layout, render, process_events, update, finalize_defaults
 
 class CoshUIRenderer:
-    def __init__(self, backend : CoshBackend):
+    def __init__(self, backend : CoshBackend, debug : CoshMode = CoshMode.NORMAL):
         self.backend = backend
+        
+        if debug is CoshMode.DEBUG and CoshUI._debugger is None:
+            CoshUI._debugger = CoshDebug() 
+
         screen_w, screen_h = self.backend.get_size()
         self.root = Container(width=screen_w, height=screen_h)
         CoshUI._measure_text = self.backend.measure_text
@@ -68,6 +74,12 @@ class CoshUIRenderer:
         CoshUI._render_stack.sort(key=lambda d: d.z_index)
         CoshUI._signals.clear()
         process_events()
+
+        if isinstance(CoshUI._debugger, CoshDebug):
+            CoshUI._debugger.ui_root = self.root
+            CoshUI._debugger.render_stack = CoshUI._render_stack[:]
+            CoshUI._debugger.render()
+    
         self.backend.flush(CoshUI._render_stack)
         CoshUI._render_stack.clear()
 

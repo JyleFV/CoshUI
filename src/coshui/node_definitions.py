@@ -29,9 +29,6 @@ class Node(ABC):
     def __post_init__(self):
         CoshLifecycle.register_node(self)
 
-        if self.positioning is CoshPositioning.ABSOLUTE and any(size is CoshSizing.FILL or isinstance(size, CoshPercentage) for size in (self.width, self.height)):
-            warn("`FILL` or `PERCENTAGE` sizing has no effect on absolute children. Use explicit `width` and `height` values instead.")
-
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning is not CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
             warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
@@ -57,6 +54,7 @@ class Node(ABC):
             "transform_y" : transform_y,
             "width" : self.width,
             "height" : self.height,
+            "margin" : self.margin,
             "background_color" : self.style.background_color,
             "z_index" : self.z_index,
             "border_radius" : self.style.border_radius,
@@ -88,6 +86,7 @@ class ParentNode(Node):
     def get_render_data(self) -> RenderContext:
         data = self.get_base_render_data()
         data["image_src"] = self.src
+        data["padding"] = self.padding
         return RenderContext(**data)
 
 @dataclass

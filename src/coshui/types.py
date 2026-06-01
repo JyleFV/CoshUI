@@ -103,6 +103,10 @@ class CoshSizing(Enum):
     FILL = 0
     AUTO = 1
 
+class CoshMode(Enum):
+    NORMAL = 0
+    DEBUG = 1
+
 class CoshPercentage:
     def __init__(self, percentage : int):
         self.percentage = percentage / 100
@@ -115,10 +119,12 @@ class RenderContext(NamedTuple):
     y : float = 0.0
     width : float = 0.0
     height : float = 0.0
+    padding : float = 0.0
+    margin : float = 0.0
+    # Visual
     z_index : int = 0
     transform_x : float = 0.0
     transform_y : float = 0.0
-    # Visual
     background_color : tuple | None = None
     border_radius : int | tuple = 0
     transform_scale : float = 1.0
@@ -149,4 +155,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['RenderContext', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

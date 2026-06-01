@@ -151,6 +151,10 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                 cursor_y += child.height + (child.margin * 2) + distributed_gap
 
         for child in absolute_children:
+            if child.width is CoshSizing.FILL:
+                    child.width = node.width - (node.padding * 2)
+            if child.height is CoshSizing.FILL:
+                child.height = node.height - (node.padding * 2)
             if node.direction is CoshDirection.ROW:
                 match node.align:
                     case CoshAlign.START:  base_y = y + node.padding
