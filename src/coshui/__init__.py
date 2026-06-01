@@ -79,10 +79,10 @@ from .animation import animate
 
 def __getattr__(name):
     if name == "PygameBackend":
-        from .backends.pygame_backend import PygameBackend
+        from .backends.frameworks.pygame_backend import PygameBackend
         return PygameBackend
     if name == "RaylibBackend":
-        from .backends.raylib_backend import RaylibBackend
+        from .backends.frameworks.raylib_backend import RaylibBackend
         return RaylibBackend
     raise AttributeError(f"module 'coshui' has no attribute {name!r}")
 

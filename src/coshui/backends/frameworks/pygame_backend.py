@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from ..backend import CoshBackend
-from ..types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
-from ..utility import resolve_border_radius
-from ..input import CoshInput
+from ...backend import CoshBackend
+from ...types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
+from ...utility import resolve_border_radius
+from ...input import CoshInput
 
 if TYPE_CHECKING:
-    from ..types import RenderContext
+    from ...types import RenderContext
 
 try:
     import pygame

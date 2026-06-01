@@ -78,8 +78,17 @@ class Grid(ParentNode):
             col = index % self.column_count
             row = index // self.column_count
 
-            child_width = (child.width + (child.margin * 2)) if child.width is not CoshSizing.FILL else 0.0
-            child_height = (child.height + (child.margin * 2)) if child.height is not CoshSizing.FILL else 0.0
+            # If a child has percentage or FILL sizing, treat its intrinsic minimum width contribution as 0.0
+            if child.width is CoshSizing.FILL or isinstance(child.width, CoshPercentage):
+                child_width = 0.0
+            else:
+                child_width = child.width + (child.margin * 2)
+                
+            # If a child has percentage or FILL sizing, treat its intrinsic minimum height contribution as 0.0
+            if child.height is CoshSizing.FILL or isinstance(child.height, CoshPercentage):
+                child_height = 0.0
+            else:
+                child_height = child.height + (child.margin * 2)
 
             col_widths[col] = max(col_widths[col], child_width)
             row_heights[row] = max(row_heights[row], child_height)

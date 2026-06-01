@@ -152,9 +152,14 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
 
         for child in absolute_children:
             if child.width is CoshSizing.FILL:
-                    child.width = node.width - (node.padding * 2)
+                child.width = node.width - (node.padding * 2)
+            elif isinstance(child.width, CoshPercentage):
+                child.width = child.width.percentage * (node.width - (node.padding * 2))
+                
             if child.height is CoshSizing.FILL:
                 child.height = node.height - (node.padding * 2)
+            elif isinstance(child.height, CoshPercentage):
+                child.height = child.height.percentage * (node.height - (node.padding * 2))
             if node.direction is CoshDirection.ROW:
                 match node.align:
                     case CoshAlign.START:  base_y = y + node.padding
@@ -206,12 +211,23 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             # 3. Establish track sizes (Respect child's hardcoded sizes if they exceed the uniform cell size)
             for row_index, row in enumerate(rows):
                 for column_index, child in enumerate(row):
-                    # If child is FILL (or converted to FILL), its intrinsic size contribution is 0,
-                    # but it will be safely caught by the uniform cell fallback size.
-                    child_width = (child.width + child.margin * 2) if child.width is not CoshSizing.FILL else 0.0
-                    child_height = (child.height + child.margin * 2) if child.height is not CoshSizing.FILL else 0.0
                     
-                    # The track must be at least as big as the uniform cell slot allocation
+                    if isinstance(child.width, CoshPercentage):
+                        calc_w = child.width.percentage * uniform_cell_width
+                        child_width = calc_w + (child.margin * 2)
+                    elif child.width is CoshSizing.FILL:
+                        child_width = 0.0
+                    else:
+                        child_width = child.width + (child.margin * 2)
+                        
+                    if isinstance(child.height, CoshPercentage):
+                        calc_h = child.height.percentage * uniform_cell_height
+                        child_height = calc_h + (child.margin * 2)
+                    elif child.height is CoshSizing.FILL:
+                        child_height = 0.0
+                    else:
+                        child_height = child.height + (child.margin * 2)
+                    
                     column_widths[column_index] = max(column_widths[column_index], child_width, uniform_cell_width)
                     row_heights[row_index] = max(row_heights[row_index], child_height, uniform_cell_height)
 
@@ -231,17 +247,23 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                 case CoshJustify.END:    start_x = x + node.width - node.padding - total_grid_content_width
                 case _:  start_x = x + node.padding
 
-            # 5. Position and expand FILL elements
+            # 5. Position and expand FILL / PERCENTAGE elements
             current_y = start_y
             for row_index, row in enumerate(rows):
                 current_x = start_x
                 
                 for column_index, child in enumerate(row):
-                    # Now that we have a concrete track size, give FILL elements their size allocation!
+                    # Resolve Widths
                     if child.width is CoshSizing.FILL:
                         child.width = column_widths[column_index] - (child.margin * 2)
+                    elif isinstance(child.width, CoshPercentage):
+                        child.width = (child.width.percentage * column_widths[column_index]) - (child.margin * 2)
+
+                    # Resolve Heights
                     if child.height is CoshSizing.FILL:
                         child.height = row_heights[row_index] - (child.margin * 2)
+                    elif isinstance(child.height, CoshPercentage):
+                        child.height = (child.height.percentage * row_heights[row_index]) - (child.margin * 2)
 
                     layout(child, current_x + child.margin, current_y + child.margin)
                     current_x += column_widths[column_index] + node.gap
@@ -249,6 +271,16 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                 current_y += row_heights[row_index] + node.gap
 
         for child in absolute_children:
+            if child.width is CoshSizing.FILL:
+                child.width = node.width - (node.padding * 2)
+            elif isinstance(child.width, CoshPercentage):
+                child.width = child.width.percentage * (node.width - (node.padding * 2))
+
+            if child.height is CoshSizing.FILL:
+                child.height = node.height - (node.padding * 2)
+            elif isinstance(child.height, CoshPercentage):
+                child.height = child.height.percentage * (node.height - (node.padding * 2))
+                
             layout(child, x + node.padding + child._x, y + node.padding + child._y)
 
 def update(delta : float):
