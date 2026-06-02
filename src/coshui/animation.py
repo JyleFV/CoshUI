@@ -1,17 +1,18 @@
 import difflib
+import math
 from typing import Callable, Optional
 
 from .state import CoshUI
 from .cui_error import CoshUIError
 
-# Helpers
-
+# Lerp Functions
 def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)
 
 def lerp_tuple(start_tup, end_tup, time):
     return tuple(lerp_float(s, e, time) for s, e in zip(start_tup, end_tup))
 
+# Easing Functions
 def ease_linear(t : float):
     return t
 
@@ -19,7 +20,7 @@ def ease_in(t : float):
     return t * t
 
 def ease_out(t : float):
-    return 1 - (1 - t) * (1 - t)
+    return 1 - ease_in(1 - t)
 
 def ease_in_out(t : float):
     if t < 0.5:
@@ -27,11 +28,43 @@ def ease_in_out(t : float):
     else:
         return 1 - pow(-2 * t + 2, 2) / 2 
 
+def ease_out_bounce(t : float):
+    if t < (1 / 2.75):
+        return 7.5625 * t * t
+    elif t < (2 / 2.75):
+        t -= (1.5 / 2.75)
+        return 7.5625 * t * t + 0.75
+    elif t < (2.5 / 2.75):
+        t -= (2.25 / 2.75)
+        return 7.5625 * t * t + 0.9375
+    else:
+        t -= (2.625 / 2.75)
+        return 7.5625 * t * t + 0.984375
+
+def ease_in_bounce(t : float):
+    return 1 - ease_out_bounce(1 - t)
+
+def ease_in_elastic(t: float) -> float:
+    c4 = (2 * math.pi) / 3
+    if t == 0: return 0
+    if t == 1: return 1
+    return -(math.pow(2, 10 * t - 10) * math.sin((t * 10 - 10.75) * c4))
+
+def ease_out_elastic(t: float) -> float:
+    c4 = (2 * math.pi) / 3
+    if t == 0: return 0
+    if t == 1: return 1
+    return math.pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c4) + 1
+
 EASING_MAP = {
         "linear" : ease_linear,
         "ease_in" : ease_in,
         "ease_out" : ease_out,
-        "ease_in_out" : ease_in_out
+        "ease_in_out" : ease_in_out,
+        "ease_in_bounce" : ease_in_bounce,
+        "ease_out_bounce" : ease_out_bounce,
+        "ease_in_elastic" : ease_in_elastic,
+        "ease_out_elastic" : ease_out_elastic
     }
 
 # FORMAT: "name_to_be_called_in_animate" : ("property", datatype_in_lerp) 

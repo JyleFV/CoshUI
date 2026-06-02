@@ -77,10 +77,7 @@ class CoshUIRenderer:
         process_events()
 
         if isinstance(CoshUI._debugger, CoshDebug):
-            CoshUI._debugger.ui_root = self.root
-            CoshUI._debugger.render_stack = CoshUI._render_stack[:]
-            CoshUI._debugger.signals = copy.deepcopy(CoshUI._signals)
-            CoshUI._debugger.render()
+            CoshUI._debugger.render(self.root, CoshUI._render_stack[:], copy.deepcopy(CoshUI._signals))
     
         self.backend.flush(CoshUI._render_stack)
         CoshUI._render_stack.clear()

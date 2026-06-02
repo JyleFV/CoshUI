@@ -69,8 +69,11 @@ class PygameBackend(CoshBackend):
 
                 final_x = center_x - (rotated_width / 2)
                 final_y = center_y - (rotated_height / 2)
-                
-                self.surface.blit(finalized_surface, (final_x, final_y))
+            else:
+                finalized_surface = temp
+                final_x, final_y = x, y
+                    
+            self.surface.blit(finalized_surface, (final_x, final_y))
                 
         else:
             pygame.draw.rect(self.surface, color, (x, y, w, h),

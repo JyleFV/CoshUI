@@ -8,7 +8,9 @@ from .cui_error import CoshUIError
 class CoshStyling:
     background_color : tuple | None = None
     alpha : int | None = None
-    # gradients : tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str] | None = None
+    # gradients : tuple | None = None
+    # glow : tuple | None = None
+    # drop_shadow : tuple | None = None
     border : tuple | None = None
     border_radius : int | tuple | None = None
     transform_position : tuple | None = None
