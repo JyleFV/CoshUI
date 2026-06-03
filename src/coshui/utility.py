@@ -47,16 +47,6 @@ def set_default_font(name : str):
 # ================ Signal Events ================
 
 def get_signal(node_id : str, signal : CoshSignals):
-    # TODO: Add this robust check in the future:
-    # signals = ["clicked", "released", "hover_enter", "hover_exit", "hovered", "pressed"]
-    # if node_id not in CoshUI._signals:
-    #     close_match = difflib.get_close_matches(node_id, CoshUI._signals, n=1)
-    #     raise CoshUIError(f"`{node_id}` not found in signals registry. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
-    
-    # if signal_name not in signals:
-    #     close_match = difflib.get_close_matches(signal_name, signals, n=1)
-    #     raise CoshUIError(f"`{signal_name}` is not a valid signal. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
-
     return CoshUI._get_signal(node_id, signal)
 
 

@@ -86,6 +86,11 @@ def __getattr__(name):
         return RaylibBackend
     raise AttributeError(f"module 'coshui' has no attribute {name!r}")
 
+from .backends.graphics.gl_window_drivers import Windower
+
+GLFW = Windower.GLFW
+MGLW = Windower.MGLW
+
 # TODO: Add the different flat variables
 __all__ = [
     # Core
@@ -188,5 +193,9 @@ __all__ = [
 
     # Mode
     "NORMAL",
-    "DEBUG"
+    "DEBUG",
+
+    # GL Specific Windowers
+    "GLFW",
+    "MGLW"
 ]

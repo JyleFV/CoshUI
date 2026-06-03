@@ -20,7 +20,11 @@ def main():
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52)
                     cui.Button(id="settings_button", text="Settings is a stupid thing to talk about and I don't like it", text_overflow=cui.TEXT_WRAP, height=50, text_justify=cui.TEXT_JUSTIFY_CENTER)
                     cui.Button(id="quit_button", text="Quit", height=50, width=150, style=cui.CoshStyling(transform_rotation=45.0))
-                    cui.Image(id="test_image", src="assets/image.png", width=75, height=75, style=cui.CoshStyling(transform_rotation=45.0))
+                    cui.Image(id="test_image", src="assets/image.png", width=75, height=75)
+
+        cui.animate("transform_rotation", "main_container", 360, 2.5, "ease_in").finished(
+            lambda: cui.animate("transform_position", "main_container", (0, 30), 2.5, "ease_in")
+        )
 
         rl.end_drawing()
 
@@ -31,12 +35,12 @@ def main():
             cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
-        if cui.get_signal("quit_button", cui.HOVERED):
-            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
-        if cui.get_signal("quit_button", cui.HOVER_EXIT):
-            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
+        if cui.get_signal("test_image", cui.CLICKED):
+            cui.animate("transform_position", "test_image", (0, 30), 0.5, "ease_out_bounce")
+        if cui.get_signal("test_image", cui.RELEASED):
+            cui.animate("transform_position", "test_image", (0, 0), 0.5, "ease_out_bounce")
 
-        if cui.get_signal("quit_button", cui.CLICKED):
+        if cui.get_signal("quit_button", cui.RELEASED):
             break;
 
     rl.close_window()

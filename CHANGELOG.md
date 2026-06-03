@@ -3,20 +3,16 @@ Posted: `June X, 2026`
 
 ### New Features:
 
-- **CoshPercentage**: New sizing type that lets users sets width/height as a percentage of the parent’s dimensions.
+- **CoshPercentage**: New sizing type that lets users set width/height as a percentage of the parent’s dimensions.
 - **CoshDebug**: New debugger that opens its own tkinter window and shows a live node inspector showing the full UI tree, computed layout values, style properties, and signals fired each frame.
 - **More Easing Curves**: Added new easing curves to `animate()`.
+    -   | New Curves |
+        | :---: |
+        | `"ease_in_bounce"` |
+        | `"ease_out_bounce"` |
+        | `"ease_in_elastic"` |
+        | `"ease_out_elastic"` |
 
-<div align="center">
-
-| New Curves |
-| :---: |
-| `"ease_in_bounce"` |
-| `"ease_out_bounce"` |
-| `"ease_in_elastic"` |
-| `"ease_out_elastic"` |
-
-</div>
 
 - **Propagation Flags**: Added "self_" variants to some transform properties (self_alpha and self_transform_position) that can be toggled True or False.
 
@@ -26,13 +22,14 @@ Posted: `June X, 2026`
 
 ### Breaking Changes
 
-- **Property Name Changes**: `animate()` functions properties names changed.  
-
-| Old | New |
-| :--- | :--- |
-| `animate("scale", …)` | `animate("transform_scale", …)` |
-| `animate("position", …)` | `animate("transform_position", …)` |
-| `animate("rotation", …)` | `animate("transform_rotation", …)` |
+- **On Complete**: `animate()` function no longer takes in on_complete callback, but returns a Tween that lets you call a finished() method that accepts the callback.
+    - **Example**: `animate(...).finished(callback)`
+- **Property Name Changes**: `animate()` function's property names changed.  
+    -   | Old | New |
+        | :--- | :--- |
+        | `animate("scale", …)` | `animate("transform_scale", …)` |
+        | `animate("position", …)` | `animate("transform_position", …)` |
+        | `animate("rotation", …)` | `animate("transform_rotation", …)` |
 
 ### Bug Fixes:
 

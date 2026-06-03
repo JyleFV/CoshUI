@@ -2,6 +2,7 @@ from .state import CoshUI
 from .input import CoshInput
 from .node_definitions import Node
 from .widgets import Container, Grid
+from .animation import Tween
 from .utility import point_in_rect, get_local_mouse
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
@@ -285,15 +286,31 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
 
 def update(delta : float):
     for tween in CoshUI._active_tweens:
-        tween.update(delta)
+        tween._update(delta)
 
-    completed = [tween for tween in CoshUI._active_tweens if tween.finished]
+    completed = [tween for tween in CoshUI._active_tweens if tween._finished]
 
-    CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
+    CoshUI._active_tweens -= { tween for tween in CoshUI._active_tweens if tween._finished }
 
     for tween in completed:
-        if tween.on_complete is not None:
-            tween.on_complete()
+        if tween._on_complete is not None:
+            tween._on_complete()
+        # Soon
+        # if tween._loop_config is not None:
+        #     end_value, duration, easing = tween._loop_config
+
+        #     new_tween = Tween(
+        #         tween.property,
+        #         tween.target_id,
+        #         end_value if end_value is not None else tween.start_value,
+        #         duration if duration is not None else tween.duration,
+        #         easing if easing is not None else tween.easing
+        #     )
+
+        #     new_tween.start_value = tween.end_value
+        #     new_tween.loop(end_value=tween.end_value)
+
+        #     CoshUI._active_tweens.add(new_tween)
 
 def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
     if not is_root:

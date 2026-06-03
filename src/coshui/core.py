@@ -15,8 +15,8 @@ from .lifecycle import CoshLifecycle
 from .state import CoshUI
 from .types import CoshMode
 from .debug import CoshDebug
-from .expanders import _expand_slider, _expand_dropdown, _expand_modal
-from .widgets import Slider, Dropdown, Modal, Container
+from .expanders import register_exapanders
+from .widgets import Container
 from .pipeline import measure, layout, render, process_events, update, finalize_defaults
 
 class CoshUIRenderer:
@@ -30,9 +30,7 @@ class CoshUIRenderer:
         self.root = Container(width=screen_w, height=screen_h)
         CoshUI._measure_text = self.backend.measure_text
 
-        CoshUI._expander_registry[Slider] = _expand_slider
-        CoshUI._expander_registry[Dropdown] = _expand_dropdown
-        CoshUI._expander_registry[Modal] = _expand_modal
+        register_exapanders()
 
     def __enter__(self):
         if CoshUI._active_renderer:

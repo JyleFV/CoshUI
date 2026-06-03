@@ -5,6 +5,7 @@ from typing import Callable, Optional
 from .state import CoshUI
 from .cui_error import CoshUIError
 
+# region Helper Functions
 # Lerp Functions
 def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)
@@ -55,6 +56,7 @@ def ease_out_elastic(t: float) -> float:
     if t == 0: return 0
     if t == 1: return 1
     return math.pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c4) + 1
+# endregion
 
 EASING_MAP = {
         "linear" : ease_linear,
@@ -82,7 +84,7 @@ PROPERTY_TYPE_MAP = {
 }
 
 class Tween:
-    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : callable, on_complete : Optional[Callable] = None):
+    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : Callable):
         self.property = n_property
         self.target_id = target_id
 
@@ -102,11 +104,12 @@ class Tween:
         self.time = 0
         self.duration = duration
         self.easing = easing
-        self.on_complete = on_complete
-        self.finished = False
+        self._on_complete = None
+        self._loop_config = None
+        self._finished = False
 
-    def update(self, delta):
-        if self.finished:
+    def _update(self, delta):
+        if self._finished:
             return
         
         self.time += delta
@@ -117,15 +120,28 @@ class Tween:
         CoshUI.set_state(self.target_id, self.path, new_value)
 
         if raw_t >= 1.0:
-            self.finished = True
+            self._finished = True
 
-    def reverse(self):
-        self.start_value = CoshUI.get_state(self.target_id, self.path)
-        self.end_value, self.start_value = self.start_value, self.end_value
-        self.time = 0
-        self.finished = False
+    def finished(self, callable : Optional[Callable]):
+        if self._on_complete is None:
+            self._on_complete = callable
+        return self
 
-def animate(n_property : str, target_id : str, end_value, duration : float, easing : str, on_complete : Optional[Callable] = None):
+    # Soon
+    # def loop(self, end_value=None, duration=None, easing=None):
+    #     if self._loop_config is None:
+    #         ease_fn = EASING_MAP.get(easing, None)
+    #         self._loop_config = (end_value, duration, ease_fn)
+    #     return self
+
+    # Soon
+    # def reverse(self):
+    #     self.start_value = CoshUI.get_state(self.target_id, self.path)
+    #     self.end_value, self.start_value = self.start_value, self.end_value
+    #     self.time = 0
+    #     self._finished = False
+
+def animate(n_property : str, target_id : str, end_value, duration : float, easing : str) -> Tween:
     """
     Animates a node property over time. 
     
@@ -137,33 +153,37 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
     :param end_value: The final target value to reach by the end of the animation.
     :param duration: Animation length in seconds.
     :param easing: The easing curve name. Defaults to 'linear' if not passed.
-    :param on_complete: A callable that gets called once the tween is finished.
 
-    .. note ::
-        **Best Practice:** Call this inside a callable passed to event fields. 
-        **Requirement:** Ensure the target and Node that holds this callable has an `id`. Nodes with no id are not persistent as of pre-v1.0.0 and may cause tweens to fail.
+    :returns Tween: Returns the tween it's working on.
     """
-
-    # TODO: Do more comprehensive checks on each parameter and raise CoshUIErrors for better DX.
 
     if n_property not in PROPERTY_MAP:
         close_match = difflib.get_close_matches(n_property, PROPERTY_MAP.keys(), n=1)
         raise CoshUIError(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
     
+    if target_id not in CoshUI._state_storage:
+        close_match = difflib.get_close_matches(target_id, CoshUI._state_storage.keys(), n=1)
+        raise CoshUIError(f"ID `{target_id}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+    
+    if easing not in EASING_MAP:
+        close_match = difflib.get_close_matches(easing, EASING_MAP.keys(), n=1)
+        raise CoshUIError(f"Unknown easing curve: `{easing}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(EASING_MAP.keys())}.")
+
     _, lerp_fn = PROPERTY_MAP[n_property]
     expected_type = PROPERTY_TYPE_MAP.get(lerp_fn)
 
     if expected_type and not isinstance(end_value, expected_type):
         raise CoshUIError(f"Property `{n_property}` expects `{expected_type}`, got `{type(end_value).__name__}`.")
 
-    existing_tween = next((t for t in CoshUI._active_tweens if t.target_id == target_id and t.property == n_property), None)
+    existing_tween = next((tween for tween in CoshUI._active_tweens if tween.target_id == target_id and tween.property == n_property), None)
 
     if existing_tween:
         if existing_tween.end_value == end_value:
-            return
+            return existing_tween
         
         CoshUI._active_tweens.remove(existing_tween)
 
     ease_fn = EASING_MAP.get(easing, ease_linear)
-    tween = Tween(n_property, target_id, end_value, duration, ease_fn, on_complete)
+    tween = Tween(n_property, target_id, end_value, duration, ease_fn)
     CoshUI._active_tweens.add(tween)
+    return tween

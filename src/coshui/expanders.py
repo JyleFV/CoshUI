@@ -3,7 +3,15 @@ from .input import CoshInput
 from .types import CoshPositioning, CoshStyling, CoshDirection, CoshMouseFilter, CoshAlign, CoshJustify, CoshSignals, CoshSizing
 from .pipeline import measure, finalize_defaults
 from ._defaults import ENGINE_DEFAULTS
-from .widgets import Container, Label, Box
+from .widgets import Container, Label, Box, Slider, Modal, Dropdown
+
+def register_exapanders():
+    if all(composite_widget in CoshUI._expander_registry for composite_widget in (Slider,Modal, Dropdown)):
+        return
+    
+    CoshUI._expander_registry[Slider] = _expand_slider
+    CoshUI._expander_registry[Dropdown] = _expand_dropdown
+    CoshUI._expander_registry[Modal] = _expand_modal
 
 def _expand_slider(node):
     saved_stack = CoshUI._stack.copy()
