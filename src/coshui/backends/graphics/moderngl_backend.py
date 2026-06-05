@@ -16,7 +16,7 @@ try:
 except ImportError:
     moderngl = None
 
-
+# NOTE: An optimization route in the future is batching, but I'm not very good at GLSL so I can't make an uber shader that helps with that.
 class ModernGLBackend(CoshBackend):
     def __init__(self, context, driver : Windower):
         if moderngl is None:
@@ -26,6 +26,9 @@ class ModernGLBackend(CoshBackend):
         self.context = context
         self.driver = driver.value()
 
+        self.context.enable(moderngl.BLEND)
+        self.context.blend_func = moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
+        
         self._orthographic_matrix = None
         self._cached_size = (0, 0)
 
@@ -34,6 +37,9 @@ class ModernGLBackend(CoshBackend):
         self.rect_vao = self.context.vertex_array(self.rect_shader, [(self.rect_vbo, '2f', 'aPos')])
 
     def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border, clip_rect, rotation):
+        if clip_rect:
+            self.context.scissor = clip_rect
+
         vertices = _get_rect_vertices(x, y, w, h)
         self.rect_vbo.write(vertices)
 
@@ -42,11 +48,21 @@ class ModernGLBackend(CoshBackend):
 
         r, g, b = color
         gpu_radius = resolve_border_radius(border_radius)
+        half_min = min(w, h) / 2.0
+        gpu_radius = tuple(min(float(rad), half_min) for rad in gpu_radius)
 
         self.rect_shader['inColor'].value = (r / 255.0, g / 255.0, b / 255.0, alpha / 255.0)
         self.rect_shader['uElementPos'].value = (float(x), float(y))
         self.rect_shader['uSize'].value = (float(w), float(h))
-        self.rect_shader['uRadius'].value = tuple(float(r) for r in gpu_radius)
+        self.rect_shader['uRadius'].value = gpu_radius
+
+        if border is not None:
+            b_color, b_width = border
+            self.rect_shader['uBorderWidth'].value = float(b_width)
+            self.rect_shader['uBorderColor'].value = (b_color[0]/255.0, b_color[1]/255.0, b_color[2]/255.0, alpha/255.0)
+        else:
+            self.rect_shader['uBorderWidth'].value = 0.0
+            self.rect_shader['uBorderColor'].value = (0.0, 0.0, 0.0, 0.0)
 
         self.rect_shader['uRotation'].value = rotation
         self.rect_shader['uCenter'].value = (center_x, center_y)
@@ -54,10 +70,13 @@ class ModernGLBackend(CoshBackend):
 
         self.rect_vao.render(moderngl.TRIANGLES)
 
-    def _draw_text(self):
+        if clip_rect:
+            self.context.scissor = None
+
+    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_overflow, alpha, rotation):
         pass
 
-    def _draw_image(self):
+    def _draw_image(self, img_path, x ,y, w, h, alpha, clip_rect, rotation):
         pass
 
     def flush(self, render_stack : list[RenderContext]):
@@ -93,6 +112,7 @@ class ModernGLBackend(CoshBackend):
     
     def _get_orthographic_matrix(self) -> np.ndarray:
         width, height = self.get_size()
+        self.context.viewport = (0, 0, width, height)
         self._orthographic_matrix = np.array([
             2.0 / width, 0.0, 0.0, 0.0,
             0.0, -2.0 / height, 0.0, 0.0,
@@ -133,7 +153,7 @@ def _get_rect_vertices(x, y, width, height):
 
         left, top,
         right, bottom,
-        left, bottom
+        left, bottom,
     ], dtype=np.float32)
 
 # endregion

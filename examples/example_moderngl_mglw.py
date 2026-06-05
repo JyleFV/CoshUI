@@ -29,7 +29,7 @@ class MyRenderer(mglw.WindowConfig):
 
         with cui.CoshUIRenderer(self.coshui_backend, cui.DEBUG):
             with cui.Container(id="main_root", width=cui.FILL, height=cui.FILL, padding=10):
-                cui.Container(id="test", width=100, height=100, style=cui.CoshStyling(background_color=(255, 255, 0), alpha=10, border_radius=20))
+                cui.Container(id="test", width=100, height=100, style=cui.CoshStyling(background_color=(255, 255, 0), border=((255, 0, 0), 5), alpha=10, border_radius=(5, 20, 5, 20)))
 
         if cui.get_signal("test", cui.CLICKED):
             cui.animate("transform_rotation", "test", 45.0, 1.0, "ease_out_bounce")

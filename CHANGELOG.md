@@ -34,6 +34,7 @@ Posted: `June X, 2026`
 ### Bug Fixes:
 
 - **Pygame’s Missing Alpha**: Alpha value not being set when rotation was 0.0, likely accidentally forgotten when implementing rotation.
+- **Raylib Border-radius Rotation**: Raylib losing border radius when rotated is now fixed.
 
 ### Backends:
 

@@ -34,46 +34,51 @@ class RaylibBackend(CoshBackend):
         top_left, top_right, bottom_right, bottom_left = resolve_border_radius(border_radius)
 
         if rotation != 0.0:
-            origin = raylibpy.Vector2(w / 2, h / 2)
-            raylib_rotation = -rotation
+            center_x = x + w / 2
+            center_y = y + h / 2
 
-            if border is not None:
-                b_color, b_width = border
-                b_rl_color = raylibpy.Color(b_color[0], b_color[1], b_color[2], int(alpha))
-                border_rect = raylibpy.Rectangle(x + w / 2, y + h / 2, w + b_width * 2, h + b_width * 2)
-                border_origin = raylibpy.Vector2(w / 2 + b_width, h / 2 + b_width)
-                raylibpy.draw_rectangle_pro(border_rect, border_origin, raylib_rotation, b_rl_color)
+            raylibpy.rl_push_matrix()
+            raylibpy.rl_translatef(center_x, center_y, 0)
+            raylibpy.rl_rotatef(-rotation, 0, 0, 1)
+            raylibpy.rl_translatef(-center_x, -center_y, 0)
 
-            rect = raylibpy.Rectangle(x + w / 2, y + h / 2, w, h)
-            raylibpy.draw_rectangle_pro(rect, origin, raylib_rotation, final_color)
-        elif top_left == top_right == bottom_right == bottom_left:
+        if top_left == top_right == bottom_right == bottom_left:
             rect = raylibpy.Rectangle(x, y, w, h)
+
             roundness = 0.0
             if top_left > 0 and min(w, h) > 0:
                 roundness = min((top_left * 2) / min(w, h), 1.0)
 
             if roundness > 0:
                 raylibpy.draw_rectangle_rounded(rect, roundness, 16, final_color)
+
                 if border is not None:
                     b_color, b_width = border
                     b_rl_color = raylibpy.Color(b_color[0], b_color[1], b_color[2], int(alpha))
                     raylibpy.draw_rectangle_rounded_lines_ex(rect, roundness, 16, b_width, b_rl_color)
+
             else:
                 raylibpy.draw_rectangle(int(x), int(y), int(w), int(h), final_color)
+
                 if border is not None:
                     b_color, b_width = border
                     b_rl_color = raylibpy.Color(b_color[0], b_color[1], b_color[2], int(alpha))
                     raylibpy.draw_rectangle_lines_ex(rect, b_width, b_rl_color)
+
         else:
-            _draw_asymmetric_rect(x, y, w, h, top_left, top_right, bottom_right, bottom_left, final_color)
             if border is not None:
                 b_color, b_width = border
                 b_rl_color = raylibpy.Color(b_color[0], b_color[1], b_color[2], int(alpha))
+
                 _draw_asymmetric_rect(x, y, w, h, top_left, top_right, bottom_right, bottom_left, final_color, b_rl_color, b_width)
+            else:
+                _draw_asymmetric_rect(x, y, w, h, top_left, top_right, bottom_right, bottom_left, final_color)
+
+        if rotation != 0.0:
+            raylibpy.rl_pop_matrix()
 
         if clip_rect:
             raylibpy.end_scissor_mode()
-
 
     def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_clip, alpha, rotation):
         FONT_LOAD_SIZE = 128
@@ -283,3 +288,5 @@ def _draw_asymmetric_rect_filled(x, y, w, h, top_left, top_right, bottom_right, 
     mid_h = h - max(top_left_rounded, top_right_rounded) - max(bottom_left_rounded, bottom_right_rounded)
     if mid_h > 0:
         raylibpy.draw_rectangle(int(x), int(mid_y), int(w), int(mid_h), color)
+
+# endregion

@@ -19,17 +19,29 @@ class CoshDebug:
 
         self.window.protocol("WM_DELETE_WINDOW", on_close)
 
+        # Create Notebook tab navigator element
+        self.notebook = ttk.Notebook(self.window)
+        self.notebook.pack(fill="both", expand=True)
+
+        # Tab Frames
+        debugger_frame = ttk.Frame(self.notebook)
+        profiler_frame = ttk.Frame(self.notebook)
+
+        self.notebook.add(debugger_frame, text="Debugger")
+        self.notebook.add(profiler_frame, text="Profiler")
+
         self.selected_node = None
         self.selected_class = None
 
-        self.tree = ttk.Treeview(self.window)
+        # Relocate elements into ui_tree_frame parent layout container
+        self.tree = ttk.Treeview(debugger_frame)
         self.tree.heading("#0", text="UI Tree Preview", anchor="w")
         self.tree.pack(fill="both", expand=True, padx=5, pady=5)
 
-        prop_label = tk.Label(self.window, text="Selected Node Properties:", anchor="w")
+        prop_label = tk.Label(debugger_frame, text="Selected Node Properties:", anchor="w")
         prop_label.pack(fill="x", padx=5, pady=2)
         
-        self.prop_text = tk.Text(self.window, height=30, bg="#f8f9fa", state="disabled", wrap="none")
+        self.prop_text = tk.Text(debugger_frame, height=30, bg="#f8f9fa", state="disabled", wrap="none")
         self.prop_text.pack(fill="x", padx=5, pady=5)
 
         def on_select(event):
