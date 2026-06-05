@@ -1,6 +1,6 @@
 from .core import CoshUIRenderer
 
-from .widgets import Container, Grid, Modal, Button, Label, InputField, Checkbox, Image, Slider, Dropdown
+from .widgets import Container, Grid, Modal, Button, Label, Checkbox, Image, Slider, Dropdown
 
 from .utility import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme
 
@@ -84,6 +84,12 @@ def __getattr__(name):
     if name == "RaylibBackend":
         from .backends.frameworks.raylib_backend import RaylibBackend
         return RaylibBackend
+    if name == "ModernGLBackend":
+        from .backends.graphics.moderngl_backend import ModernGLBackend
+        return ModernGLBackend
+    if name == "PyOpenGLBackend":
+        from .backends.graphics.pyopengl_backend import PyOpenGLBackend
+        return PyOpenGLBackend
     raise AttributeError(f"module 'coshui' has no attribute {name!r}")
 
 from .backends.graphics.gl_window_drivers import Windower
@@ -104,7 +110,6 @@ __all__ = [
     "Modal",
     "Button",
     "Label",
-    "InputField",
     "Checkbox",
     "Image",
     "Slider",
@@ -113,6 +118,8 @@ __all__ = [
     # Backends
     "PygameBackend",
     "RaylibBackend",
+    "ModernGLBackend",
+    "PyOpenGLBackend",
 
     # Themes
     "CoshTheme",

@@ -22,10 +22,6 @@ def main():
                     cui.Button(id="quit_button", text="Quit", height=50, width=150, style=cui.CoshStyling(transform_rotation=45.0))
                     cui.Image(id="test_image", src="assets/image.png", width=75, height=75)
 
-        cui.animate("transform_rotation", "main_container", 360, 2.5, "ease_in").finished(
-            lambda: cui.animate("transform_position", "main_container", (0, 30), 2.5, "ease_in")
-        )
-
         rl.end_drawing()
 
         if cui.get_signal("settings_button", cui.CLICKED):

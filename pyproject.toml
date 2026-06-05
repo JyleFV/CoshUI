@@ -19,8 +19,11 @@ classifiers = [
 
 [project.optional-dependencies]
 pygame = ["pygame-ce"]
-raylib = ["raylib-py"]
-all = ["pygame-ce", "raylib-py"]
+raylib = ["raylibpy"]
+moderngl = ["moderngl", "glfw"]
+moderngl-mglw = ["moderngl", "moderngl-window"]
+pyopengl = ["PyOpenGL", "PyOpenGL_accelerate", "glfw"]
+all = ["pygame-ce", "raylibpy", "PyOpenGL", "PyOpenGL_accelerate", "glfw", "moderngl", "moderngl-window"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

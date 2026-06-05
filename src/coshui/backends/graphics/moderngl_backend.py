@@ -1,8 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from pathlib import Path # Damn didn't know about this, this is good
+import numpy as np
 
 from ...backend import CoshBackend
 from ...types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
+from ...utility import resolve_border_radius
 from .gl_window_drivers import Windower
 
 if TYPE_CHECKING:
@@ -23,8 +26,33 @@ class ModernGLBackend(CoshBackend):
         self.context = context
         self.driver = driver.value()
 
-    def _draw_rect(self):
-        pass
+        self._orthographic_matrix = None
+        self._cached_size = (0, 0)
+
+        self.rect_shader = _load_program(self.context, "glsl/rect.vert", "glsl/rect.frag")
+        self.rect_vbo = self.context.buffer(reserve=12 * 4)
+        self.rect_vao = self.context.vertex_array(self.rect_shader, [(self.rect_vbo, '2f', 'aPos')])
+
+    def _draw_rect(self, x, y, w, h, color, border_radius, alpha, border, clip_rect, rotation):
+        vertices = _get_rect_vertices(x, y, w, h)
+        self.rect_vbo.write(vertices)
+
+        center_x = x + (w / 2.0)
+        center_y = y + (h / 2.0)
+
+        r, g, b = color
+        gpu_radius = resolve_border_radius(border_radius)
+
+        self.rect_shader['inColor'].value = (r / 255.0, g / 255.0, b / 255.0, alpha / 255.0)
+        self.rect_shader['uElementPos'].value = (float(x), float(y))
+        self.rect_shader['uSize'].value = (float(w), float(h))
+        self.rect_shader['uRadius'].value = tuple(float(r) for r in gpu_radius)
+
+        self.rect_shader['uRotation'].value = rotation
+        self.rect_shader['uCenter'].value = (center_x, center_y)
+        self.rect_shader['projection'].write(self._get_orthographic_matrix())
+
+        self.rect_vao.render(moderngl.TRIANGLES)
 
     def _draw_text(self):
         pass
@@ -63,3 +91,49 @@ class ModernGLBackend(CoshBackend):
     def measure_text(self, text, font_path, font_size):
         return self.driver._measure_text(text, font_path, font_size)
     
+    def _get_orthographic_matrix(self) -> np.ndarray:
+        width, height = self.get_size()
+        self._orthographic_matrix = np.array([
+            2.0 / width, 0.0, 0.0, 0.0,
+            0.0, -2.0 / height, 0.0, 0.0,
+            0.0, 0.0, -1.0, 0.0,
+            -1.0, 1.0, 0.0, 1.0
+        ], dtype=np.float32)
+        
+        return self._orthographic_matrix
+
+# region HELPERS
+def _load_program(context, vertex_relative_path: str, fragment_relative_path: str):
+    backend_dir = Path(__file__).parent.resolve()
+
+    vertex_path = (backend_dir / vertex_relative_path).resolve()
+    fragment_path = (backend_dir / fragment_relative_path).resolve()
+
+    with open(vertex_path, 'r') as f:
+        vertex_source = f.read()
+        
+    with open(fragment_path, 'r') as f:
+        fragment_source = f.read()
+        
+    return context.program(
+        vertex_shader=vertex_source,
+        fragment_shader=fragment_source
+    )
+
+def _get_rect_vertices(x, y, width, height):
+    left = x
+    right = x + width
+    top = y
+    bottom = y + height
+
+    return np.array([
+        left, top,
+        right, top,
+        right, bottom,
+
+        left, top,
+        right, bottom,
+        left, bottom
+    ], dtype=np.float32)
+
+# endregion

@@ -37,8 +37,8 @@ Posted: `June X, 2026`
 
 ### Backends:
 
-- **PyOpenGLBackend**: New backend for PyOpenGL.
-- **ModernGLBackend**: New backend for ModernGL.
+- **PyOpenGLBackend**: New backend for PyOpenGL with GLFW support.
+- **ModernGLBackend**: New backend for ModernGL with GLFW and MGLW support.
 
 ### Planned for v0.3.1 and above:
 
