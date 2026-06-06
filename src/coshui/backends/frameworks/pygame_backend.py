@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from ..backend import CoshBackend
-from ..types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
-from ..utility import resolve_border_radius
-from ..input import CoshInput
+from ...backend import CoshBackend
+from ...types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
+from ...utility import resolve_border_radius
+from ...input import CoshInput
 
 if TYPE_CHECKING:
-    from ..types import RenderContext
+    from ...types import RenderContext
 
 try:
     import pygame
@@ -69,8 +69,11 @@ class PygameBackend(CoshBackend):
 
                 final_x = center_x - (rotated_width / 2)
                 final_y = center_y - (rotated_height / 2)
-                
-                self.surface.blit(finalized_surface, (final_x, final_y))
+            else:
+                finalized_surface = temp
+                final_x, final_y = x, y
+                    
+            self.surface.blit(finalized_surface, (final_x, final_y))
                 
         else:
             pygame.draw.rect(self.surface, color, (x, y, w, h),
@@ -231,6 +234,13 @@ class PygameBackend(CoshBackend):
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()
     
+    def poll_input(self):
+        CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
+        CoshInput._mouse_position = pygame.mouse.get_pos()
+        CoshInput._mouse_delta = pygame.mouse.get_rel()
+        CoshInput._prev_mouse_position = CoshInput._mouse_position
+        CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]
+
     def measure_text(self, text, font_path, font_size) -> tuple:
         cache_key = (font_path, font_size)
         font = _font_cache.get(cache_key)
@@ -238,10 +248,3 @@ class PygameBackend(CoshBackend):
             font = pygame.font.Font(font_path, font_size)
             _font_cache[cache_key] = font
         return font.size(text)
-
-    def poll_input(self):
-        CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
-        CoshInput._mouse_position = pygame.mouse.get_pos()
-        CoshInput._mouse_delta = pygame.mouse.get_rel()
-        CoshInput._prev_mouse_position = CoshInput._mouse_position
-        CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]

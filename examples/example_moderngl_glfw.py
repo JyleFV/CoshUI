@@ -1,31 +1,27 @@
-import pygame as py
 import coshui as cui
-
-WIDTH, HEIGHT = 800, 800
-FPS = 60
-BLACK = (0, 0, 0)
-counter = 0
+import moderngl
+import glfw
 
 def main():
-    py.init()
-    screen = py.display.set_mode((WIDTH, HEIGHT))
-    py.display.set_caption("Pygame CoshUI Test")
-    clock = py.time.Clock()
+    if not glfw.init(): return
 
-    cui.add_class("label_color", cui.CoshStyling(background_color=(100, 255, 100)))
+    window = glfw.create_window(800, 800, "ModernGL::GLFW CoshUI Test", None, None)
+    if not window:
+        glfw.terminate()
+        return
 
-    running = True
-    while running:
-        for event in py.event.get():
-            if event.type == py.QUIT:
-                running = False
+    glfw.make_context_current(window)
 
-        screen.fill(BLACK)
+    ctx = moderngl.create_context()
+    backend = cui.ModernGLBackend(ctx, cui.GLFW)
 
-        with cui.CoshUIRenderer(cui.PygameBackend(screen)):
+    while not glfw.window_should_close(window):
+        ctx.clear(0.0, 0.0, 0.0, 1.0)
+
+        with cui.CoshUIRenderer(backend):
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
-                    cui.Label(id="main_label", text="CoshUI Menu", font_size=52)
+                    cui.Label(id="main_label", text="CoshUI Menu", font_size=52, text_overflow=cui.TEXT_HIDDEN)
                     cui.Button(id="settings_button", text="Settings is a stupid thing to talk about and I don't like it", text_overflow=cui.TEXT_WRAP, height=50, text_justify=cui.TEXT_JUSTIFY_CENTER)
                     cui.Button(id="quit_button", text="Quit", height=50, width=150, style=cui.CoshStyling(transform_rotation=45.0))
                     cui.Image(id="test_image", src="assets/image.png", width=75, height=75, style=cui.CoshStyling(transform_rotation=45.0))
@@ -41,13 +37,11 @@ def main():
             cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
         if cui.get_signal("quit_button", cui.HOVER_EXIT):
             cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
-        if cui.get_signal("quit_button", cui.CLICKED):
-            running = False
 
-        py.display.flip()
-        clock.tick(FPS)
+        glfw.swap_buffers(window)
+        glfw.poll_events()
 
-    py.quit()
+    glfw.terminate()
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,8 @@ from .state import CoshUI
 from .input import CoshInput
 from .node_definitions import Node
 from .widgets import Container, Grid
-from .utility import intersect_rect, point_in_rect, get_local_mouse
+from .animation import Tween
+from .utility import point_in_rect, get_local_mouse
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
@@ -27,8 +28,14 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             distributed_gap = node.gap # Default Fallback
             
             available_width = node.width - (node.padding * 2) - total_gap
+            
+            for child in relative_children:
+                if isinstance(child.width, CoshPercentage):
+                    child.width = (node.width - (node.padding * 2)) * child.width.percentage
+                    available_width -= (child.width + child.margin * 2)
+
             fill_widgets = [child for child in relative_children if child.width is CoshSizing.FILL]
-            static_widgets = [child for child in relative_children if child.width is not CoshSizing.FILL]
+            static_widgets = [child for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)]
 
             for widget in static_widgets:
                 available_width -= (widget.width + widget.margin * 2)
@@ -36,10 +43,12 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             if fill_widgets:
                 shared_width = max(0, available_width / len(fill_widgets))
                 for child in fill_widgets:
-                    child.width = shared_width
+                        child.width = shared_width
 
             for child in relative_children:
-                if child.height is CoshSizing.FILL:
+                if isinstance(child.height, CoshPercentage):
+                    child.height = (node.height - (node.padding * 2) - (child.margin * 2)) * child.height.percentage
+                elif child.height is CoshSizing.FILL:
                     child.height = node.height - (node.padding * 2) - (child.margin * 2)
 
             raw_inner_width = node.width - (node.padding * 2)
@@ -74,6 +83,12 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             distributed_gap = node.gap # Default Fallback
 
             available_height = node.height - (node.padding * 2) - total_gap
+
+            for child in relative_children:
+                if isinstance(child.height, CoshPercentage):
+                    child.height = (node.height - (node.padding * 2)) * child.height.percentage
+                    available_height -= (child.height + child.margin * 2)
+
             fill_widgets = [child for child in relative_children if child.height is CoshSizing.FILL]
             static_widgets = [child for child in relative_children if child.height is not CoshSizing.FILL]
 
@@ -86,7 +101,9 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                     child.height = shared_height
 
             for child in relative_children:
-                if child.width is CoshSizing.FILL:
+                if isinstance(child.width, CoshPercentage):
+                    child.width = (node.width - (node.padding * 2) - (child.margin * 2)) * child.width.percentage
+                elif child.width is CoshSizing.FILL:
                     child.width = node.width - (node.padding * 2) - (child.margin * 2)
 
             raw_inner_height = node.height - (node.padding * 2)
@@ -135,6 +152,15 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                 cursor_y += child.height + (child.margin * 2) + distributed_gap
 
         for child in absolute_children:
+            if child.width is CoshSizing.FILL:
+                child.width = node.width - (node.padding * 2)
+            elif isinstance(child.width, CoshPercentage):
+                child.width = child.width.percentage * (node.width - (node.padding * 2))
+                
+            if child.height is CoshSizing.FILL:
+                child.height = node.height - (node.padding * 2)
+            elif isinstance(child.height, CoshPercentage):
+                child.height = child.height.percentage * (node.height - (node.padding * 2))
             if node.direction is CoshDirection.ROW:
                 match node.align:
                     case CoshAlign.START:  base_y = y + node.padding
@@ -186,12 +212,23 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             # 3. Establish track sizes (Respect child's hardcoded sizes if they exceed the uniform cell size)
             for row_index, row in enumerate(rows):
                 for column_index, child in enumerate(row):
-                    # If child is FILL (or converted to FILL), its intrinsic size contribution is 0,
-                    # but it will be safely caught by the uniform cell fallback size.
-                    child_width = (child.width + child.margin * 2) if child.width is not CoshSizing.FILL else 0.0
-                    child_height = (child.height + child.margin * 2) if child.height is not CoshSizing.FILL else 0.0
                     
-                    # The track must be at least as big as the uniform cell slot allocation
+                    if isinstance(child.width, CoshPercentage):
+                        calc_w = child.width.percentage * uniform_cell_width
+                        child_width = calc_w + (child.margin * 2)
+                    elif child.width is CoshSizing.FILL:
+                        child_width = 0.0
+                    else:
+                        child_width = child.width + (child.margin * 2)
+                        
+                    if isinstance(child.height, CoshPercentage):
+                        calc_h = child.height.percentage * uniform_cell_height
+                        child_height = calc_h + (child.margin * 2)
+                    elif child.height is CoshSizing.FILL:
+                        child_height = 0.0
+                    else:
+                        child_height = child.height + (child.margin * 2)
+                    
                     column_widths[column_index] = max(column_widths[column_index], child_width, uniform_cell_width)
                     row_heights[row_index] = max(row_heights[row_index], child_height, uniform_cell_height)
 
@@ -211,17 +248,23 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                 case CoshJustify.END:    start_x = x + node.width - node.padding - total_grid_content_width
                 case _:  start_x = x + node.padding
 
-            # 5. Position and expand FILL elements
+            # 5. Position and expand FILL / PERCENTAGE elements
             current_y = start_y
             for row_index, row in enumerate(rows):
                 current_x = start_x
                 
                 for column_index, child in enumerate(row):
-                    # Now that we have a concrete track size, give FILL elements their size allocation!
+                    # Resolve Widths
                     if child.width is CoshSizing.FILL:
                         child.width = column_widths[column_index] - (child.margin * 2)
+                    elif isinstance(child.width, CoshPercentage):
+                        child.width = (child.width.percentage * column_widths[column_index]) - (child.margin * 2)
+
+                    # Resolve Heights
                     if child.height is CoshSizing.FILL:
                         child.height = row_heights[row_index] - (child.margin * 2)
+                    elif isinstance(child.height, CoshPercentage):
+                        child.height = (child.height.percentage * row_heights[row_index]) - (child.margin * 2)
 
                     layout(child, current_x + child.margin, current_y + child.margin)
                     current_x += column_widths[column_index] + node.gap
@@ -229,19 +272,45 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
                 current_y += row_heights[row_index] + node.gap
 
         for child in absolute_children:
+            if child.width is CoshSizing.FILL:
+                child.width = node.width - (node.padding * 2)
+            elif isinstance(child.width, CoshPercentage):
+                child.width = child.width.percentage * (node.width - (node.padding * 2))
+
+            if child.height is CoshSizing.FILL:
+                child.height = node.height - (node.padding * 2)
+            elif isinstance(child.height, CoshPercentage):
+                child.height = child.height.percentage * (node.height - (node.padding * 2))
+                
             layout(child, x + node.padding + child._x, y + node.padding + child._y)
 
 def update(delta : float):
     for tween in CoshUI._active_tweens:
-        tween.update(delta)
+        tween._update(delta)
 
-    completed = [tween for tween in CoshUI._active_tweens if tween.finished]
+    completed = [tween for tween in CoshUI._active_tweens if tween._finished]
 
-    CoshUI._active_tweens -= { t for t in CoshUI._active_tweens if t.finished }
+    CoshUI._active_tweens -= { tween for tween in CoshUI._active_tweens if tween._finished }
 
     for tween in completed:
-        if tween.on_complete is not None:
-            tween.on_complete()
+        if tween._on_complete is not None:
+            tween._on_complete()
+        # Soon
+        # if tween._loop_config is not None:
+        #     end_value, duration, easing = tween._loop_config
+
+        #     new_tween = Tween(
+        #         tween.property,
+        #         tween.target_id,
+        #         end_value if end_value is not None else tween.start_value,
+        #         duration if duration is not None else tween.duration,
+        #         easing if easing is not None else tween.easing
+        #     )
+
+        #     new_tween.start_value = tween.end_value
+        #     new_tween.loop(end_value=tween.end_value)
+
+        #     CoshUI._active_tweens.add(new_tween)
 
 def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
     if not is_root:

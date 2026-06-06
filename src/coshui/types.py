@@ -8,7 +8,9 @@ from .cui_error import CoshUIError
 class CoshStyling:
     background_color : tuple | None = None
     alpha : int | None = None
-    # gradients : tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str] | None = None
+    # gradients : tuple | None = None
+    # glow : tuple | None = None
+    # drop_shadow : tuple | None = None
     border : tuple | None = None
     border_radius : int | tuple | None = None
     transform_position : tuple | None = None
@@ -103,6 +105,14 @@ class CoshSizing(Enum):
     FILL = 0
     AUTO = 1
 
+class CoshMode(Enum):
+    NORMAL = 0
+    DEBUG = 1
+
+class CoshPercentage:
+    def __init__(self, percentage : int):
+        self.percentage = percentage / 100
+
 class RenderContext(NamedTuple):
     # Node-specific
     id : str | None = None
@@ -111,10 +121,12 @@ class RenderContext(NamedTuple):
     y : float = 0.0
     width : float = 0.0
     height : float = 0.0
+    padding : float = 0.0
+    margin : float = 0.0
+    # Visual
     z_index : int = 0
     transform_x : float = 0.0
     transform_y : float = 0.0
-    # Visual
     background_color : tuple | None = None
     border_radius : int | tuple = 0
     transform_scale : float = 1.0
@@ -145,4 +157,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['RenderContext', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

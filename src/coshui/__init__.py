@@ -1,10 +1,10 @@
 from .core import CoshUIRenderer
 
-from .widgets import Container, Grid, Modal, Button, Label, InputField, Checkbox, Image, Slider, Dropdown
+from .widgets import Container, Grid, Modal, Button, Label, Checkbox, Image, Slider, Dropdown
 
 from .utility import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme
 
-from .types import CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
+from .types import CoshMode, CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
 
 # Align
 ALIGN_START = CoshAlign.START
@@ -67,6 +67,11 @@ ABSOLUTE = CoshPositioning.ABSOLUTE
 # Sizing
 FILL = CoshSizing.FILL
 AUTO = CoshSizing.AUTO
+PERCENTAGE = CoshPercentage
+
+# Mode
+NORMAL = CoshMode.NORMAL
+DEBUG = CoshMode.DEBUG
 
 from .themes import CoshTheme
 
@@ -74,12 +79,23 @@ from .animation import animate
 
 def __getattr__(name):
     if name == "PygameBackend":
-        from .backends.pygame_backend import PygameBackend
+        from .backends.frameworks.pygame_backend import PygameBackend
         return PygameBackend
     if name == "RaylibBackend":
-        from .backends.raylib_backend import RaylibBackend
+        from .backends.frameworks.raylib_backend import RaylibBackend
         return RaylibBackend
+    if name == "ModernGLBackend":
+        from .backends.graphics.gl_related.moderngl_backend import ModernGLBackend
+        return ModernGLBackend
+    if name == "PyOpenGLBackend":
+        from .backends.graphics.gl_related.pyopengl_backend import PyOpenGLBackend
+        return PyOpenGLBackend
     raise AttributeError(f"module 'coshui' has no attribute {name!r}")
+
+from .backends.graphics.gl_related.gl_window_drivers import Windower
+
+GLFW = Windower.GLFW
+MGLW = Windower.MGLW
 
 # TODO: Add the different flat variables
 __all__ = [
@@ -94,7 +110,6 @@ __all__ = [
     "Modal",
     "Button",
     "Label",
-    "InputField",
     "Checkbox",
     "Image",
     "Slider",
@@ -103,6 +118,8 @@ __all__ = [
     # Backends
     "PygameBackend",
     "RaylibBackend",
+    "ModernGLBackend",
+    "PyOpenGLBackend",
 
     # Themes
     "CoshTheme",
@@ -179,4 +196,13 @@ __all__ = [
     # Sizing
     "FILL",
     "AUTO",
+    "PERCENTAGE",
+
+    # Mode
+    "NORMAL",
+    "DEBUG",
+
+    # GL Specific Windowers
+    "GLFW",
+    "MGLW"
 ]

@@ -12,8 +12,8 @@ class Node(ABC):
 
     style : CoshStyling = field(default_factory=lambda: CoshStyling())
     children : list = field(default_factory=list)
-    width : float | None = None
-    height : float | None = None
+    width : float | CoshSizing | CoshPercentage | None = None
+    height : float | CoshSizing | CoshPercentage | None = None
     margin : float | None = None
     x : float | None = None
     y : float | None = None
@@ -28,9 +28,6 @@ class Node(ABC):
 
     def __post_init__(self):
         CoshLifecycle.register_node(self)
-
-        if self.positioning is CoshPositioning.ABSOLUTE and any(size is CoshSizing.FILL for size in (self.width, self.height)):
-            warn("`FILL` sizing has no effect on absolute children. Use an explicit `width` and `height` values instead.")
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning is not CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
@@ -57,6 +54,7 @@ class Node(ABC):
             "transform_y" : transform_y,
             "width" : self.width,
             "height" : self.height,
+            "margin" : self.margin,
             "background_color" : self.style.background_color,
             "z_index" : self.z_index,
             "border_radius" : self.style.border_radius,
@@ -88,6 +86,7 @@ class ParentNode(Node):
     def get_render_data(self) -> RenderContext:
         data = self.get_base_render_data()
         data["image_src"] = self.src
+        data["padding"] = self.padding
         return RenderContext(**data)
 
 @dataclass

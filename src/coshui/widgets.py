@@ -36,15 +36,15 @@ class Container(ParentNode):
 
         match self.direction:
             case CoshDirection.ROW:
-                children_width = sum(child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL)
+                children_width = sum(child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage))
                 total_gap = self.gap * max(0, len(relative_children) - 1)
                 auto_width = children_width + total_gap + (self.padding * 2)
-                auto_height = max([child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL], default=0) + (self.padding * 2)
+                auto_height = max([child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL and not isinstance(child.height, CoshPercentage)], default=0) + (self.padding * 2)
             case CoshDirection.COLUMN:
-                children_height = sum(child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL)
+                children_height = sum(child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL and not isinstance(child.height, CoshPercentage))
                 total_gap = self.gap * max(0, len(relative_children) - 1)
                 auto_height = children_height + total_gap + (self.padding * 2)
-                auto_width = max([child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL], default=0) + (self.padding * 2)
+                auto_width = max([child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)], default=0) + (self.padding * 2)
 
         if self.width is CoshSizing.AUTO:
             self.width = auto_width
@@ -78,8 +78,17 @@ class Grid(ParentNode):
             col = index % self.column_count
             row = index // self.column_count
 
-            child_width = (child.width + (child.margin * 2)) if child.width is not CoshSizing.FILL else 0.0
-            child_height = (child.height + (child.margin * 2)) if child.height is not CoshSizing.FILL else 0.0
+            # If a child has percentage or FILL sizing, treat its intrinsic minimum width contribution as 0.0
+            if child.width is CoshSizing.FILL or isinstance(child.width, CoshPercentage):
+                child_width = 0.0
+            else:
+                child_width = child.width + (child.margin * 2)
+                
+            # If a child has percentage or FILL sizing, treat its intrinsic minimum height contribution as 0.0
+            if child.height is CoshSizing.FILL or isinstance(child.height, CoshPercentage):
+                child_height = 0.0
+            else:
+                child_height = child.height + (child.margin * 2)
 
             col_widths[col] = max(col_widths[col], child_width)
             row_heights[row] = max(row_heights[row], child_height)
