@@ -1,4 +1,3 @@
-import moderngl
 import moderngl_window as mglw
 import coshui as cui
 
@@ -9,11 +8,11 @@ import coshui as cui
 # there, or #2 call `mglw.window()._calc_mouse_delta(self.mouse_x, self.mouse_y)` BEFORE the UI code runs. Either way, both are genuine hacks which I don't like 
 # >:(
 
-# NOTE: MGLW is still very weird, maybe I'll work on it at a later time
+# NOTE: MGLW is so very weird, it's not very good with external tooling so beware of using CoshUI's debugger.
 
 class MyRenderer(mglw.WindowConfig):
     gl_version = (3, 3)
-    title = "ModernGL CoshUI Test"
+    title = "ModernGL::MGLW CoshUI Test"
     window_size = (800, 800)
     aspect_ratio = 16 / 9
     resizable = True
@@ -27,14 +26,25 @@ class MyRenderer(mglw.WindowConfig):
     def on_render(self, time: float, frametime: float):
         self.ctx.clear(0.1, 0.1, 0.1)
 
-        with cui.CoshUIRenderer(self.coshui_backend, cui.DEBUG):
-            with cui.Container(id="main_root", width=cui.FILL, height=cui.FILL, padding=10):
-                cui.Container(id="test", width=100, height=100, style=cui.CoshStyling(background_color=(255, 255, 0), border=((255, 0, 0), 5), alpha=10, border_radius=(5, 20, 5, 20)))
+        with cui.CoshUIRenderer(self.coshui_backend):
+            with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
+                with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
+                    cui.Label(id="main_label", text="CoshUI Menu", font_size=52)
+                    cui.Button(id="settings_button", text="Settings is a stupid thing to talk about and I don't like it", text_overflow=cui.TEXT_WRAP, height=50, text_justify=cui.TEXT_JUSTIFY_CENTER)
+                    cui.Button(id="quit_button", text="Quit", height=50, width=150, style=cui.CoshStyling(transform_rotation=45.0))
+                    cui.Image(id="test_image", src="assets/image.png", width=75, height=75, style=cui.CoshStyling(transform_rotation=45.0))
 
-        if cui.get_signal("test", cui.CLICKED):
-            cui.animate("transform_rotation", "test", 45.0, 1.0, "ease_out_bounce")
-        if cui.get_signal("test", cui.RELEASED):
-            cui.animate("transform_rotation", "test", 0.0, 1.0, "ease_out_bounce")
+        if cui.get_signal("settings_button", cui.CLICKED):
+            cui.animate("transform_scale", "main_label", 1.2, 0.25, "ease_in")
+            cui.animate("background_color", "main_container", (255, 0, 0), 1.5, "ease_in")
+        if cui.get_signal("settings_button", cui.RELEASED):
+            cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")
+            cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
+
+        if cui.get_signal("quit_button", cui.HOVERED):
+            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
+        if cui.get_signal("quit_button", cui.HOVER_EXIT):
+            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
 
     def on_resize(self, width: int, height: int):
         self.ctx.viewport = (0, 0, width, height)

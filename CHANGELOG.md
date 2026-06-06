@@ -1,5 +1,5 @@
 # CoshUI - 0.3.0 Changelog
-Posted: `June X, 2026`
+Posted: `June 7, 2026`
 
 ### New Features:
 
@@ -13,18 +13,15 @@ Posted: `June X, 2026`
         | `"ease_in_elastic"` |
         | `"ease_out_elastic"` |
 
-
-- **Propagation Flags**: Added "self_" variants to some transform properties (self_alpha and self_transform_position) that can be toggled True or False.
-
 ### Behavior Changes:
 
 - **ABSOLUTE FILL**: Gave the ability for `ABSOLUTE` positioning Nodes to use cui.FILL for its `width` and `height` values.
 
-### Breaking Changes
+### Breaking Changes:
 
-- **On Complete**: `animate()` function no longer takes in on_complete callback, but returns a Tween that lets you call a finished() method that accepts the callback.
+- **On Complete**: `animate()` function no longer takes in on_complete callback, but returns a Tween that lets you call a `.finished()` method that accepts the callback. This is partly to make it more pythonic but also to clean up the API and to add new methods in the future like `.loop()`.
     - **Example**: `animate(...).finished(callback)`
-- **Property Name Changes**: `animate()` function's property names changed.  
+- **Property Name Changes**: `animate()` function's property names changed. By doing this, it becomes easier to use the animation system by mapping the new names to the actual properties being animated. 
     -   | Old | New |
         | :--- | :--- |
         | `animate("scale", …)` | `animate("transform_scale", …)` |
@@ -33,13 +30,16 @@ Posted: `June X, 2026`
 
 ### Bug Fixes:
 
-- **Pygame’s Missing Alpha**: Alpha value not being set when rotation was 0.0, likely accidentally forgotten when implementing rotation.
+- **Pygame’s Missing Alpha**: Alpha value not being set when rotation was 0.0 for rectangles, this is due to being accidentally forgotten when implementing rotation.
 - **Raylib Border-radius Rotation**: Raylib losing border radius when rotated is now fixed.
 
 ### Backends:
 
 - **PyOpenGLBackend**: New backend for PyOpenGL with GLFW support.
 - **ModernGLBackend**: New backend for ModernGL with GLFW and MGLW support.
+
+> [!WARNING]
+> ModernGL-Window's support acts fairly weird with the debugger. My main theory is the debugger consumes a bit too much and hangs some parts of it. If this is true, then this may also be a program complexity problem — which if it is, might be need a complete rework of the debugger.
 
 ### Planned for v0.3.1 and above:
 

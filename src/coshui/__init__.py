@@ -85,14 +85,14 @@ def __getattr__(name):
         from .backends.frameworks.raylib_backend import RaylibBackend
         return RaylibBackend
     if name == "ModernGLBackend":
-        from .backends.graphics.moderngl_backend import ModernGLBackend
+        from .backends.graphics.gl_related.moderngl_backend import ModernGLBackend
         return ModernGLBackend
     if name == "PyOpenGLBackend":
-        from .backends.graphics.pyopengl_backend import PyOpenGLBackend
+        from .backends.graphics.gl_related.pyopengl_backend import PyOpenGLBackend
         return PyOpenGLBackend
     raise AttributeError(f"module 'coshui' has no attribute {name!r}")
 
-from .backends.graphics.gl_window_drivers import Windower
+from .backends.graphics.gl_related.gl_window_drivers import Windower
 
 GLFW = Windower.GLFW
 MGLW = Windower.MGLW

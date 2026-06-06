@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from ...input import CoshInput
+from ....input import CoshInput
 
 try:
     import moderngl_window
@@ -15,10 +15,6 @@ except ImportError:
 
 class _WindowDriver(ABC):
     @abstractmethod
-    def _measure_text(self, text, font_path, font_size):
-        pass
-    
-    @abstractmethod
     def _poll_input(self):
         pass
     
@@ -28,9 +24,6 @@ class _WindowDriver(ABC):
 
 # GLFW
 class _GLFWDriver(_WindowDriver):
-    def _measure_text(self):
-        pass
-
     def _poll_input(self):
         CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
         CoshInput._mouse_position = glfw.get_cursor_pos(glfw.get_current_context())
@@ -46,9 +39,6 @@ class _GLFWDriver(_WindowDriver):
 
 # MGLW
 class _MGLWDriver(_WindowDriver):
-    def _measure_text(self):
-        pass
-
     # This works only if _calc_mouse_delta(self.mouse_x, self.mouse_y) is called beforehand
     # or if _mouse_pos is set somewhere. Either way, MGLW hates others making tooling around it seems.
     def _poll_input(self):

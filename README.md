@@ -14,9 +14,9 @@
 </div>
 
 ## What is CoshUI?
-CoshUI is a Python-first, declarative UI library inspired by CSS, Godot, and Dear ImGui. Unlike most Python UI libraries, CoshUI is fully backend-agnostic — write your UI once and render it with Pygame, Raylib, or any backend you build yourself.
+CoshUI is a Python-first, declarative UI library inspired by CSS, Godot, and Dear ImGui. Unlike most Python UI libraries, CoshUI is fully backend-agnostic — write your UI once and render it with Pygame, Raylib, ModernGL, or any backends you build or are supported.
 
-CoshUI features a full layout engine with flexbox-inspired sizing, a retained-state system, a tween animation system, a signal-based event model, and a theme system — all behind a clean, web-like API that's simple to pick up without sacrificing flexibility.
+CoshUI features a full layout engine with flexbox-inspired sizing, a retained-state system, a tween animation system, a signal-based event model, and a theme system — all within in a declarative API that's simple to pick up without sacrificing flexibility.
 
 ## How to Install
 
@@ -32,6 +32,9 @@ pip install coshui[pygame]
 
 # Raylib
 pip install coshui[raylib]
+
+# ModernGL
+pip install coshui[moderngl] # or [moderngl-mglw]
 
 # Both
 pip install coshui[all]
@@ -60,6 +63,9 @@ if cui.get_signal("color_btn", cui.CLICKED):
 ```
 
 To learn more, check out the [examples](https://gitlab.com/jylefv/CoshUI/-/blob/main/examples/examples.md) or visit the [documentation](https://terrarizer03.github.io/coshui-docs/).
+
+## Documentation
+CoshUI's documentation features the basic API coverage and all you need to know about how to use it. It can be viewed [here.](https://terrarizer03.github.io/coshui-docs)
 
 ## Contributing
 CoshUI is primarily developed on [GitLab](https://gitlab.com/jylefv/CoshUI). Please open issues and pull requests there.
