@@ -34,7 +34,7 @@ def main():
             cui.animate("transform_scale", "main_label", 1.2, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 0, 0), 1.5, "ease_in")
         if cui.get_signal("settings_button", cui.RELEASED):
-            cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")
+            cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")  
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
         if cui.get_signal("quit_button", cui.HOVERED):
