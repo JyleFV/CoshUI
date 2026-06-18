@@ -9,6 +9,7 @@ Posted: `June 18, 2026`
 
 - **PyOpenGL Windower Warning**: If anything other than `cui.GLFW` is passed into `PyOpenGLBackend`, it gives an error
 - **Wrong Node ID**: `get_signal` now has a Node ID check, before it did not.
+- **Dropdown Default Theme**: Added a basic default theme for Dropdown to reduce resistance of usage.
 
 ---
 

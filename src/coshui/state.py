@@ -19,7 +19,8 @@ DEFAULT_THEME = CoshTheme(
             checkbox={ "width" : 25, "height" : 25, "border_radius" : 4, "border": ((200, 200, 200), 2), "checked_color" : (85, 75, 255), "unchecked_color" : (200, 200, 200)},
             image={ "width" : 150, "height" : 150 },
             modal={ "header_color" : (60, 60, 80), "header_border_radius" : (7.5, 7.5, 0, 0), "content_color" : (80, 80, 100), "content_border_radius" : (0, 0, 7.5, 7.5) }, 
-            slider={ "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 }
+            slider={ "thumb_color" : (100, 100, 100), "track_color" : (200, 200, 200), "border_radius" : 50 },
+            dropdown={ "width" : 150, "height" : 30, "background_color" : (100, 100, 100) }
         )
 
 COURIER = os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime.ttf")

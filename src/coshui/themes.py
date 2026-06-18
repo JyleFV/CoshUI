@@ -13,9 +13,10 @@ class CoshTheme:
     checkbox : dict = field(default_factory=lambda: {...})
     image : dict = field(default_factory=lambda: {...})
     slider : dict = field(default_factory=lambda: {...})
+    dropdown : dict = field(default_factory=lambda: {...})
 
     def get_for(self, node):
-        from .widgets import Modal, Button, Label, Checkbox, Image, Slider
+        from .widgets import Modal, Button, Label, Checkbox, Image, Slider, Dropdown
         
         if isinstance(node, Modal):
             return self.modal
@@ -29,6 +30,8 @@ class CoshTheme:
             return self.image
         if isinstance(node, Slider):
             return self.slider
+        if isinstance(node, Dropdown):
+            return self.dropdown
 
         return None
 
