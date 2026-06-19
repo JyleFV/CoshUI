@@ -56,12 +56,10 @@ class CoshLifecycle:
             return
         
         for key, value in theme_style.items():
+            if hasattr(node, key) and getattr(node, key) is None:
+                setattr(node, key, value)
             if hasattr(node.style, key) and getattr(node.style, key) is None:
                 setattr(node.style, key, value)
-            if hasattr(node, key) and getattr(node, key) is None:
-                setattr(node, key, value)
-            if hasattr(node, key) and getattr(node, key) is None:
-                setattr(node, key, value)
         
         if isinstance(node, Checkbox):
             if node.checked:

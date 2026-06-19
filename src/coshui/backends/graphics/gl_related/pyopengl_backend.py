@@ -7,6 +7,7 @@ import numpy as np
 from ....backend import CoshBackend
 from ....types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
 from ....utility import resolve_border_radius
+from ....cui_error import CoshUIError
 from .gl_window_drivers import Windower
 
 if TYPE_CHECKING:
@@ -26,6 +27,9 @@ class PyOpenGLBackend(CoshBackend):
             raise ImportError(
                 "PyOpenGL is not installed. Please install it using `pip install coshui[pyopengl]`."
             )
+        if driver is not Windower.GLFW:
+            raise CoshUIError("PyOpenGL does not take in the MGLW driver.")
+        
         self.driver = driver.value()
 
         glEnable(GL_BLEND)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coshui"
-version = "0.3.0"
+version = "0.3.1"
 authors = [{name = "Jyle Frazier Villareal", email = "jylefraziervillareal@gmail.com"}]
 description = "A Python-first — Declarative-Mode — Backend-Agnostic — UI Library"
 readme = "README.md"
@@ -25,11 +25,18 @@ moderngl-mglw = ["moderngl", "moderngl-window", "freetype-py", "Pillow"]
 pyopengl = ["PyOpenGL", "PyOpenGL_accelerate", "glfw", "freetype-py", "Pillow"]
 all = ["pygame-ce", "raylibpy", "PyOpenGL", "PyOpenGL_accelerate", "glfw", "moderngl", "moderngl-window", "freetype-py", "Pillow"]
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-coshui = ["assets/fonts/*.ttf"]
+coshui = [
+    "assets/fonts/*.ttf",
+    "backends/graphics/gl_related/glsl/*.frag",
+    "backends/graphics/gl_related/glsl/*.vert"
+]
 
 [project.urls]
 Homepage = "https://terrarizer03.github.io/coshui-docs/"

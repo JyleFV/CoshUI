@@ -47,6 +47,10 @@ def set_default_font(name : str):
 # ================ Signal Events ================
 
 def get_signal(node_id : str, signal : CoshSignals):
+    if node_id not in CoshUI._state_storage:
+        close_match = difflib.get_close_matches(node_id, CoshUI._state_storage.keys(), n=1)
+        raise CoshUIError(f"Unknown Node ID: `{node_id}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+    
     return CoshUI._get_signal(node_id, signal)
 
 
