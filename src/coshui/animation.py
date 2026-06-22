@@ -2,7 +2,6 @@ import difflib
 import math
 from typing import Callable, Optional
 
-from .state import CoshUI
 from .cui_error import CoshUIError
 
 # region Helper Functions
@@ -84,31 +83,26 @@ PROPERTY_TYPE_MAP = {
 }
 
 class Tween:
-    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : Callable):
+    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : Callable, path : str, lerp_fn : Callable):
         self.property = n_property
         self.target_id = target_id
+        self.path = path
+        self.lerp_fn = lerp_fn
 
-        self.path, self.lerp_fn = PROPERTY_MAP.get(n_property) 
-
-        val = CoshUI.get_state(self.target_id, self.path)
-        
-        # Should be redundant but it's a good visual check
-        if val is None:
-            if self.lerp_fn == lerp_tuple:
-                val = tuple(0 for _ in end_value) 
-            else:
-                val = 0.0
-
-        self.start_value = val
+        self.start_value = None
         self.end_value = end_value
         self.time = 0
         self.duration = duration
         self.easing = easing
         self._on_complete = None
-        self._loop_config = None
+        # self._loop_config = None
         self._finished = False
 
     def _update(self, delta):
+        from .state import CoshUI
+        if self.start_value is None:
+            return
+        
         if self._finished:
             return
         
@@ -122,9 +116,12 @@ class Tween:
         if raw_t >= 1.0:
             self._finished = True
 
-    def finished(self, callable : Optional[Callable]):
+    def finished(self, callback : Optional[Callable]):
+        if not callable(callback):
+            raise CoshUIError(f"Callable: `{callback}` is not a callable.")
+        
         if self._on_complete is None:
-            self._on_complete = callable
+            self._on_complete = callback
         return self
 
     # Soon
@@ -157,6 +154,7 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
     :returns Tween: Returns the tween it's working on.
     """
 
+    from .state import CoshUI
     if n_property not in PROPERTY_MAP:
         close_match = difflib.get_close_matches(n_property, PROPERTY_MAP.keys(), n=1)
         raise CoshUIError(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
@@ -169,21 +167,13 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
         close_match = difflib.get_close_matches(easing, EASING_MAP.keys(), n=1)
         raise CoshUIError(f"Unknown easing curve: `{easing}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(EASING_MAP.keys())}.")
 
-    _, lerp_fn = PROPERTY_MAP[n_property]
+    path, lerp_fn = PROPERTY_MAP[n_property]
     expected_type = PROPERTY_TYPE_MAP.get(lerp_fn)
 
     if expected_type and not isinstance(end_value, expected_type):
         raise CoshUIError(f"Property `{n_property}` expects `{expected_type}`, got `{type(end_value).__name__}`.")
 
-    existing_tween = next((tween for tween in CoshUI._active_tweens if tween.target_id == target_id and tween.property == n_property), None)
-
-    if existing_tween:
-        if existing_tween.end_value == end_value:
-            return existing_tween
-        
-        CoshUI._active_tweens.remove(existing_tween)
-
     ease_fn = EASING_MAP.get(easing, ease_linear)
-    tween = Tween(n_property, target_id, end_value, duration, ease_fn)
-    CoshUI._active_tweens.add(tween)
-    return tween
+    tween = Tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)
+    
+    return CoshUI._tween_manager.register_tween(tween)

@@ -285,32 +285,7 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
             layout(child, x + node.padding + child._x, y + node.padding + child._y)
 
 def update(delta : float):
-    for tween in CoshUI._active_tweens:
-        tween._update(delta)
-
-    completed = [tween for tween in CoshUI._active_tweens if tween._finished]
-
-    CoshUI._active_tweens -= { tween for tween in CoshUI._active_tweens if tween._finished }
-
-    for tween in completed:
-        if tween._on_complete is not None:
-            tween._on_complete()
-        # Soon
-        # if tween._loop_config is not None:
-        #     end_value, duration, easing = tween._loop_config
-
-        #     new_tween = Tween(
-        #         tween.property,
-        #         tween.target_id,
-        #         end_value if end_value is not None else tween.start_value,
-        #         duration if duration is not None else tween.duration,
-        #         easing if easing is not None else tween.easing
-        #     )
-
-        #     new_tween.start_value = tween.end_value
-        #     new_tween.loop(end_value=tween.end_value)
-
-        #     CoshUI._active_tweens.add(new_tween)
+    CoshUI._tween_manager.update(delta)
 
 def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
     if not is_root:

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import os
 
 from .themes import CoshTheme
+from .tween_manager import TweenManager
 
 if TYPE_CHECKING:
     from .debug import CoshDebug
@@ -44,7 +45,7 @@ class CoshUI:
     # ---------------- Input & Event-related ----------------
     _focused_id = None
     _signals : dict = {} # FORMAT: { node_id : set() }
-    _active_tweens : set = set()
+    _tween_manager : TweenManager = TweenManager()
     # ---------------- Theme-related ----------------
     _theme_registry : dict = { "DEFAULT" : DEFAULT_THEME }
     _active_theme = _theme_registry.get("DEFAULT")
