@@ -23,7 +23,7 @@ def main():
 
         screen.fill(BLACK)
 
-        with cui.CoshUIRenderer(cui.PygameBackend(screen)):
+        with cui.CoshUIRenderer(cui.PygameBackend(screen), cui.DEBUG):
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=30, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52)

@@ -2,24 +2,23 @@ from .animation import Tween, lerp_tuple
 
 class TweenManager:
     def __init__(self):
-        self.tween_registry = {}
+        self.tween_registry : dict[tuple, Tween] = {}
 
-    def register_tween(self, tween: Tween) -> Tween:
-        key = (tween.target_id, tween.property)
-        
-        if key in self.tween_registry:
-            existing_tween = self.tween_registry[key]
-            if existing_tween.end_value == tween.end_value:
-                return existing_tween
-        
+    def create_tween(self, n_property, target_id, end_value, duration, easing, path, lerp_fn):
         from .state import CoshUI
-        
-        start_value = CoshUI.get_state(tween.target_id, tween.path)
-        if start_value is None:
-            start_value = tuple(0 for _ in tween.end_value) if tween.lerp_fn == lerp_tuple else 0.0
-            
-        tween.start_value = start_value
+        key = (target_id, n_property)
 
+        if key in self.tween_registry:
+            existing = self.tween_registry[key]
+            if not existing._finished and (existing.end_value == end_value or existing._ping_pong):
+                return existing
+
+        start_value = CoshUI.get_state(target_id, path)
+        if start_value is None:
+            start_value = tuple(0 for _ in end_value) if lerp_fn == lerp_tuple else 0.0
+
+        tween = Tween(n_property, target_id, start_value, end_value, duration, easing, path, lerp_fn)
+        
         self.tween_registry[key] = tween
         return tween
 

@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 from .cui_error import CoshUIError
 
-# region Helper Functions
+# region Easing and Lerp Functions
 # Lerp Functions
 def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)
@@ -83,26 +83,26 @@ PROPERTY_TYPE_MAP = {
 }
 
 class Tween:
-    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : Callable, path : str, lerp_fn : Callable):
+    def __init__(self, n_property : str, target_id, start_value, end_value, duration : float, easing : Callable, path : str, lerp_fn : Callable):
         self.property = n_property
         self.target_id = target_id
         self.path = path
         self.lerp_fn = lerp_fn
 
-        self.start_value = None
+        self.start_value = start_value
         self.end_value = end_value
         self.time = 0
         self.duration = duration
         self.easing = easing
         self._on_complete = None
-        # self._loop_config = None
         self._finished = False
+
+        self._loop_count = None # None = Infinite
+        self._loops_done = 0
+        self._ping_pong = False
 
     def _update(self, delta):
         from .state import CoshUI
-        if self.start_value is None:
-            return
-        
         if self._finished:
             return
         
@@ -114,7 +114,16 @@ class Tween:
         CoshUI.set_state(self.target_id, self.path, new_value)
 
         if raw_t >= 1.0:
-            self._finished = True
+            if not self._ping_pong and self._loop_count is None:
+                self._finished = True
+            else:
+                if self._loop_count is not None and self._loops_done + 1 >= self._loop_count:
+                    self._finished = True
+                else:
+                    self._loops_done += 1
+                    self.time = 0
+                    if self._ping_pong:
+                        self.start_value, self.end_value = self.end_value, self.start_value
 
     def finished(self, callback : Optional[Callable]):
         if not callable(callback):
@@ -124,12 +133,16 @@ class Tween:
             self._on_complete = callback
         return self
 
-    # Soon
-    # def loop(self, end_value=None, duration=None, easing=None):
-    #     if self._loop_config is None:
-    #         ease_fn = EASING_MAP.get(easing, None)
-    #         self._loop_config = (end_value, duration, ease_fn)
-    #     return self
+    def loop(self, count=None, ping_pong=False):
+        if count is not None and (not isinstance(count, int) or count <= 0):
+            raise CoshUIError(f"loop `count` parameter must be a positive integer or None, got `{count}`.")
+        
+        if not isinstance(ping_pong, bool):
+            raise CoshUIError(f"loop `ping_pong` parameter must be a bool, got `{type(ping_pong).__name__}`.")
+        
+        self._loop_count = count
+        self._ping_pong = ping_pong
+        return self
 
     # Soon
     # def reverse(self):
@@ -174,6 +187,4 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
         raise CoshUIError(f"Property `{n_property}` expects `{expected_type}`, got `{type(end_value).__name__}`.")
 
     ease_fn = EASING_MAP.get(easing, ease_linear)
-    tween = Tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)
-    
-    return CoshUI._tween_manager.register_tween(tween)
+    return CoshUI._tween_manager.create_tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)
