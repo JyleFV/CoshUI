@@ -33,10 +33,10 @@ def main():
             cui.animate("transform_scale", "main_label", 1.0, 0.25, "ease_in")
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
-        if cui.get_signal("quit_button", cui.HOVERED):
-            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
+        if cui.get_signal("quit_button", cui.HOVER_ENTER):
+            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_out_bounce")
         if cui.get_signal("quit_button", cui.HOVER_EXIT):
-            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_out_bounce")
 
         glfw.swap_buffers(window)
         glfw.poll_events()

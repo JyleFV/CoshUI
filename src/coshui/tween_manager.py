@@ -1,5 +1,6 @@
 from .animation import Tween, lerp_tuple
 
+# Deals with Tween creation, storage, lifetime, and updates.
 class TweenManager:
     def __init__(self):
         self.tween_registry : dict[tuple, Tween] = {}

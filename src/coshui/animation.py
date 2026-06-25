@@ -26,7 +26,7 @@ def ease_in_out(t : float):
     if t < 0.5:
         return 2 * t * t
     else:
-        return 1 - pow(-2 * t + 2, 2) / 2 
+        return 1 - math.pow(-2 * t + 2, 2) / 2 
 
 def ease_out_bounce(t : float):
     if t < (1 / 2.75):
@@ -94,36 +94,57 @@ class Tween:
         self.time = 0
         self.duration = duration
         self.easing = easing
+        self._original_start_value = start_value
         self._on_complete = None
         self._finished = False
 
-        self._loop_count = None # None = Infinite
+        self._looping = False
+        self._loop_count = None # None = Infinite time
         self._loops_done = 0
         self._ping_pong = False
+        self._loop_delay = 0.0
+        self._loop_delay_remaining = 0.0
+        self._waiting = False
 
     def _update(self, delta):
         from .state import CoshUI
         if self._finished:
             return
-        
+
+        if self._waiting:
+            self._loop_delay_remaining -= delta
+            if self._loop_delay_remaining <= 0:
+                self._waiting = False
+                self.time = 0
+                if self._ping_pong:
+                    self.start_value, self.end_value = self.end_value, self.start_value
+                else:
+                    self.start_value = self._original_start_value
+            return
+
         self.time += delta
         raw_t = min(self.time / self.duration, 1.0)
         eased_t = self.easing(raw_t)
-
         new_value = self.lerp_fn(self.start_value, self.end_value, eased_t)
         CoshUI.set_state(self.target_id, self.path, new_value)
 
         if raw_t >= 1.0:
-            if not self._ping_pong and self._loop_count is None:
+            if not self._looping:
                 self._finished = True
             else:
                 if self._loop_count is not None and self._loops_done + 1 >= self._loop_count:
                     self._finished = True
                 else:
                     self._loops_done += 1
-                    self.time = 0
-                    if self._ping_pong:
-                        self.start_value, self.end_value = self.end_value, self.start_value
+                    if self._loop_delay > 0:
+                        self._waiting = True
+                        self._loop_delay_remaining = self._loop_delay
+                    else:
+                        self.time = 0
+                        if self._ping_pong:
+                            self.start_value, self.end_value = self.end_value, self.start_value
+                        else:
+                            self.start_value = self._original_start_value
 
     def finished(self, callback : Optional[Callable]):
         if not callable(callback):
@@ -133,32 +154,30 @@ class Tween:
             self._on_complete = callback
         return self
 
-    def loop(self, count=None, ping_pong=False):
+    def loop(self, count=None, ping_pong=False, delay=0.0):
         if count is not None and (not isinstance(count, int) or count <= 0):
-            raise CoshUIError(f"loop `count` parameter must be a positive integer or None, got `{count}`.")
+            raise CoshUIError(f"Animation loop `count` parameter must be a positive integer or None, got `{count}`.")
         
         if not isinstance(ping_pong, bool):
-            raise CoshUIError(f"loop `ping_pong` parameter must be a bool, got `{type(ping_pong).__name__}`.")
+            raise CoshUIError(f"Animation loop `ping_pong` parameter must be a bool, got `{type(ping_pong).__name__}`.")
+        
+        if not isinstance(delay, (int, float)) or delay < 0:
+            raise CoshUIError(f"Animation loop `delay` parameter must be a positive number, got `{type(delay).__name__}`.")
         
         self._loop_count = count
         self._ping_pong = ping_pong
+        self._loop_delay = delay
+        self._looping = True
         return self
-
-    # Soon
-    # def reverse(self):
-    #     self.start_value = CoshUI.get_state(self.target_id, self.path)
-    #     self.end_value, self.start_value = self.start_value, self.end_value
-    #     self.time = 0
-    #     self._finished = False
 
 def animate(n_property : str, target_id : str, end_value, duration : float, easing : str) -> Tween:
     """
     Animates a node property over time. 
     
-    This function creates a `Tween` object and adds it
-    to the global `_active_tweens` registry to be updated per frame.
+    This function calls the TweenManager to create a `Tween` object. The TweenManager deals
+    with Tween lifetime, storage, and updates.
 
-    :param n_property: The property you want to animate (e.g., 'position', 'scale', or 'alpha').
+    :param n_property: The property you want to animate (e.g., 'transform_position', 'transform_scale', or 'alpha').
     :param target_id: The id of the node instance the animation is applied to.
     :param end_value: The final target value to reach by the end of the animation.
     :param duration: Animation length in seconds.
