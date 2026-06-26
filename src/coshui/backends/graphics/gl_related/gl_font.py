@@ -11,9 +11,10 @@ _atlas_cache = {}
 ATLAS_SIZE = 512
 
 class GlyphAtlas:
-    def __init__(self, texture_data: np.ndarray, glyphs: dict):
+    def __init__(self, texture_data : np.ndarray, glyphs : dict, line_height):
         self.texture_data = texture_data  # (ATLAS_SIZE, ATLAS_SIZE) uint8 array
         self.glyphs = glyphs # { char : GlyphInfo }
+        self.line_height = line_height
 
 class GlyphInfo:
     def __init__(self, uv_x, uv_y, uv_w, uv_h, bitmap_left, bitmap_top, advance, width, height):
@@ -27,7 +28,7 @@ class GlyphInfo:
         self.width = width
         self.height = height
 
-def get_atlas(font_path: str, font_size: int) -> GlyphAtlas:
+def get_atlas(font_path : str, font_size : int) -> GlyphAtlas:
     cache_key = (font_path, font_size)
     if cache_key in _atlas_cache:
         return _atlas_cache[cache_key]
@@ -85,17 +86,21 @@ def get_atlas(font_path: str, font_size: int) -> GlyphAtlas:
         cursor_x += bw + 1
         row_height = max(row_height, bh)
 
-    atlas = GlyphAtlas(atlas_data, glyphs)
+    ascender = face.size.ascender >> 6
+    descender = abs(face.size.descender >> 6)
+    height = ascender + descender
+
+    atlas = GlyphAtlas(atlas_data, glyphs, height)
     _atlas_cache[cache_key] = atlas
     return atlas
 
-def measure_text(font_path: str, font_size: int, text: str) -> tuple:
+def measure_text(font_path : str, font_size : int, text : str) -> tuple:
     atlas = get_atlas(font_path, font_size)
     width = sum(atlas.glyphs[c].advance for c in text if c in atlas.glyphs)
-    height = font_size
+    height = atlas.line_height
     return (width, height)
 
-def wrap_text(font_path: str, font_size: int, text: str, max_width: float) -> list:
+def wrap_text(font_path : str, font_size : int, text : str, max_width : float) -> list:
     atlas = get_atlas(font_path, font_size)
     lines = []
     words = text.split(' ')
