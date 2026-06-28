@@ -111,6 +111,8 @@ def process_events():
                     consumed_click = True
             if CoshInput.get_mouse_down():
                 CoshUI._emit_signal(data.id, CoshSignals.PRESSED)
+                if data.mouse_filter is CoshMouseFilter.STOP:
+                    consumed_click = True
 
 def finalize_defaults(node):
     targets = [node, node.style, node]

@@ -60,7 +60,7 @@ KEYWORD_MAP = {
 
 @dataclass
 class TextStyle:
-    color: tuple = (255, 255, 255)
+    color: tuple | None = None
     font_size: int | None = None
     font: str | None = None
     bold: bool = False
@@ -126,6 +126,8 @@ def parse_tag(tag: str) -> dict:
     parts = []
     current = ""
     depth = 0
+
+    # TODO: Add _text_style_class to make user-generated tags using add_class()
 
     for char in tag:
         if char == "(":

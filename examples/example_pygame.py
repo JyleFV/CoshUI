@@ -23,7 +23,10 @@ def main():
 
         screen.fill(BLACK)
 
-        with cui.CoshUIRenderer(cui.PygameBackend(screen)):
+        with cui.CoshUIRenderer(cui.PygameBackend(screen), cui.DEBUG):
+            # with cui.Grid(id="grid", column_count=5):
+            #     for i in range(100):
+            #         cui.Button(id=f"button-{i}", text=f"Button {i}")
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=30, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52)
@@ -31,6 +34,7 @@ def main():
                     cui.Button(id="quit_button", text="Quit", height=50, width=150, style=cui.CoshStyling(transform_rotation=45.0))
                     cui.Image(id="test_image", src="assets/image.png", width=75, height=75, style=cui.CoshStyling(transform_rotation=45.0))
                     cui.Dropdown(id="dropdown", item_list=itemList)
+                    cui.Slider(id="slider", width=100)
 
         if cui.get_signal("settings_button", cui.CLICKED):
             cui.animate("transform_scale", "main_label", 1.2, 0.25, "ease_in")
