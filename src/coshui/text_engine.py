@@ -83,7 +83,7 @@ class TextRun(TextStyle):
             "strikethrough" : self.strikethrough,
         }
 
-class TextContext:
+class TextData:
     def __init__(self, letter_spacing=None, word_spacing=None, line_spacing=None):
         self.runs: list[TextRun] = []
         self.letter_spacing = letter_spacing
@@ -156,9 +156,9 @@ def parse_tag(tag: str) -> dict:
     
     return style
 
-def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float) -> TextContext:
+def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float) -> TextData:
     tokens = tokenize(text)
-    context = TextContext(letter_spacing=letter_spacing, word_spacing=word_spacing, line_spacing=line_spacing)
+    context = TextData(letter_spacing=letter_spacing, word_spacing=word_spacing, line_spacing=line_spacing)
 
     base_style = TextStyle(color=text_color, font=font, font_size=font_size)
     style_stack = [base_style]
@@ -180,21 +180,43 @@ def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter
             case "tag":
                 current = style_stack[-1]
                 overrides = parse_tag(token.value)
-                override_color = overrides.get("color", current.color)
-                override_font = overrides.get("font", current.font)
-                override_font_size = overrides.get("font_size", current.font_size)
-                new_style = TextStyle(
-                    color=TAGS["color"]["validator"](override_color) if isinstance(override_color, str) else override_color,
-                    font=TAGS["font"]["validator"](override_font) if isinstance(override_font, str) else override_font,
-                    font_size=TAGS["font_size"]["validator"](override_font_size) if isinstance(override_font_size, str) else override_font_size,
-                    bold=overrides.get("bold", current.bold),
-                    italic=overrides.get("italic", current.italic),
-                    underline=overrides.get("underline", current.underline),
-                    strikethrough=overrides.get("strikethrough", current.strikethrough),
-                )
-                style_stack.append(new_style)
+                style_stack.append(validate_style(current, overrides))
             case "close":
                 if len(style_stack) > 1:
                     style_stack.pop()
 
     return context
+
+# region HELPERS
+def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
+    # Color
+    override_color = overrides.get("color", None)
+    if override_color is not None:
+        color = TAGS["color"]["validator"](override_color) if isinstance(override_color, str) else override_color
+    else:
+        color = current.color
+
+    # Font
+    override_font = overrides.get("font", None)
+    if override_font is not None:
+        font = TAGS["font"]["validator"](override_font)
+    else:
+        font = current.font
+
+    # Font size
+    override_font_size = overrides.get("font_size", None)
+    if override_font_size is not None:
+        font_size = TAGS["font_size"]["validator"](override_font_size) if isinstance(override_font_size, str) else override_font_size
+    else:
+        font_size = current.font_size
+
+    return TextStyle(
+        color=color,
+        font=font,
+        font_size=font_size,
+        bold=overrides.get("bold", current.bold),
+        italic=overrides.get("italic", current.italic),
+        underline=overrides.get("underline", current.underline),
+        strikethrough=overrides.get("strikethrough", current.strikethrough),
+    )
+# endregion

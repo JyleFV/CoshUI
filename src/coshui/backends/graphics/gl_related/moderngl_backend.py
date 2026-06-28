@@ -268,6 +268,10 @@ class ModernGLBackend(CoshBackend):
     
     def _get_orthographic_matrix(self) -> np.ndarray:
         width, height = self.get_size()
+
+        if width == 0 or height == 0:
+            return self._orthographic_matrix if self._orthographic_matrix is not None else np.eye(4, dtype=np.float32)
+
         self.context.viewport = (0, 0, width, height)
         self._orthographic_matrix = np.array([
             2.0 / width, 0.0, 0.0, 0.0,

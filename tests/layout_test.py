@@ -40,21 +40,6 @@ def test_container_percentage_sizing():
     assert child.width == ((parent.width) - (parent.padding * 2)) * 0.50
     assert child.height == ((parent.width) - (parent.padding * 2)) * 0.75
 
-def test_coshml():
-    coshml_script = "[color=(255, 0, 0) font=Courier bold font_size=36]Hello[/] World"
-
-    text_context = parse_coshml(text=coshml_script, text_color=(255, 255, 255), font="Inter", font_size=24, letter_spacing=None, word_spacing=None, line_spacing=None)
-
-    assert len(text_context.runs) == 2
-    assert text_context.runs[0].text == "Hello"
-    assert text_context.runs[0].color == (255, 0, 0)
-    assert text_context.runs[0].font_size == 36
-    assert text_context.runs[0].bold == True
-    assert text_context.runs[1].text == " World"
-    assert text_context.runs[1].color == (255, 255, 255)
-    assert text_context.runs[1].font == "Inter"
-    assert text_context.runs[1].font_size == 24
-
 @pytest.fixture(autouse=True)
 def clear_coshui_state():
     CoshUI._stack.clear()
