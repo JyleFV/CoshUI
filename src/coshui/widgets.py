@@ -8,8 +8,9 @@ from .types import *
 from .utility import Ref
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
-from .node_definitions import Element, TextNode, ParentNode, Widget
+from .node_definitions import Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
+from .text_engine import parse_coshml
 
 if TYPE_CHECKING:
     from .utility import Ref
@@ -122,6 +123,21 @@ class Button(TextNode):
 @dataclass
 class Label(TextNode):
     pass
+
+@dataclass
+class RichLabel(TextNode):
+    letter_spacing : float | None = None
+    line_spacing : float | None = None
+    word_spacing : float | None = None
+
+    def measure(self): # TODO: should return a measurement (width, height) of the full parsed CoshML text.
+        return
+    
+    def get_render_data(self):
+        data = self.get_base_render_data()
+        data["text_data"] = parse_coshml(self.text, self.text_color, self.font, self.font_size, self.letter_spacing, self.word_spacing, self.line_spacing)
+
+        return RenderContext(**data)
 
 @dataclass
 class Checkbox(Element):

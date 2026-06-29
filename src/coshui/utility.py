@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar, Generic, TYPE_CHECKING
+from typing import TypeVar, Generic, TYPE_CHECKING, Callable, Optional
 import difflib
 import os
 import math
@@ -15,14 +15,22 @@ T = TypeVar('T')
 class Ref(Generic[T]):
     def __init__(self, value : T) -> None:
         self._value : T = value
+        self._on_change = None
 
     @property
     def value(self):
         return self._value
 
     @value.setter
-    def value(self, new_value : T):
+    def value(self, new_value: T):
+        old_value = self._value
         self._value = new_value
+        if self._on_change and old_value != new_value:
+            self._on_change(new_value)
+
+    def on_change(self, callback: Callable):
+        self._on_change = callback
+        return self
 
 # ================ Fonts ================
 
@@ -108,6 +116,12 @@ def set_theme(theme_name : str):
         raise CoshUIError(f"The theme `{theme_name}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
     CoshUI._active_theme = theme
 
+# ================ Themes ================
+
+# ================ Themes ================
+# NOTE: user-facing function to create Particles
+def create_particle():
+    pass
 # ================ Themes ================
 
 # ================ Helper Functions ================

@@ -127,7 +127,7 @@ class ModernGLBackend(CoshBackend):
         else:
             lines = [text]
 
-        line_height = scaled_font_size
+        line_height = atlas.line_height
         total_text_h = len(lines) * line_height
 
         match align:
@@ -155,7 +155,7 @@ class ModernGLBackend(CoshBackend):
                 case CoshTextJustify.RIGHT:  pen_x = x + w - line_w
 
             pen_y = start_y + (i * line_height)
-            baseline_y = pen_y + line_height
+            baseline_y = pen_y + atlas.ascender
 
             vertices = []
             for char in line:

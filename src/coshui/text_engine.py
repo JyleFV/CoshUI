@@ -2,24 +2,25 @@ from dataclasses import dataclass
 from typing import Literal
 
 from .state import CoshUI
-from .cui_error import CoshUIError
+from .cui_error import CoshMLError
+from .types import TextData
 
 # region Validators
 def validate_color(value: str) -> tuple:
     try:
         parsed = tuple(int(x.strip()) for x in value.strip("()").split(","))
     except ValueError:
-        raise CoshUIError(f"[CoshML] Invalid color value `{value}`. Expected a tuple of 3 integers e.g. `(255, 0, 0)`.")
+        raise CoshMLError(f"Invalid color value `{value}`. Expected a tuple of 3 integers e.g. `(255, 0, 0)`.")
     
     if len(parsed) != 3 or not all(0 <= c <= 255 for c in parsed):
-        raise CoshUIError(f"[CoshML] Invalid color value `{value}`. Each channel must be between 0 and 255.")
+        raise CoshMLError(f"Invalid color value `{value}`. Each channel must be between 0 and 255.")
     
     return parsed
 
 def validate_font(font : str):
     validated_font = CoshUI._font_library.get(font, None)
     if validated_font is None:
-        raise CoshUIError(f"[CoshML] `{font}` is not a valid font.")
+        raise CoshMLError(f"`{font}` is not a valid font.")
     
     return validated_font
 
@@ -27,24 +28,16 @@ def validate_font_size(size : str):
     try:
         final_size = int(size)
     except ValueError:
-        raise CoshUIError(f"[CoshML] Invalid size value `{size}` for font_size. Input a proper integer.")
+        raise CoshMLError(f"Invalid size value `{size}` for font_size. Input a proper integer.")
     
     return final_size 
 # endregion
 
+# TODO: Simplify to "tag" : validator
 TAGS = {
-    "color" : {
-        "attribute" : "color",
-        "validator" : validate_color
-    },
-    "font" : {
-        "attribute" : "font",
-        "validator" : validate_font
-    },
-    "font_size" : {
-        "attribute" : "font_size",
-        "validator" : validate_font_size
-    }
+    "color" : validate_color,
+    "font" : validate_font,
+    "font_size" : validate_font_size
 }
 
 KEYWORD_MAP = {
@@ -82,20 +75,6 @@ class TextRun(TextStyle):
             "underline" : self.underline,
             "strikethrough" : self.strikethrough,
         }
-
-class TextData:
-    def __init__(self, letter_spacing=None, word_spacing=None, line_spacing=None):
-        self.runs: list[TextRun] = []
-        self.letter_spacing = letter_spacing
-        self.line_spacing = line_spacing
-        self.word_spacing = word_spacing
-    
-    def is_uniform(self) -> bool:
-        if not self.runs:
-            return True
-
-        first = self.runs[0]._style_dict()
-        return all(run._style_dict() == first for run in self.runs)
 
 @dataclass
 class Token:
@@ -162,6 +141,7 @@ def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter
 
     base_style = TextStyle(color=text_color, font=font, font_size=font_size)
     style_stack = [base_style]
+    full_text = ""
 
     for token in tokens:
         match token.type:
@@ -177,13 +157,21 @@ def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter
                     underline=current.underline,
                     strikethrough=current.strikethrough,
                 ))
+                full_text += token.value
             case "tag":
                 current = style_stack[-1]
                 overrides = parse_tag(token.value)
                 style_stack.append(validate_style(current, overrides))
             case "close":
+                if len(style_stack) == 1:
+                    raise CoshMLError("Closing tag found without any tags, please follow the appropriate use of CoshML.")
                 if len(style_stack) > 1:
                     style_stack.pop()
+
+    if len(style_stack) != 1:
+        raise CoshMLError(f"{len(style_stack) - 1} unclosed tag(s). Did you forget a closing tag `[/]`?")
+
+    context.text = full_text
 
     return context
 
@@ -192,21 +180,21 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
     # Color
     override_color = overrides.get("color", None)
     if override_color is not None:
-        color = TAGS["color"]["validator"](override_color) if isinstance(override_color, str) else override_color
+        color = TAGS["color"](override_color) if isinstance(override_color, str) else override_color
     else:
         color = current.color
 
     # Font
     override_font = overrides.get("font", None)
     if override_font is not None:
-        font = TAGS["font"]["validator"](override_font)
+        font = TAGS["font"](override_font)
     else:
         font = current.font
 
     # Font size
     override_font_size = overrides.get("font_size", None)
     if override_font_size is not None:
-        font_size = TAGS["font_size"]["validator"](override_font_size) if isinstance(override_font_size, str) else override_font_size
+        font_size = TAGS["font_size"](override_font_size) if isinstance(override_font_size, str) else override_font_size
     else:
         font_size = current.font_size
 

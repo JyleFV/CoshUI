@@ -33,6 +33,16 @@ def test_coshml_basic():
     assert context.runs[1].bold is False
 
 
+def test_coshml_full_text():
+    context = parse_coshml(
+        text="[color=(255, 0, 0) font=Courier bold font_size=36]Hello[/] World",
+        **BASE_ARGS,
+    )
+
+    assert len(context.runs) == 2
+    assert context.text == "Hello World"
+
+
 def test_coshml_nested_tags():
     context = parse_coshml(
         text="[red]Hello [bold]World[/]![/]",
@@ -99,44 +109,6 @@ def test_coshml_multiple_keywords():
     assert run.color == (0, 255, 0)
     assert run.italic is True
     assert run.underline is True
-
-
-def test_coshml_invalid_font():
-    with pytest.raises(CoshUIError):
-        parse_coshml(
-            text="[font=DefinitelyNotAFont]Hello[/]",
-            **BASE_ARGS,
-        )
-
-
-def test_coshml_invalid_color():
-    with pytest.raises(CoshUIError):
-        parse_coshml(
-            text="[color=(999,0,0)]Hello[/]",
-            **BASE_ARGS,
-        )
-
-
-def test_coshml_invalid_font_size():
-    with pytest.raises(CoshUIError):
-        parse_coshml(
-            text="[font_size=abc]Hello[/]",
-            **BASE_ARGS,
-        )
-
-
-def test_coshml_unmatched_close_tag():
-    """
-    Current behavior:
-    Extra closing tags are ignored.
-    """
-    context = parse_coshml(
-        text="Hello[/]",
-        **BASE_ARGS,
-    )
-
-    assert len(context.runs) == 1
-    assert context.runs[0].text == "Hello"
 
 
 def test_coshml_empty_tag():

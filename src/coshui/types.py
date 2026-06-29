@@ -1,8 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from typing import NamedTuple
 from enum import Enum
 
 from .cui_error import CoshUIError
+
+if TYPE_CHECKING:
+    from .text_engine import TextRun
 
 @dataclass
 class CoshStyling:
@@ -143,10 +148,42 @@ class RenderContext(NamedTuple):
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
+    text_data : TextData | None = None
     # Image
     image_src : str | None = None
     # Overflow-logic
     clip_rect : tuple | None = None
+
+# region "Data" Classes:
+# Some of these are stubs for now
+class RectData:
+    pass
+
+class ImageData:
+    pass
+
+class TextData:
+    def __init__(self, letter_spacing=None, word_spacing=None, line_spacing=None):
+        self.text : str = None
+        self.runs : list[TextRun] = []
+        self.letter_spacing = letter_spacing
+        self.line_spacing = line_spacing
+        self.word_spacing = word_spacing
+        # stubbed for now, but soon once the data differences happen, these will be set here.
+        # self.text_justify = CoshTextJustify.CENTER
+        # self.text_align = CoshTextAlign.CENTER
+        # self.text_overflow = CoshTextOverflow.VISIBLE
+    
+    def is_uniform(self) -> bool:
+        if not self.runs:
+            return True
+
+        first = self.runs[0]._style_dict()
+        return all(run._style_dict() == first for run in self.runs)
+
+class ParticleData:
+    pass
+# endregion
 
 # HELPER
 def is_valid_border(border):

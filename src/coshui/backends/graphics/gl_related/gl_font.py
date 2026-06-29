@@ -11,9 +11,11 @@ _atlas_cache = {}
 ATLAS_SIZE = 512
 
 class GlyphAtlas:
-    def __init__(self, texture_data : np.ndarray, glyphs : dict, line_height):
+    def __init__(self, texture_data, glyphs, ascender, descender, line_height):
         self.texture_data = texture_data  # (ATLAS_SIZE, ATLAS_SIZE) uint8 array
         self.glyphs = glyphs # { char : GlyphInfo }
+        self.ascender = ascender
+        self.descender = descender
         self.line_height = line_height
 
 class GlyphInfo:
@@ -88,9 +90,9 @@ def get_atlas(font_path : str, font_size : int) -> GlyphAtlas:
 
     ascender = face.size.ascender >> 6
     descender = abs(face.size.descender >> 6)
-    height = ascender + descender
+    line_height = face.size.height >> 6
 
-    atlas = GlyphAtlas(atlas_data, glyphs, height)
+    atlas = GlyphAtlas(atlas_data, glyphs, ascender, descender, line_height)
     _atlas_cache[cache_key] = atlas
     return atlas
 
