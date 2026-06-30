@@ -47,7 +47,10 @@ class CoshUIRenderer:
         if delta > 0.1:
             delta = 1/60
 
+        t0 = time.perf_counter()
         update(delta)
+        self.update_time = time.perf_counter() - t0
+
         self.backend.poll_input()
 
         CoshUI._active_renderer = True
@@ -65,7 +68,7 @@ class CoshUIRenderer:
         CoshLifecycle.expand(self.root)
         finalize_defaults(self.root)
 
-        timings = _run_pipeline(self.root, self.backend)
+        timings = _run_pipeline(self.root, self.backend, self.update_time)
 
         if isinstance(CoshUI._debugger, CoshDebug):
             CoshUI._debugger.render(self.root, CoshUI._render_stack, CoshUI._signals, timings)
@@ -77,7 +80,7 @@ class CoshUIRenderer:
         for key in stale:
             del CoshUI._state_storage[key]
 
-def _run_pipeline(root, backend) -> dict:
+def _run_pipeline(root, backend, update_time=0.0) -> dict:
     t0 = time.perf_counter()
     measure(root)
     t1 = time.perf_counter()
@@ -85,16 +88,15 @@ def _run_pipeline(root, backend) -> dict:
     t2 = time.perf_counter()
     render(root)
     t3 = time.perf_counter()
-
     CoshUI._render_stack.sort(key=lambda d: d.z_index)
     CoshUI._signals.clear()
     process_events()
     t4 = time.perf_counter()
-
     backend.flush(CoshUI._render_stack)
     t5 = time.perf_counter()
 
     return {
+        "update": update_time,
         "measure": t1 - t0,
         "layout": t2 - t1,
         "render": t3 - t2,

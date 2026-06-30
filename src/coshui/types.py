@@ -148,11 +148,14 @@ class RenderContext(NamedTuple):
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
-    text_data : TextData | None = None
+    text_data : TextData | None = None # NOTE: soon to be the only value for text
     # Image
     image_src : str | None = None
     # Overflow-logic
     clip_rect : tuple | None = None
+
+class ParticleContext(NamedTuple):
+    particles : list = field(default_factory=list)
 
 # region "Data" Classes:
 # Some of these are stubs for now
@@ -162,27 +165,38 @@ class RectData:
 class ImageData:
     pass
 
+@dataclass
 class TextData:
-    def __init__(self, letter_spacing=None, word_spacing=None, line_spacing=None):
-        self.text : str = None
-        self.runs : list[TextRun] = []
-        self.letter_spacing = letter_spacing
-        self.line_spacing = line_spacing
-        self.word_spacing = word_spacing
-        # stubbed for now, but soon once the data differences happen, these will be set here.
-        # self.text_justify = CoshTextJustify.CENTER
-        # self.text_align = CoshTextAlign.CENTER
-        # self.text_overflow = CoshTextOverflow.VISIBLE
-    
+    letter_spacing: float | None = None
+    word_spacing: float | None = None
+    line_spacing: float | None = None
+    text_justify: CoshTextJustify = CoshTextJustify.CENTER
+    text_align: CoshTextAlign = CoshTextAlign.CENTER
+    text_overflow: CoshTextOverflow = CoshTextOverflow.VISIBLE
+    text: str | None = None
+    raw_text : str = None
+    runs: list[TextRun] = field(default_factory=list)
+
     def is_uniform(self) -> bool:
         if not self.runs:
             return True
 
         first = self.runs[0]._style_dict()
         return all(run._style_dict() == first for run in self.runs)
-
-class ParticleData:
-    pass
+    
+    def cached_state(self):
+        return {
+            "raw_text": self.raw_text,
+            "letter_spacing": self.letter_spacing,
+            "word_spacing": self.word_spacing,
+            "line_spacing": self.line_spacing,
+            "text_align": self.text_align,
+            "text_justify": self.text_justify,
+            "text_overflow": self.text_overflow,
+            "font": self.runs[0].font if self.runs else None,
+            "font_size": self.runs[0].font_size if self.runs else None,
+            "color": self.runs[0].color if self.runs else None,
+        }
 # endregion
 
 # HELPER
@@ -194,4 +208,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

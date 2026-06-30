@@ -1,8 +1,8 @@
 import pytest
 
-from coshui.text_engine import parse_coshml
+from coshui.text_engine import parse_coshml, TextRun
 from coshui.cui_error import CoshUIError
-
+from coshui.types import *
 
 BASE_ARGS = dict(
     text_color=(255, 255, 255),
@@ -11,6 +11,9 @@ BASE_ARGS = dict(
     letter_spacing=None,
     word_spacing=None,
     line_spacing=None,
+    text_justify=None,
+    text_align=None,
+    text_overflow=None
 )
 
 
@@ -138,3 +141,84 @@ def test_coshml_non_uniform_detection():
     )
 
     assert context.is_uniform() is False
+
+
+def test_text_data_same():
+    run_1 = TextRun(text="Hello", color=(255, 255, 100), font="Inter", font_size=24)
+    run_2 = TextRun(text="World", color=(255, 255, 100), font="Inter", font_size=24)
+
+    data_1 = TextData(runs=[run_1, run_2])
+    data_2 = TextData(runs=[run_1, run_2])
+
+    assert data_1 == data_2
+
+
+def test_text_data_different():
+    run_1 = TextRun(text="Hello", color=(255, 255, 100), font="Inter", font_size=24)
+    run_2 = TextRun(text="World", color=(255, 255, 100), font="Inter", font_size=24)
+    run_3 = TextRun(text="World", color=(255, 255, 100), font="Inter", font_size=24)
+
+    data_1 = TextData(runs=[run_1, run_2])
+    data_2 = TextData(runs=[run_2, run_3])
+
+    assert data_1 != data_2
+
+def test_text_data_cache_state():
+    data = parse_coshml(
+        "Hello",
+        (255, 255, 255),
+        "Arial.ttf",
+        16,
+        1.0,
+        2.0,
+        3.0,
+        CoshTextJustify.CENTER,
+        CoshTextAlign.CENTER,
+        CoshTextOverflow.VISIBLE,
+    )
+
+    expected = {
+        "raw_text": "Hello",
+        "letter_spacing": 1.0,
+        "word_spacing": 2.0,
+        "line_spacing": 3.0,
+        "text_align": CoshTextAlign.CENTER,
+        "text_justify": CoshTextJustify.CENTER,
+        "text_overflow": CoshTextOverflow.VISIBLE,
+        "font": "Arial.ttf",
+        "font_size": 16,
+        "color": (255, 255, 255),
+    }
+
+    assert data.cached_state() == expected
+
+def test_text_data_cache_state_uses_raw_text():
+    red = parse_coshml(
+        "[red]Hello[/]",
+        (255, 255, 255),
+        "Arial.ttf",
+        16,
+        None,
+        None,
+        None,
+        CoshTextJustify.CENTER,
+        CoshTextAlign.CENTER,
+        CoshTextOverflow.VISIBLE,
+    )
+
+    blue = parse_coshml(
+        "[blue]Hello[/]",
+        (255, 255, 255),
+        "Arial.ttf",
+        16,
+        None,
+        None,
+        None,
+        CoshTextJustify.CENTER,
+        CoshTextAlign.CENTER,
+        CoshTextOverflow.VISIBLE,
+    )
+
+    assert red.text == blue.text
+    assert red.raw_text != blue.raw_text
+    assert red.cached_state() != blue.cached_state()

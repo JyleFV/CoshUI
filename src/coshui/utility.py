@@ -6,6 +6,7 @@ import math
 
 from .cui_error import CoshUIError
 from .state import CoshUI
+from .text_engine import TextRun
 from .types import *
 
 if TYPE_CHECKING:
@@ -176,6 +177,12 @@ def get_local_mouse(mouse_x, mouse_y, node_x, node_y, node_w, node_h, angle):
     local_dy = distance_x * sin_a + distance_y * cos_a
 
     return (center_x + local_dx, center_y + local_dy)
+
+def create_single_text_data(text : str, text_align : CoshTextAlign, text_justify : CoshTextJustify, text_overflow : CoshTextOverflow, text_color : tuple, font_size : int, font : str,):
+    text_data = TextData(text_align=text_align, text_justify=text_justify, text_overflow=text_overflow)
+    text_data.text = text
+    text_data.runs.append(TextRun(color=text_color, font_size=font_size, font=font, text=text))
+    return text_data
 
 def print_tree(node):
     print(f"Node: {node.__class__.__name__} with node_id: {node.id}\n")

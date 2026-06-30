@@ -5,6 +5,8 @@ from .types import *
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
 from .lifecycle import CoshLifecycle
+from .utility import create_single_text_data
+from .text_engine import parse_coshml
 
 @dataclass
 class Node(ABC):
@@ -129,8 +131,16 @@ class TextNode(Element):
 
     def get_render_data(self):
         data = self.get_base_render_data()
+        font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        data["text_data"] = create_single_text_data(
+            self.text, self.text_align, 
+            self.text_justify, self.text_overflow, 
+            self.text_color, self.font_size, font
+        )
+
+        # TODO: Remove these raw values once TextData works in backends
         data["text"] = self.text
-        data["font"] = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        data["font"] = font
         data["font_size"] = self.font_size
         data["text_color"] = self.text_color
         data["text_align"] = self.text_align

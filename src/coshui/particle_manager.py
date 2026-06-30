@@ -1,5 +1,10 @@
 from .state import CoshUI
 
+# holds data of individual particles and updates that data
+class ParticleData:
+    pass
+
+# Holds particle data and manages particle lifetime
 class Particle:
     pass
 

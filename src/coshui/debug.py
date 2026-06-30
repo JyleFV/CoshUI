@@ -9,6 +9,7 @@ from .cui_error import warn
 # Most this file was vibecoded, so I'm not sure what's going on here most of the time
 class CoshDebug:
     GRAPH_COLORS = {
+        "update": "#e9ff42",
         "measure": "#4fc3f7",
         "layout": "#81c784",
         "render": "#ffb74d",
@@ -145,14 +146,14 @@ class CoshDebug:
         separator = tk.Frame(self.profiler_frame, bg=self.BG_LIGHT, height=1)
         separator.pack(fill="x", padx=8, pady=4)
 
-        self._node_count_label = tk.Label(self.profiler_frame, text="Node Count: 0", fg=self.FG_DIM, bg=self.BG, font=("Courier", 10), anchor="w")
-        self._node_count_label.pack(fill="x", padx=8, pady=4)
+        self._total_label = tk.Label(self.profiler_frame, text="total: 0.0000ms", fg=self.FG, bg=self.BG, font=("Courier", 10, "bold"), anchor="w")
+        self._total_label.pack(fill="x", padx=8, pady=4)
 
         separator2 = tk.Frame(self.profiler_frame, bg=self.BG_LIGHT, height=1)
         separator2.pack(fill="x", padx=8, pady=4)
 
-        self._total_label = tk.Label(self.profiler_frame, text="total: 0.0000ms", fg=self.FG, bg=self.BG, font=("Courier", 10, "bold"), anchor="w")
-        self._total_label.pack(fill="x", padx=8, pady=4)
+        self._node_count_label = tk.Label(self.profiler_frame, text="Node Count: 0", fg=self.FG_DIM, bg=self.BG, font=("Courier", 10), anchor="w")
+        self._node_count_label.pack(fill="x", padx=8, pady=4)
 
         self._graph_canvas = tk.Canvas(self.profiler_frame, bg=self.BG, height=200, highlightthickness=0)
         self._graph_canvas.pack(fill="both", expand=True, padx=8, pady=8)

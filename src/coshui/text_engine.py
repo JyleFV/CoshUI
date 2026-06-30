@@ -87,6 +87,8 @@ def tokenize(text: str) -> list[Token]:
     while i < len(text):
         if text[i] == "[":
             end = text.find("]", i)
+            if end == -1:
+                raise CoshMLError("Missing `]` closing tag. Did you forget to close a tag?")
             tag_content = text[i + 1:end]
             if tag_content == "/":
                 tokens.append(Token("close", ""))
@@ -135,9 +137,14 @@ def parse_tag(tag: str) -> dict:
     
     return style
 
-def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow) -> TextData:
     tokens = tokenize(text)
-    context = TextData(letter_spacing=letter_spacing, word_spacing=word_spacing, line_spacing=line_spacing)
+    context = TextData(
+        letter_spacing=letter_spacing, word_spacing=word_spacing, 
+        line_spacing=line_spacing, text_align=text_align, 
+        text_justify=text_justify, text_overflow=text_overflow,
+        raw_text=text
+    )
 
     base_style = TextStyle(color=text_color, font=font, font_size=font_size)
     style_stack = [base_style]
