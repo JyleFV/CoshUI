@@ -28,6 +28,7 @@ class CoshUIRenderer:
         screen_w, screen_h = self.backend.get_size()
         self.root = Container(width=screen_w, height=screen_h)
         CoshUI._measure_text = self.backend.measure_text
+        CoshUI._measure_run = self.backend.measure_run
 
         register_exapanders()
 

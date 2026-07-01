@@ -283,13 +283,16 @@ class CoshDebug:
             self._insert_prop("mouse_filter", target_node.mouse_filter)
 
             self._insert_section("  ── Text ────────────────────────")
-            self._insert_prop("text", repr(target_node.text))
-            self._insert_prop("text_color", fmt(target_node.text_color))
-            self._insert_prop("font", target_node.font)
-            self._insert_prop("font_size", fmt(target_node.font_size))
-            self._insert_prop("text_justify", target_node.text_justify)
-            self._insert_prop("text_align", target_node.text_align)
-            self._insert_prop("text_overflow", target_node.text_overflow)
+            self._insert_section("  NOTE: RICH LABEL MIGHT SHOW SOMEWHAT INACCURATE VALUES  ")
+            text_data = target_node.text_data
+            first_run = text_data.runs[0] if text_data and text_data.runs else None
+            self._insert_prop("text", repr(text_data.text if text_data else None))
+            self._insert_prop("text_color", fmt(first_run.color if first_run else None))
+            self._insert_prop("font", first_run.font if first_run else None)
+            self._insert_prop("font_size", fmt(first_run.font_size if first_run else None))
+            self._insert_prop("text_justify", text_data.text_justify if text_data else None)
+            self._insert_prop("text_align", text_data.text_align if text_data else None)
+            self._insert_prop("text_overflow", text_data.text_overflow if text_data else None)
 
             self._insert_section("  ── Image ───────────────────────")
             self._insert_prop("image_src", target_node.image_src)

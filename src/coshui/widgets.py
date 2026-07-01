@@ -11,6 +11,7 @@ from .cui_error import CoshUIError, warn
 from .node_definitions import Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 from .text_engine import parse_coshml
+from ._defaults import ENGINE_DEFAULTS
 
 if TYPE_CHECKING:
     from .utility import Ref
@@ -131,27 +132,30 @@ class RichLabel(TextNode):
     word_spacing : float | None = None
 
     def __post_init__(self):
-        super().__post_init__()
+        # Skips TextNode straight to Element so we can bypass create_single_text_data()
+        Element.__post_init__(self)
 
-        font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        self.font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
+        
         current = {
-            "raw_text": self.text,
-            "letter_spacing": self.letter_spacing,
-            "word_spacing": self.word_spacing,
-            "line_spacing": self.line_spacing,
-            "text_align": self.text_align,
-            "text_justify": self.text_justify,
-            "text_overflow": self.text_overflow,
-            "font": font,
-            "font_size": self.font_size,
-            "color": self.text_color,
+            "raw_text" : self.text,
+            "letter_spacing" : self.letter_spacing,
+            "word_spacing" : self.word_spacing,
+            "line_spacing" : self.line_spacing,
+            "text_align" : self.text_align,
+            "text_justify" : self.text_justify,
+            "text_overflow" : self.text_overflow,
+            "font" : self.font,
+            "font_size" : self.font_size,
+            "color" : self.text_color,
         }
 
         text = CoshUI.get_state(self.id, "text_data", None)
         if text is None or current != text.cached_state():
             parsed_text = parse_coshml(
                 self.text, self.text_color, 
-                font, self.font_size, 
+                self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 
                 self.text_overflow 
@@ -160,9 +164,6 @@ class RichLabel(TextNode):
             text = parsed_text
 
         self.text_data = text
-
-    def measure(self): # TODO: should return a measurement (width, height) of the full parsed CoshML text.
-        return
     
     def get_render_data(self):
         data = self.get_base_render_data()

@@ -53,6 +53,7 @@ class CoshUI:
     _style_class : dict = {}
     # ---------------- Text Measuring ----------------
     _measure_text : callable = None
+    _measure_run : callable = None
     # ---------------- Debug ----------------
     _debugger : None | CoshDebug = None
 

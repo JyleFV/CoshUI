@@ -1,9 +1,9 @@
 from .state import CoshUI
 from .input import CoshInput
-from .node_definitions import Node
+from .node_definitions import Node, TextNode
 from .widgets import Container, Grid
 from .animation import Tween
-from .utility import point_in_rect, get_local_mouse
+from .utility import point_in_rect, get_local_mouse, _find_line_breaks, _justify_offset, _align_offset
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
@@ -20,6 +20,8 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
         _layout_container(node, x, y)
     if isinstance(node, Grid):
         _layout_grid(node, x, y)
+    if isinstance(node, TextNode):
+        _layout_text(node)
 
 def update(delta : float):
     CoshUI._tween_manager.update(delta)
@@ -407,4 +409,80 @@ def _layout_grid(node, x, y):
             child.height = child.height.percentage * (node.height - (node.padding * 2))
             
         layout(child, x + node.padding + child._x, y + node.padding + child._y)
+
+def _layout_text(node):
+    text_data = node.text_data
+    runs = text_data.runs
+
+    if not runs:
+        text_data.lines = []
+        return
+
+    # Step 0: flatten all runs into one string, remembering each run's char range
+    full_text = ""
+    run_ranges = []  # (start_char, end_char, run)
+    for run in runs:
+        start = len(full_text)
+        full_text += run.text
+        run_ranges.append((start, len(full_text), run))
+
+    # Step 1: find line breakpoints (word wrap), purely on the flattened string
+    line_ranges = _find_line_breaks(full_text, node.width, node.text_overflow, run_ranges)
+    # line_ranges: list of (start_char, end_char) per line
+
+    # Step 2: for each line, slice against run_ranges to build fragments
+    lines = []
+    cursor_y = 0.0
+    for (line_start, line_end) in line_ranges:
+        fragments = []
+        cursor_x = 0.0
+        line_height = 0.0
+
+        for (run_start, run_end, run) in run_ranges:
+            # does this run overlap this line's char range at all?
+            overlap_start = max(line_start, run_start)
+            overlap_end = min(line_end, run_end)
+            if overlap_start >= overlap_end:
+                continue  # no overlap, skip this run for this line
+
+            # slice out just the part of the run's text that's on this line
+            local_start = overlap_start - run_start
+            local_end = overlap_end - run_start
+            frag_text = run.text[local_start:local_end]
+
+            frag_font_size = run.font_size or ENGINE_DEFAULTS["font_size"]
+            width, height = CoshUI._measure_run(run.font, frag_font_size, frag_text)
+
+            fragments.append(TextFragment(
+                text=frag_text,
+                x=cursor_x,
+                width=width,
+                color=run.color,
+                font=run.font,
+                font_size=frag_font_size,
+                bold=run.bold,
+                italic=run.italic,
+                underline=run.underline,
+                strikethrough=run.strikethrough,
+            ))
+
+            cursor_x += width
+            line_height = max(line_height, height)
+
+        # apply text_justify by shifting all fragments' x
+        total_line_width = cursor_x
+        offset_x = _justify_offset(node.width, total_line_width, node.text_justify)
+        for frag in fragments:
+            frag.x += offset_x
+
+        lines.append(LineLayout(y=cursor_y, height=line_height, fragments=fragments))
+        cursor_y += line_height
+
+    # apply text_align by shifting all lines' y
+    total_text_height = cursor_y
+    offset_y = _align_offset(node.height, total_text_height, node.text_align)
+    for line in lines:
+        line.y += offset_y
+
+    text_data.lines = lines
 # endregion

@@ -33,3 +33,7 @@ class CoshBackend(ABC):
     @abstractmethod
     def measure_text(self):
         pass
+
+    @abstractmethod
+    def measure_run(self):
+        pass

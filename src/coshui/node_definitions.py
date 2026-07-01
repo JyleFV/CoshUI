@@ -6,7 +6,7 @@ from .state import CoshUI
 from .cui_error import CoshUIError, warn
 from .lifecycle import CoshLifecycle
 from .utility import create_single_text_data
-from .text_engine import parse_coshml
+from ._defaults import ENGINE_DEFAULTS
 
 @dataclass
 class Node(ABC):
@@ -105,10 +105,6 @@ class Element(Node):
         pass
 
 @dataclass
-class Widget(Element):
-    pass
-
-@dataclass
 class TextNode(Element):
     text : str | None = None
     font : str | None = None
@@ -118,12 +114,22 @@ class TextNode(Element):
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
 
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
+        self.text_data = create_single_text_data(
+            self.text, self.text_align, 
+            self.text_justify, self.text_overflow, 
+            self.text_color, self.font_size , self.font
+        )
+
     def measure(self):
         if CoshUI._measure_text is None:
             return
         if self.width is CoshSizing.AUTO or self.height is CoshSizing.AUTO:
-            font_path = CoshUI._font_library.get(self.font) if self.font else CoshUI._default_font
-            w, h = CoshUI._measure_text(self.text, font_path, self.font_size or 16)
+            w, h = CoshUI._measure_text(self.text_data)
             if self.width is CoshSizing.AUTO:
                 self.width = w
             if self.height is CoshSizing.AUTO:
@@ -131,16 +137,11 @@ class TextNode(Element):
 
     def get_render_data(self):
         data = self.get_base_render_data()
-        font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
-        data["text_data"] = create_single_text_data(
-            self.text, self.text_align, 
-            self.text_justify, self.text_overflow, 
-            self.text_color, self.font_size, font
-        )
+        data["text_data"] = self.text_data
 
         # TODO: Remove these raw values once TextData works in backends
         data["text"] = self.text
-        data["font"] = font
+        data["font"] = self.font
         data["font_size"] = self.font_size
         data["text_color"] = self.text_color
         data["text_align"] = self.text_align

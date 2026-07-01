@@ -2,8 +2,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...backend import CoshBackend
-from ...types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
-from ...utility import resolve_border_radius
+from ...types import CoshTextOverflow
+from ...utility import resolve_border_radius, _rotate_point_around
 from ...input import CoshInput
 
 if TYPE_CHECKING:
@@ -93,46 +93,12 @@ class PygameBackend(CoshBackend):
                 
         self.surface.set_clip(None)
 
-    def _draw_text(self, text, x, y, w, h, font_path, font_size, scale, color, align, justify, clip_rect, text_overflow, alpha, rotation):
-        safe_font_size = font_size if font_size is not None else 16
-        safe_scale = scale if scale is not None else 1.0
-
-        scaled_font_size = max(1, int(safe_font_size * safe_scale))
-        cache_key = (font_path, scaled_font_size)
-        font = _font_cache.get(cache_key)
-        if font is None:
-            font = pygame.font.Font(font_path, scaled_font_size)
-            _font_cache[cache_key] = font
-
-        if text_overflow is CoshTextOverflow.WRAP:
-            lines = []
-            words = text.split(' ')
-            current_line = ""
-            
-            for word in words:
-                test_line = f"{current_line} {word}".strip() if current_line else word
-                test_w, _ = font.size(test_line)
-                
-                if test_w <= w:
-                    current_line = test_line
-                else:
-                    if not current_line:
-                        lines.append(word)
-                        current_line = ""
-                    else:
-                        lines.append(current_line)
-                        current_line = word
-            if current_line:
-                lines.append(current_line)
-        else:
-            lines = [text]
-
-        line_height = font.get_linesize()
-        total_text_h = len(lines) * line_height
-
+    def _draw_text(self, text_data, node_x, node_y, node_w, node_h, alpha, rotation, clip_rect, scale):
+        node_rect = pygame.Rect(node_x, node_y, node_w, node_h) if text_data.text_overflow in (CoshTextOverflow.HIDDEN, CoshTextOverflow.WRAP) else None
         container_rect = pygame.Rect(*clip_rect) if clip_rect else None
 
-        node_rect = pygame.Rect(x, y, w, h) if text_overflow in (CoshTextOverflow.HIDDEN, CoshTextOverflow.WRAP) else None
+        node_center_x = node_x + (node_w / 2)
+        node_center_y = node_y + (node_h / 2)
 
         final_rect = None
         if container_rect and node_rect:
@@ -144,44 +110,31 @@ class PygameBackend(CoshBackend):
 
         self.surface.set_clip(final_rect)
 
-        match align:
-            case CoshTextAlign.TOP:
-                start_y = y
-            case CoshTextAlign.CENTER:
-                start_y = y + (h / 2) - (total_text_h / 2)
-            case CoshTextAlign.BOTTOM:
-                start_y = y + h - total_text_h
+        for line in text_data.lines:
+            for frag in line.fragments:
+                font = _get_font(frag.font, frag.font_size)
+                surface = font.render(frag.text, True, frag.color)
+                surface.set_alpha(alpha)
 
-        for i, line_text in enumerate(lines):
-            line_surface = font.render(line_text, True, color)
-            line_surface.set_alpha(alpha)
-            line_w, _ = line_surface.get_size()
+                frag_x = node_x + frag.x
+                frag_y = node_y + line.y
 
-            match justify:
-                case CoshTextJustify.LEFT:
-                    text_x = x
-                case CoshTextJustify.CENTER:
-                    text_x = x + (w / 2) - (line_w / 2)
-                case CoshTextJustify.RIGHT:
-                    text_x = x + w - line_w
-                    
-            text_y = start_y + (i * line_height)
-            
-            final_x, final_y = text_x, text_y
-            final_surface = line_surface
-            if rotation != 0.0:
-                _, line_h = line_surface.get_size()
-                center_x = text_x + (line_w / 2)
-                center_y = text_y + (line_h / 2)
+                if rotation != 0.0:
+                    frag_w, frag_h = surface.get_size()
+                    # fragment's own center before rotation
+                    fx_center = frag_x + frag_w / 2
+                    fy_center = frag_y + frag_h / 2
 
-                final_surface = pygame.transform.rotate(line_surface, rotation)
+                    # where that center ends up after rotating around the NODE's center
+                    new_center_x, new_center_y = _rotate_point_around(fx_center, fy_center, node_center_x, node_center_y, rotation)
 
-                rotated_width, rotated_height = final_surface.get_size()
-
-                final_x = center_x - (rotated_width / 2)
-                final_y = center_y - (rotated_height / 2)
-
-            self.surface.blit(final_surface, (final_x, final_y))
+                    rotated_surface = pygame.transform.rotate(surface, rotation)
+                    rw, rh = rotated_surface.get_size()
+                    final_x = new_center_x - rw / 2
+                    final_y = new_center_y - rh / 2
+                    self.surface.blit(rotated_surface, (final_x, final_y))
+                else:
+                    self.surface.blit(surface, (frag_x, frag_y))
 
         self.surface.set_clip(None)
 
@@ -225,8 +178,8 @@ class PygameBackend(CoshBackend):
             if data.background_color:
                 self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border, data.clip_rect, data.transform_rotation)
             
-            if data.text:
-                self._draw_text(data.text, true_x, true_y, scaled_w, scaled_h, data.font, data.font_size, scale, data.text_color, data.text_align, data.text_justify, data.clip_rect, data.text_overflow, data.alpha, data.transform_rotation)
+            if data.text_data:
+                self._draw_text(data.text_data, true_x, true_y, scaled_w, scaled_h, data.alpha, data.transform_rotation, data.clip_rect, scale)
 
             if data.image_src:
                 self._draw_image(data.image_src, true_x, true_y, scaled_w, scaled_h, data.alpha, data.clip_rect, data.transform_rotation)
@@ -241,10 +194,36 @@ class PygameBackend(CoshBackend):
         CoshInput._prev_mouse_position = CoshInput._mouse_position
         CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]
 
-    def measure_text(self, text, font_path, font_size) -> tuple:
-        cache_key = (font_path, font_size)
-        font = _font_cache.get(cache_key)
-        if font is None:
-            font = pygame.font.Font(font_path, font_size)
-            _font_cache[cache_key] = font
+    def measure_text(self, text_data) -> tuple:
+        if not text_data.runs:
+            return (0, 0)
+        
+        total_width = 0
+        max_height = 0
+        
+        for run in text_data.runs:
+            cache_key = (run.font, run.font_size)
+            font = _font_cache.get(cache_key, None)
+        
+            if font is None:
+                font = pygame.font.Font(run.font, run.font_size)
+                _font_cache[cache_key] = font
+        
+            width, height = font.size(run.text)
+        
+            total_width += width
+            max_height = max(height, max_height)
+        
+        return (total_width, max_height)
+    
+    def measure_run(self, font_path, font_size, text):
+        font = _font_cache.get((font_path, font_size)) or pygame.font.Font(font_path, font_size)
         return font.size(text)
+    
+def _get_font(font_path, font_size):
+    cache_key = (font_path, font_size)
+    font = _font_cache.get(cache_key)
+    if font is None:
+        font = pygame.font.Font(font_path, font_size)
+        _font_cache[cache_key] = font
+    return font

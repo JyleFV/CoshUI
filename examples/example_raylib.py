@@ -14,7 +14,8 @@ def main():
         rl.begin_drawing()
         rl.clear_background(rl.BLACK)
         
-        with cui.CoshUIRenderer(cui.RaylibBackend()):
+        with cui.CoshUIRenderer(cui.RaylibBackend(), cui.DEBUG):
+            cui.RichLabel(id="first_rich", text="[red font=Ubuntu]Hello[/] [color=(255, 100, 255)]World! My name is JyleFV and I really[/] like Minecraft!", text_color=(0, 0, 0), text_align=cui.TEXT_ALIGN_TOP, text_justify=cui.TEXT_JUSTIFY_LEFT, width=200, height=500, text_overflow=cui.TEXT_WRAP, style=cui.CoshStyling(background_color=(255, 255, 255)))
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52)

@@ -157,8 +157,6 @@ class RenderContext(NamedTuple):
 class ParticleContext(NamedTuple):
     particles : list = field(default_factory=list)
 
-# region "Data" Classes:
-# Some of these are stubs for now
 class RectData:
     pass
 
@@ -167,15 +165,16 @@ class ImageData:
 
 @dataclass
 class TextData:
-    letter_spacing: float | None = None
-    word_spacing: float | None = None
-    line_spacing: float | None = None
-    text_justify: CoshTextJustify = CoshTextJustify.CENTER
-    text_align: CoshTextAlign = CoshTextAlign.CENTER
-    text_overflow: CoshTextOverflow = CoshTextOverflow.VISIBLE
-    text: str | None = None
+    letter_spacing : float | None = None
+    word_spacing : float | None = None
+    line_spacing : float | None = None
+    text_justify : CoshTextJustify = CoshTextJustify.CENTER
+    text_align : CoshTextAlign = CoshTextAlign.CENTER
+    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
+    text : str | None = None
     raw_text : str = None
-    runs: list[TextRun] = field(default_factory=list)
+    runs : list[TextRun] = field(default_factory=list)
+    lines : list[LineLayout] = field(default_factory=list)
 
     def is_uniform(self) -> bool:
         if not self.runs:
@@ -186,18 +185,36 @@ class TextData:
     
     def cached_state(self):
         return {
-            "raw_text": self.raw_text,
-            "letter_spacing": self.letter_spacing,
-            "word_spacing": self.word_spacing,
-            "line_spacing": self.line_spacing,
-            "text_align": self.text_align,
-            "text_justify": self.text_justify,
-            "text_overflow": self.text_overflow,
-            "font": self.runs[0].font if self.runs else None,
-            "font_size": self.runs[0].font_size if self.runs else None,
-            "color": self.runs[0].color if self.runs else None,
+            "raw_text" : self.raw_text,
+            "letter_spacing" : self.letter_spacing,
+            "word_spacing" : self.word_spacing,
+            "line_spacing" : self.line_spacing,
+            "text_align" : self.text_align,
+            "text_justify" : self.text_justify,
+            "text_overflow" : self.text_overflow,
+            "font" : self.runs[0].font if self.runs else None,
+            "font_size" : self.runs[0].font_size if self.runs else None,
+            "color" : self.runs[0].color if self.runs else None,
         }
-# endregion
+
+@dataclass
+class TextFragment:
+    text : str
+    x : float
+    width : float
+    color : tuple
+    font : str | None
+    font_size : int
+    bold : bool = False
+    italic : bool = False
+    underline : bool = False
+    strikethrough : bool = False
+
+@dataclass
+class LineLayout:
+    y : float
+    height : float
+    fragments : list = field(default_factory=list)
 
 # HELPER
 def is_valid_border(border):
@@ -208,4 +225,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

@@ -184,6 +184,63 @@ def create_single_text_data(text : str, text_align : CoshTextAlign, text_justify
     text_data.runs.append(TextRun(color=text_color, font_size=font_size, font=font, text=text))
     return text_data
 
+def _rotate_point_around(px, py, cx, cy, angle_degrees):
+    rad = math.radians(-angle_degrees)
+    dx, dy = px - cx, py - cy
+    cos_a, sin_a = math.cos(rad), math.sin(rad)
+    return (cx + dx * cos_a - dy * sin_a, cy + dx * sin_a + dy * cos_a)
+
+def _find_line_breaks(full_text, max_width, text_overflow, run_ranges):
+    from ._defaults import ENGINE_DEFAULTS
+
+    if text_overflow is not CoshTextOverflow.WRAP:
+        return [(0, len(full_text))]  # one line, no wrapping
+
+    def measure(text_slice, start_char):
+        # find which run covers this char to get its font/size for measuring
+        for run_start, run_end, run in run_ranges:
+            if run_start <= start_char < run_end:
+                size = run.font_size or ENGINE_DEFAULTS["font_size"]
+                return CoshUI._measure_run(run.font, size, text_slice)[0]
+        return 0
+
+    lines = []
+    line_start = 0
+    current_line_end = 0
+    i = 0
+    while i <= len(full_text):
+        next_space = full_text.find(' ', i)
+        word_end = next_space if next_space != -1 else len(full_text)
+
+        test_slice = full_text[line_start:word_end]
+        test_width = measure(test_slice, line_start)
+
+        if test_width <= max_width or current_line_end == line_start:
+            current_line_end = word_end
+            i = word_end + 1
+        else:
+            lines.append((line_start, current_line_end))
+            line_start = current_line_end + 1
+            i = line_start
+
+        if next_space == -1:
+            break
+
+    lines.append((line_start, len(full_text)))
+    return lines
+
+def _justify_offset(node_width, line_width, justify):
+    match justify:
+        case CoshTextJustify.LEFT:   return 0.0
+        case CoshTextJustify.CENTER: return (node_width - line_width) / 2
+        case CoshTextJustify.RIGHT:  return node_width - line_width
+
+def _align_offset(node_height, total_height, align):
+    match align:
+        case CoshTextAlign.TOP:    return 0.0
+        case CoshTextAlign.CENTER: return (node_height - total_height) / 2
+        case CoshTextAlign.BOTTOM: return node_height - total_height
+
 def print_tree(node):
     print(f"Node: {node.__class__.__name__} with node_id: {node.id}\n")
     for child in node.children:
