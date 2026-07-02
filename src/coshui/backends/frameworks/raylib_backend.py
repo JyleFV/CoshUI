@@ -101,6 +101,13 @@ class RaylibBackend(CoshBackend):
 
                 frag_x = node_x + frag.x * scale
                 frag_y = node_y + line.y * scale
+                
+                # Get text structural dimensions up front for layout math
+                size = raylibpy.measure_text_ex(font, frag.text, scaled_font_size, 1.0)
+                frag_w = size.x
+                frag_h = size.y
+                
+                line_thickness = max(1.0, float(scaled_font_size // 16))
 
                 if rotation != 0.0:
                     size = raylibpy.measure_text_ex(font, frag.text, scaled_font_size, 1.0)
@@ -111,11 +118,32 @@ class RaylibBackend(CoshBackend):
                     frag_center_x = frag_x + (frag_w / 2)
                     frag_center_y = frag_y + (frag_h / 2)
 
+                    
                     new_center_x, new_center_y = _rotate_point_around(frag_center_x, frag_center_y, node_center.x, node_center.y, rotation)
 
                     raylibpy.draw_text_pro(font, frag.text, raylibpy.Vector2(new_center_x, new_center_y), raylibpy.Vector2(frag_w / 2, frag_h / 2), -rotation, scaled_font_size, 1.0, color)
+                
+                    if frag.underline:
+                        local_line_y = frag_h - 2
+                        start_x, start_y = _rotate_point_around(frag_x, frag_y + local_line_y, node_center.x, node_center.y, rotation)
+                        end_x, end_y = _rotate_point_around(frag_x + frag_w, frag_y + local_line_y, node_center.x, node_center.y, rotation)
+                        raylibpy.draw_line_ex(raylibpy.Vector2(start_x, start_y), raylibpy.Vector2(end_x, end_y), line_thickness, color)
+                        
+                    if frag.strikethrough:
+                        local_line_y = frag_h / 2
+                        start_x, start_y = _rotate_point_around(frag_x, frag_y + local_line_y, node_center.x, node_center.y, rotation)
+                        end_x, end_y = _rotate_point_around(frag_x + frag_w, frag_y + local_line_y, node_center.x, node_center.y, rotation)
+                        raylibpy.draw_line_ex(raylibpy.Vector2(start_x, start_y), raylibpy.Vector2(end_x, end_y), line_thickness, color)
                 else:
                     raylibpy.draw_text_ex(font, frag.text, raylibpy.Vector2(frag_x, frag_y), scaled_font_size, 1.0, color)
+
+                    if frag.underline:
+                        line_y = frag_y + frag_h - 2
+                        raylibpy.draw_line_ex(raylibpy.Vector2(frag_x, line_y), raylibpy.Vector2(frag_x + frag_w, line_y), line_thickness, color)
+                        
+                    if frag.strikethrough:
+                        line_y = frag_y + frag_h / 2
+                        raylibpy.draw_line_ex(raylibpy.Vector2(frag_x, line_y), raylibpy.Vector2(frag_x + frag_w, line_y), line_thickness, color)
 
         if final_clip:
             raylibpy.end_scissor_mode()

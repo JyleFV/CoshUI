@@ -20,8 +20,8 @@ def main():
 
         with cui.CoshUIRenderer(backend, cui.DEBUG):
             with cui.Container(id="root_container", width=cui.FILL, height=cui.FILL, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, style=cui.CoshStyling(background_color=(100, 100, 255))):
-                cui.RichLabel(id="first_rich", 
-                            text="[red font=Ubuntu font_size=52]Hello[/] [color=(100, 100, 255)]World! My name is JyleFV and I really[/] like Minecraft!", 
+                cui.RichLabel(id="first_rich", strikethrough=True, underline=True,
+                            text="[red font=Ubuntu font_size=52 strikethrough]Hello[/] [color=(100, 100, 255)]World! My name is JyleFV and I really[/] like Minecraft!", 
                             text_color=(0, 0, 0), text_align=cui.TEXT_ALIGN_TOP, text_justify=cui.TEXT_JUSTIFY_CENTER, width=200, height=200, text_overflow=cui.TEXT_WRAP, 
                             style=cui.CoshStyling(background_color=(255, 255, 255))
                 )

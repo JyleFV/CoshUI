@@ -136,7 +136,7 @@ def parse_tag(tag: str) -> dict:
     
     return style
 
-def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, color) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, color, strikethrough, underline) -> TextData:
     tokens = tokenize(text)
     context = TextData(
         letter_spacing=letter_spacing, word_spacing=word_spacing, 
@@ -145,7 +145,7 @@ def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter
         raw_text=text, default_color=color, default_font=font, default_font_size=font_size
     )
 
-    base_style = TextStyle(color=text_color, font=font, font_size=font_size)
+    base_style = TextStyle(color=text_color, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline)
     style_stack = [base_style]
     full_text = ""
 

@@ -113,6 +113,10 @@ class TextNode(Element):
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
+    bold : bool = False
+    italic : bool = False
+    strikethrough : bool = False
+    underline : bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -122,7 +126,8 @@ class TextNode(Element):
         self.text_data = create_single_text_data(
             self.text, self.text_align, 
             self.text_justify, self.text_overflow, 
-            self.text_color, self.font_size , self.font
+            self.text_color, self.font_size , self.font,
+            self.strikethrough, self.underline
         )
 
     def measure(self):

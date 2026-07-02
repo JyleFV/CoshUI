@@ -120,6 +120,16 @@ class PygameBackend(CoshBackend):
                 frag_x = node_x + frag.x * scale
                 frag_y = node_y + line.y * scale
 
+                scaled_frag_width = frag.width * scale
+                line_thickness = max(1, int(scaled_font_size // 16))
+
+                if frag.underline:
+                    line_y = surface.get_height() - 2
+                    pygame.draw.line(surface, frag.color, (0, line_y), (scaled_frag_width, line_y), width=line_thickness)
+                if frag.strikethrough:
+                    line_y = surface.get_height() / 2
+                    pygame.draw.line(surface, frag.color, (0, line_y), (scaled_frag_width, line_y), width=line_thickness)
+
                 if rotation != 0.0:
                     frag_w, frag_h = surface.get_size()
 

@@ -178,10 +178,10 @@ def get_local_mouse(mouse_x, mouse_y, node_x, node_y, node_w, node_h, angle):
 
     return (center_x + local_dx, center_y + local_dy)
 
-def create_single_text_data(text : str, text_align : CoshTextAlign, text_justify : CoshTextJustify, text_overflow : CoshTextOverflow, text_color : tuple, font_size : int, font : str,):
+def create_single_text_data(text : str, text_align : CoshTextAlign, text_justify : CoshTextJustify, text_overflow : CoshTextOverflow, text_color : tuple, font_size : int, font : str, strikethrough : bool, underline : bool):
     text_data = TextData(text_align=text_align, text_justify=text_justify, text_overflow=text_overflow, default_color=text_color, default_font_size=font_size, default_font=font)
     text_data.text = text
-    text_data.runs.append(TextRun(color=text_color, font_size=font_size, font=font, text=text))
+    text_data.runs.append(TextRun(color=text_color, font_size=font_size, font=font, text=text, strikethrough=strikethrough, underline=underline))
     return text_data
 
 def _rotate_point_around(px, py, cx, cy, angle_degrees):

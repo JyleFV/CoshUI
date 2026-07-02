@@ -5,7 +5,7 @@ import numpy as np
 
 from ....backend import CoshBackend
 from ....types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
-from ....utility import resolve_border_radius
+from ....utility import resolve_border_radius, _rotate_point_around
 from .gl_window_drivers import Windower
 
 if TYPE_CHECKING:
@@ -143,6 +143,16 @@ class ModernGLBackend(CoshBackend):
                 pen_x = node_x + frag.x * scale
                 pen_y = node_y + line.y * scale
                 baseline_y = pen_y + atlas.ascender
+                frag_start_x = pen_x
+
+                if frag.underline or frag.strikethrough:
+                    frag_w = frag.width * scale
+                    frag_h = atlas.ascender + atlas.descender
+                    thickness = max(1, int(scaled_font_size // 16))
+                    if frag.underline:
+                        _draw_decoration_quad(self.rect_shader, self.rect_vbo, self.rect_vao, self._get_orthographic_matrix(), frag_start_x, pen_y + frag_h - 2, frag_w, thickness, frag.color, alpha, (center_x, center_y), rotation)
+                    if frag.strikethrough:
+                        _draw_decoration_quad(self.rect_shader, self.rect_vbo, self.rect_vao, self._get_orthographic_matrix(), frag_start_x, pen_y + frag_h / 2, frag_w, thickness, frag.color, alpha, (center_x, center_y), rotation)
 
                 vertices = []
 
@@ -284,6 +294,38 @@ class ModernGLBackend(CoshBackend):
         return self._orthographic_matrix
 
 # region HELPERS
+def _draw_decoration_quad(rect_shader, rect_vbo, rect_vao, projection, x, y, w, h, color, alpha, node_center, rotation):
+    """Draws a solid rect (used for underline/strikethrough), rotating the quad's own
+    corners around the text node's center so it stays aligned with rotated text."""
+    corners = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+    if rotation and rotation != 0.0:
+        corners = [_rotate_point_around(cx, cy, node_center[0], node_center[1], rotation) for cx, cy in corners]
+
+    vertices = np.array([
+        corners[0][0], corners[0][1],
+        corners[1][0], corners[1][1],
+        corners[2][0], corners[2][1],
+
+        corners[0][0], corners[0][1],
+        corners[2][0], corners[2][1],
+        corners[3][0], corners[3][1],
+    ], dtype=np.float32)
+    rect_vbo.write(vertices)
+
+    r, g, b = color
+    rect_shader['inColor'].value = (r / 255.0, g / 255.0, b / 255.0, alpha / 255.0)
+    rect_shader['uElementPos'].value = (float(x), float(y))
+    rect_shader['uSize'].value = (float(w), float(h))
+    rect_shader['uRadius'].value = (0.0, 0.0, 0.0, 0.0)
+    rect_shader['uBorderWidth'].value = 0.0
+    rect_shader['uBorderColor'].value = (0.0, 0.0, 0.0, 0.0)
+    # Rotation is baked into the quad's vertices already, so leave shader rotation off.
+    rect_shader['uRotation'].value = 0.0
+    rect_shader['uCenter'].value = (0.0, 0.0)
+    rect_shader['projection'].write(projection)
+
+    rect_vao.render(moderngl.TRIANGLES)
+
 def _load_program(context, vertex_relative_path: str, fragment_relative_path: str):
     backend_dir = Path(__file__).parent.resolve()
 

@@ -6,7 +6,7 @@ import numpy as np
 
 from ....backend import CoshBackend
 from ....types import CoshTextAlign, CoshTextJustify, CoshTextOverflow
-from ....utility import resolve_border_radius
+from ....utility import resolve_border_radius, _rotate_point_around
 from ....cui_error import CoshUIError
 from .gl_window_drivers import Windower
 
@@ -131,17 +131,7 @@ class PyOpenGLBackend(CoshBackend):
                     gl_atlas = glGenTextures(1)
 
                     glBindTexture(GL_TEXTURE_2D, gl_atlas)
-                    glTexImage2D(
-                        GL_TEXTURE_2D,
-                        0,
-                        GL_RED,
-                        512,
-                        512,
-                        0,
-                        GL_RED,
-                        GL_UNSIGNED_BYTE,
-                        atlas.texture_data.tobytes()
-                    )
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, atlas.texture_data.tobytes())
 
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -149,14 +139,7 @@ class PyOpenGLBackend(CoshBackend):
                     self._atlas_texture_cache[atlas_key] = gl_atlas
 
                 r, g, b = frag.color
-                _set_uniform_4f(
-                    self.text_shader,
-                    "uTextColor",
-                    r / 255.0,
-                    g / 255.0,
-                    b / 255.0,
-                    alpha / 255.0,
-                )
+                _set_uniform_4f(self.text_shader, "uTextColor", r / 255.0, g / 255.0, b / 255.0, alpha / 255.0,)
 
                 glActiveTexture(GL_TEXTURE0)
                 glBindTexture(GL_TEXTURE_2D, gl_atlas)
@@ -165,6 +148,17 @@ class PyOpenGLBackend(CoshBackend):
                 pen_x = node_x + frag.x * scale
                 pen_y = node_y + line.y * scale
                 baseline_y = pen_y + atlas.ascender
+                frag_start_x = pen_x
+
+                if frag.underline or frag.strikethrough:
+                    frag_w = frag.width * scale
+                    frag_h = atlas.ascender + atlas.descender
+                    thickness = max(1, int(scaled_font_size // 16))
+                    if frag.underline:
+                        _draw_decoration_quad(self.rect_shader, self.rect_vbo, self._get_orthographic_matrix(), frag_start_x, pen_y + frag_h - 2, frag_w, thickness, frag.color, alpha, (center_x, center_y), rotation)
+                    if frag.strikethrough:
+                        _draw_decoration_quad(self.rect_shader, self.rect_vbo, self._get_orthographic_matrix(), frag_start_x, pen_y + frag_h / 2, frag_w, thickness, frag.color, alpha, (center_x, center_y), rotation)
+                    glUseProgram(self.text_shader)
 
                 vertices = []
 
@@ -308,6 +302,38 @@ class PyOpenGLBackend(CoshBackend):
 
 
 # region HELPERS
+def _draw_decoration_quad(rect_shader, rect_vbo, projection, x, y, w, h, color, alpha, node_center, rotation):
+        """Draws a solid rect (used for underline/strikethrough), rotating the quad's own
+        corners around the text node's center so it stays aligned with rotated text."""
+        corners = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+        if rotation and rotation != 0.0:
+            corners = [_rotate_point_around(cx, cy, node_center[0], node_center[1], rotation) for cx, cy in corners]
+
+        vertices = np.array([
+            corners[0][0], corners[0][1],
+            corners[1][0], corners[1][1],
+            corners[2][0], corners[2][1],
+
+            corners[0][0], corners[0][1],
+            corners[2][0], corners[2][1],
+            corners[3][0], corners[3][1],
+        ], dtype=np.float32)
+        _write_vbo(rect_vbo, vertices)
+
+        r, g, b = color
+        glUseProgram(rect_shader)
+        _set_uniform_4f(rect_shader, 'inColor', r / 255.0, g / 255.0, b / 255.0, alpha / 255.0)
+        _set_uniform_2f(rect_shader, 'uElementPos', float(x), float(y))
+        _set_uniform_2f(rect_shader, 'uSize', float(w), float(h))
+        _set_uniform_4f(rect_shader, 'uRadius', 0.0, 0.0, 0.0, 0.0)
+        _set_uniform_1f(rect_shader, 'uBorderWidth', 0.0)
+        _set_uniform_4f(rect_shader, 'uBorderColor', 0.0, 0.0, 0.0, 0.0)
+        # Rotation is baked into the quad's vertices already, so leave shader rotation off.
+        _set_uniform_1f(rect_shader, 'uRotation', 0.0)
+        _set_uniform_2f(rect_shader, 'uCenter', 0.0, 0.0)
+        _set_uniform_matrix4f(rect_shader, 'projection', projection)
+
+        _draw_vbo(rect_vbo, rect_shader)
 
 def _load_program(vertex_relative_path: str, fragment_relative_path: str) -> int:
     backend_dir = Path(__file__).parent.resolve()
