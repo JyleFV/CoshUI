@@ -151,14 +151,14 @@ class RichLabel(TextNode):
             "color" : self.text_color,
         }
 
-        text = CoshUI.get_state(self.id, "text_data", None)
+        text = CoshUI.get_state(self.id, "text_data")
         if text is None or current != text.cached_state():
             parsed_text = parse_coshml(
                 self.text, self.text_color, 
                 self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 
-                self.text_overflow 
+                self.text_overflow, self.text_color
             )
             CoshUI.set_state(self.id, "text_data", parsed_text)
             text = parsed_text

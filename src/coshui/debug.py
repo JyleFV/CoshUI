@@ -283,7 +283,6 @@ class CoshDebug:
             self._insert_prop("mouse_filter", target_node.mouse_filter)
 
             self._insert_section("  ── Text ────────────────────────")
-            self._insert_section("  NOTE: RICH LABEL MIGHT SHOW SOMEWHAT INACCURATE VALUES  ")
             text_data = target_node.text_data
             first_run = text_data.runs[0] if text_data and text_data.runs else None
             self._insert_prop("text", repr(text_data.text if text_data else None))

@@ -7,6 +7,10 @@ except ImportError:
 
 # FORMAT: { (font_path, font_size) : GlyphAtlas }
 _atlas_cache = {}
+# FORMAT: { tuple( (run.font, run.font_size, run.text), ... ) : (width, height) }
+_measure_text_cache = {}
+# FORMAT: { (font_path, font_size, text) : (width, height) }
+_measure_run_cache = {}
 
 ATLAS_SIZE = 512
 
@@ -96,29 +100,35 @@ def get_atlas(font_path : str, font_size : int) -> GlyphAtlas:
     _atlas_cache[cache_key] = atlas
     return atlas
 
-def measure_text(font_path : str, font_size : int, text : str) -> tuple:
+def measure_text(text_data) -> tuple:
+    if not text_data.runs:
+        return (0, 0)
+
+    cache_key = tuple((run.font, run.font_size, run.text) for run in text_data.runs)
+    if cache_key in _measure_text_cache:
+        return _measure_text_cache.get(cache_key)
+
+    total_width = 0
+    max_height = 0
+
+    for run in text_data.runs:
+        width, height = measure_run(run.font, run.font_size, run.text)
+        total_width += width
+        max_height = max(max_height, height)
+
+    result = (total_width, max_height)
+    _measure_text_cache[cache_key] = result
+    return result
+
+def measure_run(font_path : str, font_size : int, text : str) -> tuple:
+    cache_key = (font_path, font_size, text)
+    if cache_key in _measure_run_cache:
+        return _measure_run_cache.get(cache_key)
+
     atlas = get_atlas(font_path, font_size)
     width = sum(atlas.glyphs[c].advance for c in text if c in atlas.glyphs)
     height = atlas.line_height
-    return (width, height)
-
-def wrap_text(font_path : str, font_size : int, text : str, max_width : float) -> list:
-    atlas = get_atlas(font_path, font_size)
-    lines = []
-    words = text.split(' ')
-    current_line = ""
-
-    for word in words:
-        test_line = f"{current_line} {word}".strip() if current_line else word
-        w, _ = measure_text(font_path, font_size, test_line)
-        if w <= max_width:
-            current_line = test_line
-        else:
-            if not current_line:
-                lines.append(word)
-            else:
-                lines.append(current_line)
-                current_line = word
-    if current_line:
-        lines.append(current_line)
-    return lines
+    
+    result = (width, height)
+    _measure_run_cache[cache_key] = result
+    return result 

@@ -112,20 +112,20 @@ class PygameBackend(CoshBackend):
 
         for line in text_data.lines:
             for frag in line.fragments:
-                font = _get_font(frag.font, frag.font_size)
+                scaled_font_size = max(1, int(frag.font_size * scale))
+                font = _get_font(frag.font, scaled_font_size)
                 surface = font.render(frag.text, True, frag.color)
                 surface.set_alpha(alpha)
 
-                frag_x = node_x + frag.x
-                frag_y = node_y + line.y
+                frag_x = node_x + frag.x * scale
+                frag_y = node_y + line.y * scale
 
                 if rotation != 0.0:
                     frag_w, frag_h = surface.get_size()
-                    # fragment's own center before rotation
+
                     fx_center = frag_x + frag_w / 2
                     fy_center = frag_y + frag_h / 2
 
-                    # where that center ends up after rotating around the NODE's center
                     new_center_x, new_center_y = _rotate_point_around(fx_center, fy_center, node_center_x, node_center_y, rotation)
 
                     rotated_surface = pygame.transform.rotate(surface, rotation)
@@ -202,12 +202,7 @@ class PygameBackend(CoshBackend):
         max_height = 0
         
         for run in text_data.runs:
-            cache_key = (run.font, run.font_size)
-            font = _font_cache.get(cache_key, None)
-        
-            if font is None:
-                font = pygame.font.Font(run.font, run.font_size)
-                _font_cache[cache_key] = font
+            font = _get_font(run.font, run.font_size)
         
             width, height = font.size(run.text)
         
@@ -217,7 +212,7 @@ class PygameBackend(CoshBackend):
         return (total_width, max_height)
     
     def measure_run(self, font_path, font_size, text):
-        font = _font_cache.get((font_path, font_size)) or pygame.font.Font(font_path, font_size)
+        font = _get_font(font_path, font_size)
         return font.size(text)
     
 def _get_font(font_path, font_size):

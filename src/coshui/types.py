@@ -168,6 +168,9 @@ class TextData:
     letter_spacing : float | None = None
     word_spacing : float | None = None
     line_spacing : float | None = None
+    default_font : str | None = None
+    default_font_size : int | None = None
+    default_color : tuple | None = None
     text_justify : CoshTextJustify = CoshTextJustify.CENTER
     text_align : CoshTextAlign = CoshTextAlign.CENTER
     text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
@@ -175,13 +178,7 @@ class TextData:
     raw_text : str = None
     runs : list[TextRun] = field(default_factory=list)
     lines : list[LineLayout] = field(default_factory=list)
-
-    def is_uniform(self) -> bool:
-        if not self.runs:
-            return True
-
-        first = self.runs[0]._style_dict()
-        return all(run._style_dict() == first for run in self.runs)
+    _layout_cache_key : tuple | None = None
     
     def cached_state(self):
         return {
@@ -192,9 +189,9 @@ class TextData:
             "text_align" : self.text_align,
             "text_justify" : self.text_justify,
             "text_overflow" : self.text_overflow,
-            "font" : self.runs[0].font if self.runs else None,
-            "font_size" : self.runs[0].font_size if self.runs else None,
-            "color" : self.runs[0].color if self.runs else None,
+            "font" : self.default_font,
+            "font_size" : self.default_font_size,
+            "color" : self.default_color,
         }
 
 @dataclass

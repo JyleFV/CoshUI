@@ -125,24 +125,6 @@ def test_coshml_empty_tag():
     assert context.runs[0].color == (255, 255, 255)
 
 
-def test_coshml_uniform_detection():
-    context = parse_coshml(
-        text="Hello World",
-        **BASE_ARGS,
-    )
-
-    assert context.is_uniform() is True
-
-
-def test_coshml_non_uniform_detection():
-    context = parse_coshml(
-        text="[red]Hello[/] World",
-        **BASE_ARGS,
-    )
-
-    assert context.is_uniform() is False
-
-
 def test_text_data_same():
     run_1 = TextRun(text="Hello", color=(255, 255, 100), font="Inter", font_size=24)
     run_2 = TextRun(text="World", color=(255, 255, 100), font="Inter", font_size=24)

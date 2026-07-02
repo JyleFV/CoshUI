@@ -412,6 +412,10 @@ def _layout_grid(node, x, y):
 
 def _layout_text(node):
     text_data = node.text_data
+    cache_key = (text_data.raw_text, node.width, node.height, text_data.text_overflow, text_data.text_align, text_data.text_justify)
+    if text_data._layout_cache_key == cache_key and text_data.lines:
+        return
+    text_data._layout_cache_key = cache_key
     runs = text_data.runs
 
     if not runs:

@@ -94,15 +94,16 @@ class RaylibBackend(CoshBackend):
 
         for line in text_data.lines:
             for frag in line.fragments:
+                scaled_font_size = max(1, int(frag.font_size * scale))
                 font = _get_font(frag.font)
 
                 color = raylibpy.Color(frag.color[0], frag.color[1], frag.color[2], alpha)
 
-                frag_x = node_x + frag.x
-                frag_y = node_y + line.y
+                frag_x = node_x + frag.x * scale
+                frag_y = node_y + line.y * scale
 
                 if rotation != 0.0:
-                    size = raylibpy.measure_text_ex(font, frag.text, frag.font_size, 1.0)
+                    size = raylibpy.measure_text_ex(font, frag.text, scaled_font_size, 1.0)
 
                     frag_w = size.x
                     frag_h = size.y
@@ -112,9 +113,9 @@ class RaylibBackend(CoshBackend):
 
                     new_center_x, new_center_y = _rotate_point_around(frag_center_x, frag_center_y, node_center.x, node_center.y, rotation)
 
-                    raylibpy.draw_text_pro(font, frag.text, raylibpy.Vector2(new_center_x, new_center_y), raylibpy.Vector2(frag_w / 2, frag_h / 2), -rotation, frag.font_size, 1.0, color)
+                    raylibpy.draw_text_pro(font, frag.text, raylibpy.Vector2(new_center_x, new_center_y), raylibpy.Vector2(frag_w / 2, frag_h / 2), -rotation, scaled_font_size, 1.0, color)
                 else:
-                    raylibpy.draw_text_ex(font, frag.text, raylibpy.Vector2(frag_x, frag_y), frag.font_size, 1.0, color)
+                    raylibpy.draw_text_ex(font, frag.text, raylibpy.Vector2(frag_x, frag_y), scaled_font_size, 1.0, color)
 
         if final_clip:
             raylibpy.end_scissor_mode()

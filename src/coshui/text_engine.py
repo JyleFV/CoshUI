@@ -33,7 +33,6 @@ def validate_font_size(size : str):
     return final_size 
 # endregion
 
-# TODO: Simplify to "tag" : validator
 TAGS = {
     "color" : validate_color,
     "font" : validate_font,
@@ -137,13 +136,13 @@ def parse_tag(tag: str) -> dict:
     
     return style
 
-def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, color) -> TextData:
     tokens = tokenize(text)
     context = TextData(
         letter_spacing=letter_spacing, word_spacing=word_spacing, 
         line_spacing=line_spacing, text_align=text_align, 
         text_justify=text_justify, text_overflow=text_overflow,
-        raw_text=text
+        raw_text=text, default_color=color, default_font=font, default_font_size=font_size
     )
 
     base_style = TextStyle(color=text_color, font=font, font_size=font_size)
