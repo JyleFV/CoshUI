@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 
 from .types import *
-from .utility import Ref
+from .utility import Ref, resolve_font_variant
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
 from .node_definitions import Element, TextNode, ParentNode
@@ -135,7 +135,7 @@ class RichLabel(TextNode):
         # Skips TextNode straight to Element so we can bypass create_single_text_data()
         Element.__post_init__(self)
 
-        self.font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        self.font = resolve_font_variant(CoshUI._font_library.get(self.font, None), self.bold, self.italic, self.font)
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         
         current = {
@@ -158,7 +158,8 @@ class RichLabel(TextNode):
                 self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 
-                self.text_overflow, self.text_color, self.strikethrough, self.underline
+                self.text_overflow, self.text_color, self.strikethrough, self.underline,
+                self.bold, self.italic
             )
             CoshUI.set_state(self.id, "text_data", parsed_text)
             text = parsed_text

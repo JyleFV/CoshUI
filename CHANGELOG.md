@@ -1,3 +1,6 @@
+# CoshUI - 0.3.2 The "CoshML" Update
+Posted: `July X, 2026`
+
 # CoshUI - 0.3.1 Patch Notes
 Posted: `June 18, 2026`
 

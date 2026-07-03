@@ -4,9 +4,8 @@ import difflib
 import os
 import math
 
-from .cui_error import CoshUIError
+from .cui_error import CoshUIError, warn
 from .state import CoshUI
-from .text_engine import TextRun
 from .types import *
 
 if TYPE_CHECKING:
@@ -35,21 +34,24 @@ class Ref(Generic[T]):
 
 # ================ Fonts ================
 
-def add_font(name : str, base_path : str):
+def add_font(name : str, base_path : str, bold : str = None, italic : str = None, bold_italic : str = None):
     if not name or not base_path:
         raise CoshUIError("Please input a name or a path when adding fonts.")
-    
-    if not os.path.isfile(base_path):
-        raise CoshUIError(f"Font path `{base_path}` does not exist or is not a file")
-    
-    CoshUI._font_library[name] = os.path.abspath(base_path)
 
-def set_default_font(name : str):
-    try:
-        path = os.path.abspath(CoshUI._font_library[name])
-        CoshUI._default_font = CoshUI._font_library.get(name)
-    except KeyError:
-        raise CoshUIError("That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments.") from None
+    variants = { "base_font" : base_path, "bold" : bold, "italic" : italic, "bold_italic" : bold_italic }
+
+    for variant, path in variants.items():
+        if path is not None and not os.path.isfile(path):
+            raise CoshUIError(f"Font path `{path}` for `{variant}` of `{name}` does not exist or is not a file.")
+
+    CoshUI._font_library[name] = { variant: (os.path.abspath(path) if path is not None else None) for variant, path in variants.items() }
+
+def set_default_font(name: str):
+    if name not in CoshUI._font_library:
+        close_match = difflib.get_close_matches(name, CoshUI._font_library.keys(), n=1)
+        raise CoshUIError(f"That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+
+    CoshUI._default_font = name
 
 # ================ Fonts ================
 
@@ -179,6 +181,7 @@ def get_local_mouse(mouse_x, mouse_y, node_x, node_y, node_w, node_h, angle):
     return (center_x + local_dx, center_y + local_dy)
 
 def create_single_text_data(text : str, text_align : CoshTextAlign, text_justify : CoshTextJustify, text_overflow : CoshTextOverflow, text_color : tuple, font_size : int, font : str, strikethrough : bool, underline : bool):
+    from .text_engine import TextRun
     text_data = TextData(text_align=text_align, text_justify=text_justify, text_overflow=text_overflow, default_color=text_color, default_font_size=font_size, default_font=font)
     text_data.text = text
     text_data.runs.append(TextRun(color=text_color, font_size=font_size, font=font, text=text, strikethrough=strikethrough, underline=underline))
@@ -245,3 +248,26 @@ def print_tree(node):
     print(f"Node: {node.__class__.__name__} with node_id: {node.id}\n")
     for child in node.children:
         print_tree(child)
+
+def resolve_font_variant(font_entry, bold=False, italic=False, font_name=None):
+    if font_entry is None:
+        if font_name is not None:
+            warn(f"Requested font `{font_name}` but it doesn't seem to be an existing font. Falling back to the default.")
+
+        if bold and italic:
+            return CoshUI._font_library[CoshUI._default_font].get("bold_italic")
+        elif bold:
+            return CoshUI._font_library[CoshUI._default_font].get("bold")
+        elif italic:
+            return CoshUI._font_library[CoshUI._default_font].get("italic")
+        return CoshUI._font_library[CoshUI._default_font].get("base_font")
+
+    variant_key = "bold_italic" if (bold and italic) else "bold" if bold else "italic" if italic else None
+    if variant_key is None:
+        return font_entry["base_font"]
+
+    variant = font_entry.get(variant_key)
+    if variant is None:
+        warn(f"Requested `{variant_key}` variant for font `{font_name}` but it wasn't added with `add_font()`. Falling back to `base_font`.")
+        return font_entry["base_font"]
+    return variant

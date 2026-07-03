@@ -5,7 +5,7 @@ from .types import *
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
 from .lifecycle import CoshLifecycle
-from .utility import create_single_text_data
+from .utility import create_single_text_data, resolve_font_variant
 from ._defaults import ENGINE_DEFAULTS
 
 @dataclass
@@ -121,7 +121,7 @@ class TextNode(Element):
     def __post_init__(self):
         super().__post_init__()
 
-        self.font = CoshUI._font_library.get(self.font) if self.font is not None else CoshUI._default_font
+        self.font = resolve_font_variant(CoshUI._font_library.get(self.font, None), self.bold, self.italic, self.font)
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         self.text_data = create_single_text_data(
             self.text, self.text_align, 

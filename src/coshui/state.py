@@ -24,9 +24,24 @@ DEFAULT_THEME = CoshTheme(
             dropdown={ "width" : 150, "height" : 30, "background_color" : (100, 100, 100) }
         )
 
-COURIER = os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime.ttf")
-INTER = os.path.join(os.path.dirname(__file__), "assets", "fonts", "Inter.ttf")
-UBUNTUMONO = os.path.join(os.path.dirname(__file__), "assets", "fonts", "UbuntuMono.ttf")
+COURIER = { 
+    "base_font" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime.ttf"),
+    "bold" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime-Bold.ttf"),
+    "italic" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime-Italic.ttf"),
+    "bold_italic" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime-BoldItalic.ttf")
+}
+INTER = { 
+    "base_font" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "Inter.ttf"),
+    "bold" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "Inter-Bold.ttf"),
+    "italic" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "Inter-Italic.ttf"),
+    "bold_italic" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "Inter-BoldItalic.ttf")
+}
+UBUNTUMONO = { 
+    "base_font" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "UbuntuMono.ttf"),
+    "bold" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "UbuntuMono-Bold.ttf"),
+    "italic" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "UbuntuMono-Italic.ttf"),
+    "bold_italic" : os.path.join(os.path.dirname(__file__), "assets", "fonts", "UbuntuMono-BoldItalic.ttf")
+}
 
 class CoshUI:
     #----------------  Lifecycle ----------------
@@ -39,7 +54,7 @@ class CoshUI:
     # ---------------- Render-related ----------------
     _font_library : dict = { "Courier" : COURIER, "Inter" : INTER, "Ubuntu" : UBUNTUMONO }
     _render_stack : list = []
-    _default_font : str = _font_library.get("Inter")
+    _default_font : str = "Inter"
     # ---------------- Composite Widgets ----------------
     _expander_registry : dict = {}
     # ---------------- Input & Event-related ----------------
