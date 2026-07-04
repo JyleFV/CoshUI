@@ -143,13 +143,4 @@ class TextNode(Element):
     def get_render_data(self):
         data = self.get_base_render_data()
         data["text_data"] = self.text_data
-
-        # TODO: Remove these raw values once TextData works in backends
-        data["text"] = self.text
-        data["font"] = self.font
-        data["font_size"] = self.font_size
-        data["text_color"] = self.text_color
-        data["text_align"] = self.text_align
-        data["text_justify"] = self.text_justify
-        data["text_overflow"] = self.text_overflow
         return RenderContext(**data)

@@ -141,6 +141,15 @@ def resolve_border_radius(value : int | float | tuple) -> tuple:
         case _:
             raise CoshUIError(f"Invalid border_radius `{value}`. Expected an int/float or a tuple of the 4 corner values (top-left, top-right, bottom-right, bottom-left).")
 
+def resolve_four_value(value : int | float | tuple) -> FourSide:
+    match value:
+        case int() | float():
+            return FourSide(value, value, value, value)
+        case (top, right, bottom, left):
+            return FourSide(top, right, bottom, left)
+        case _:
+            raise CoshUIError(f"Invalid padding/margin value `{value}`. Expected an int/float or a tuple of 4 values (top, right, bottom, left).")
+
 def point_in_rect(px, py, rx, ry, rw, rh):
     return (rx <= px <= rx + rw and ry <= py <= ry + rh)
 
@@ -250,18 +259,25 @@ def print_tree(node):
         print_tree(child)
 
 def resolve_font_variant(font_entry, bold=False, italic=False, font_name=None):
+    # Handles missing fonts 
     if font_entry is None:
+        # Handles misspelled fonts
         if font_name is not None:
             warn(f"Requested font `{font_name}` but it doesn't seem to be an existing font. Falling back to the default.")
 
-        if bold and italic:
-            return CoshUI._font_library[CoshUI._default_font].get("bold_italic")
-        elif bold:
-            return CoshUI._font_library[CoshUI._default_font].get("bold")
-        elif italic:
-            return CoshUI._font_library[CoshUI._default_font].get("italic")
-        return CoshUI._font_library[CoshUI._default_font].get("base_font")
+        # Uses default font and handles different variants
+        default_entry = CoshUI._font_library[CoshUI._default_font]
+        variant_key = "bold_italic" if (bold and italic) else "bold" if bold else "italic" if italic else None
+        if variant_key is None:
+            return default_entry["base_font"]
 
+        variant = default_entry.get(variant_key)
+        if variant is None:
+            warn(f"Default font `{CoshUI._default_font}` has no `{variant_key}` variant. Falling back to `base_font`.")
+            return default_entry["base_font"]
+        return variant
+
+    # Handles variants of passed in font
     variant_key = "bold_italic" if (bold and italic) else "bold" if bold else "italic" if italic else None
     if variant_key is None:
         return font_entry["base_font"]

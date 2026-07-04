@@ -141,18 +141,25 @@ class RenderContext(NamedTuple):
     # Interaction
     mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
     # Text
-    text : str | None = None
-    text_color : tuple = (255, 255, 255)
-    font : str | None = None
-    font_size : int = 18
-    text_justify : CoshTextJustify = CoshTextJustify.CENTER
-    text_align : CoshTextAlign = CoshTextAlign.CENTER
-    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
-    text_data : TextData | None = None # NOTE: soon to be the only value for text
+    text_data : TextData | None = None
     # Image
     image_src : str | None = None
     # Overflow-logic
     clip_rect : tuple | None = None
+
+class FourSide(NamedTuple):
+    top : float
+    right : float
+    bottom : float
+    left : float
+
+    @property
+    def horizontal(self) -> float:
+        return self.left + self.right
+
+    @property
+    def vertical(self) -> float:
+        return self.top + self.bottom
 
 class ParticleContext(NamedTuple):
     particles : list = field(default_factory=list)
@@ -222,4 +229,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
