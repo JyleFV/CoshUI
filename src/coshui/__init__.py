@@ -2,6 +2,8 @@ from .core import CoshUIRenderer
 
 from .widgets import Container, Grid, Modal, Button, Label, Checkbox, Image, Slider, Dropdown, RichLabel
 
+from .text_engine import TextStyle
+
 from .utility import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme
 
 from .types import CoshMode, CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
@@ -135,6 +137,7 @@ __all__ = [
 
     # Types (raw enums)
     "CoshStyling",
+    "TextStyle"
 
     # Align
     "ALIGN_START",

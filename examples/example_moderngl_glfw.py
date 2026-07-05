@@ -1,6 +1,7 @@
 import coshui as cui
 import moderngl
 import glfw
+import time
 
 def main():
     if not glfw.init(): return
@@ -15,12 +16,13 @@ def main():
     ctx = moderngl.create_context()
     backend = cui.ModernGLBackend(ctx, cui.GLFW)
     itemList = ["Hello", "World", "My", "Name"]
+    cui.add_class("header", cui.TextStyle(color=(255, 0, 0), italic=True, font="Courier", bold=True, strikethrough=True, underline=True, font_size=48))
 
     while not glfw.window_should_close(window):
         ctx.clear(0.0, 0.0, 0.0, 1.0)
 
         with cui.CoshUIRenderer(backend, cui.DEBUG):
-            cui.RichLabel(id="first_rich", strikethrough=True, text="[red font=Ubuntu font_size=52]Hello[/] [color=(100, 100, 255)]World! My name is JyleFV and I really[/] like Minecraft!", text_color=(0, 0, 0), text_align=cui.TEXT_ALIGN_TOP, text_justify=cui.TEXT_JUSTIFY_LEFT, width=200, height=500, text_overflow=cui.TEXT_WRAP, style=cui.CoshStyling(background_color=(255, 255, 255)))
+            cui.RichLabel(id="first_rich", strikethrough=True, text="[header]Hello[/] [color=(100, 100, 255)]World! My name is JyleFV and I really[/] like Minecraft!", text_color=(0, 0, 0), text_align=cui.TEXT_ALIGN_TOP, text_justify=cui.TEXT_JUSTIFY_LEFT, width=200, height=500, text_overflow=cui.TEXT_WRAP, style=cui.CoshStyling(background_color=(255, 255, 255)))
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", mouse_filter=cui.STOP, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52, text_overflow=cui.TEXT_HIDDEN)

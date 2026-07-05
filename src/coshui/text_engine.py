@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal
+import difflib
 
 from .state import CoshUI
 from .cui_error import CoshMLError
@@ -61,20 +62,20 @@ class TextStyle:
     underline: bool = False
     strikethrough: bool = False
 
-@dataclass
-class TextRun(TextStyle):
-    text : str | None = None
-
     def _style_dict(self):
         return {
             "color" : self.color,
-            "size" : self.font_size,
+            "font_size" : self.font_size,
             "font" : self.font,
             "bold" : self.bold,
             "italic" : self.italic,
             "underline" : self.underline,
             "strikethrough" : self.strikethrough,
         }
+
+@dataclass
+class TextRun(TextStyle):
+    text : str | None = None
 
 @dataclass
 class Token:
@@ -108,21 +109,27 @@ def parse_tag(tag: str) -> dict:
     current = ""
     depth = 0
 
-    # TODO: Add _text_style_class to make user-generated tags using add_class()
-
-    for char in tag:
+    for i, char in enumerate(tag):
         if char == "(":
             depth += 1
             current += char
+
         elif char == ")":
             depth -= 1
+            if depth < 0:
+                raise CoshMLError(f"Unexpected ')' at position {i + 1} of CoshML tag `{tag}`.")
             current += char
+
         elif char == " " and depth == 0:
             if current:
                 parts.append(current)
             current = ""
+
         else:
             current += char
+
+    if depth > 0:
+        raise CoshMLError(f"Unclosed parenthesis in CoshML tag `{tag}`.")
     
     if current:
         parts.append(current)
@@ -130,11 +137,26 @@ def parse_tag(tag: str) -> dict:
     for part in parts:
         if "=" in part:
             key, value = part.split("=", 1)
+            known_keys = set(TAGS.keys())
+            if key not in known_keys:
+                close_match = difflib.get_close_matches(key, known_keys, n=1)
+                raise CoshMLError(
+                    f"Unknown CoshML attribute `{key}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?"
+                )
             style[key] = value
         elif part in KEYWORD_MAP:
             attr, val = KEYWORD_MAP[part]
             style[attr] = val
-    
+        elif part in CoshUI._text_style_class:
+            text_style = CoshUI._text_style_class[part]
+            style.update(text_style._style_dict())
+        else:
+            all_known = list(KEYWORD_MAP.keys()) + list(CoshUI._text_style_class.keys())
+            close_match = difflib.get_close_matches(part, all_known, n=1)
+            raise CoshMLError(
+                f"Unknown CoshML tag `{part}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?"
+            )
+
     return style
 
 def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, color, strikethrough, underline, bold, italic) -> TextData:

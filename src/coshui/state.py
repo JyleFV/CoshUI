@@ -66,6 +66,7 @@ class CoshUI:
     _active_theme = _theme_registry.get("DEFAULT")
     # ----------------Class System ----------------
     _style_class : dict = {}
+    _text_style_class : dict = {}
     # ---------------- Text Measuring ----------------
     _measure_text : callable = None
     _measure_run : callable = None

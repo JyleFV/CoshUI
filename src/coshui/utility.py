@@ -10,6 +10,7 @@ from .types import *
 
 if TYPE_CHECKING:
     from .themes import CoshTheme
+    from .text_engine import TextStyle
 
 T = TypeVar('T')
 class Ref(Generic[T]):
@@ -69,10 +70,14 @@ def get_signal(node_id : str, signal : CoshSignals):
 
 # ================ Styling Classes ================
 
-def add_class(name : str, style : CoshStyling):
-    if not isinstance(style, CoshStyling):
-        raise CoshUIError("Passed in style is not a CoshStyling object.")
-    CoshUI._style_class[name] = style
+def add_class(name : str, style : CoshStyling | TextStyle):
+    from .text_engine import TextStyle
+    if isinstance(style, CoshStyling):
+        CoshUI._style_class[name] = style
+    elif isinstance(style, TextStyle):
+        CoshUI._text_style_class[name] = style
+    else:
+        raise CoshUIError("Passed in style is not a CoshStyling or TextStyle object.")
 
 # ================ Styling Classes ================
 
