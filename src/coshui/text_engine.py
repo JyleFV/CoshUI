@@ -135,7 +135,9 @@ def parse_tag(tag: str) -> dict:
         parts.append(current)
 
     for part in parts:
-        if "=" in part:
+        if part in TAGS: # This means the part is a TAG that has no value
+            raise CoshMLError(f"The tag `{part}` needs a value.")
+        elif "=" in part:
             key, value = part.split("=", 1)
             known_keys = set(TAGS.keys())
             if key not in known_keys:

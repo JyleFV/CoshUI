@@ -71,10 +71,16 @@ def get_signal(node_id : str, signal : CoshSignals):
 # ================ Styling Classes ================
 
 def add_class(name : str, style : CoshStyling | TextStyle):
-    from .text_engine import TextStyle
+    from .text_engine import TextStyle, KEYWORD_MAP, TAGS
     if isinstance(style, CoshStyling):
+        if name in CoshUI._style_class:
+            raise CoshUIError(f"The class name `{name}` already exists. Did you make duplicate classes?")
         CoshUI._style_class[name] = style
     elif isinstance(style, TextStyle):
+        if name in (KEYWORD_MAP.keys() | TAGS.keys()):
+            raise CoshUIError(f"The tag `{name}` already exists and cannot be used as a class name. Please choose a different one.")
+        if name in CoshUI._text_style_class:
+            raise CoshUIError(f"The text class name `{name}` already exists. Did you make duplicate classes?")
         CoshUI._text_style_class[name] = style
     else:
         raise CoshUIError("Passed in style is not a CoshStyling or TextStyle object.")

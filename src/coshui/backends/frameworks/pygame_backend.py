@@ -16,6 +16,8 @@ except ImportError:
 
 _image_cache = {}
 _font_cache = {}
+_rect_cache = {}
+_text_cache = {}
 
 class PygameBackend(CoshBackend):
     def __init__(self, surface):
@@ -33,65 +35,42 @@ class PygameBackend(CoshBackend):
             self.surface.set_clip(pygame.Rect(*clip_rect))
 
         tl, tr, br, bl = resolve_border_radius(border_radius)
-        
-        use_temp_surface = (alpha < 255) or (rotation and rotation != 0.0)
 
-        if use_temp_surface:
-            temp = pygame.Surface((w, h), pygame.SRCALPHA)
+        cache_key = (int(w), int(h), color, alpha, border, int(tl), int(tr), int(br), int(bl))
 
-            fill_color = (*color, alpha) if alpha < 255 else color
-            
-            pygame.draw.rect(temp, fill_color, (0, 0, w, h),
-                border_top_left_radius=int(tl),
-                border_top_right_radius=int(tr),
-                border_bottom_right_radius=int(br),
-                border_bottom_left_radius=int(bl),
-            )
+        surface = _rect_cache.get(cache_key)
+
+        if surface is None:
+            surface = pygame.Surface((int(w), int(h)), pygame.SRCALPHA)
+
+            fill_color = (*color, alpha)
+
+            pygame.draw.rect(surface, fill_color, (0, 0, w, h), border_top_left_radius=int(tl), border_top_right_radius=int(tr), border_bottom_right_radius=int(br), border_bottom_left_radius=int(bl))
+
             if border is not None:
                 border_color, border_width = border
-                final_b_color = (*border_color, alpha) if alpha < 255 else border_color
-                pygame.draw.rect(temp, final_b_color, (0, 0, w, h), border_width,
-                    border_top_left_radius=int(tl),
-                    border_top_right_radius=int(tr),
-                    border_bottom_right_radius=int(br),
-                    border_bottom_left_radius=int(bl)
-                )
 
-            final_x, final_y = x, y
-            finalized_surface = temp
-            if rotation and rotation != 0:
-                finalized_surface = pygame.transform.rotate(temp, rotation)
+                pygame.draw.rect(surface, (*border_color, alpha), (0, 0, w, h), border_width, border_top_left_radius=int(tl), border_top_right_radius=int(tr), border_bottom_right_radius=int(br), border_bottom_left_radius=int(bl))
 
-                center_x = x + (w / 2)
-                center_y = y + (h / 2)
+            _rect_cache[cache_key] = surface
 
-                rotated_width, rotated_height = finalized_surface.get_size()
+        final_surface = surface
 
-                final_x = center_x - (rotated_width / 2)
-                final_y = center_y - (rotated_height / 2)
-            else:
-                finalized_surface = temp
-                final_x, final_y = x, y
-                    
-            self.surface.blit(finalized_surface, (final_x, final_y))
-                
-        else:
-            pygame.draw.rect(self.surface, color, (x, y, w, h),
-                border_top_left_radius=int(tl),
-                border_top_right_radius=int(tr),
-                border_bottom_right_radius=int(br),
-                border_bottom_left_radius=int(bl),
-            )
-            if border is not None:
-                border_color, border_width = border
-                pygame.draw.rect(self.surface, border_color, (x, y, w, h), border_width,
-                    border_top_left_radius=int(tl),
-                    border_top_right_radius=int(tr),
-                    border_bottom_right_radius=int(br),
-                    border_bottom_left_radius=int(bl),                  
-                )
-                
-        self.surface.set_clip(None)
+        if rotation:
+            final_surface = pygame.transform.rotate(surface, rotation)
+
+            center_x = x + w / 2
+            center_y = y + h / 2
+
+            rw, rh = final_surface.get_size()
+
+            x = center_x - rw / 2
+            y = center_y - rh / 2
+
+        self.surface.blit(final_surface, (x, y))
+
+        if clip_rect:
+            self.surface.set_clip(None)
 
     def _draw_text(self, text_data, node_x, node_y, node_w, node_h, alpha, rotation, clip_rect, scale):
         node_rect = pygame.Rect(node_x, node_y, node_w, node_h) if text_data.text_overflow in (CoshTextOverflow.HIDDEN, CoshTextOverflow.WRAP) else None
@@ -113,40 +92,54 @@ class PygameBackend(CoshBackend):
         for line in text_data.lines:
             for frag in line.fragments:
                 scaled_font_size = max(1, int(frag.font_size * scale))
-                font = _get_font(frag.font, scaled_font_size)
-                surface = font.render(frag.text, True, frag.color)
-                surface.set_alpha(alpha)
+
+                cache_key = (frag.text, frag.font, scaled_font_size, frag.color, alpha, frag.underline, frag.strikethrough)
+
+                surface = _text_cache.get(cache_key)
+
+                if surface is None:
+
+                    font = _get_font(frag.font, scaled_font_size)
+
+                    surface = font.render(frag.text, True, frag.color).convert_alpha()
+
+                    surface.set_alpha(alpha)
+
+                    line_thickness = max(1, scaled_font_size // 16)
+
+                    if frag.underline:
+                        y = surface.get_height() - 2
+                        pygame.draw.line(surface, frag.color, (0, y), (surface.get_width(), y), width=line_thickness)
+
+                    if frag.strikethrough:
+                        y = surface.get_height() / 2
+                        pygame.draw.line(surface, frag.color, (0, y), (surface.get_width(), y), width=line_thickness)
+
+                    _text_cache[cache_key] = surface
 
                 frag_x = node_x + frag.x * scale
                 frag_y = node_y + line.y * scale
 
-                scaled_frag_width = frag.width * scale
-                line_thickness = max(1, int(scaled_font_size // 16))
+                if rotation != 0:
 
-                if frag.underline:
-                    line_y = surface.get_height() - 2
-                    pygame.draw.line(surface, frag.color, (0, line_y), (scaled_frag_width, line_y), width=line_thickness)
-                if frag.strikethrough:
-                    line_y = surface.get_height() / 2
-                    pygame.draw.line(surface, frag.color, (0, line_y), (scaled_frag_width, line_y), width=line_thickness)
-
-                if rotation != 0.0:
                     frag_w, frag_h = surface.get_size()
 
-                    fx_center = frag_x + frag_w / 2
-                    fy_center = frag_y + frag_h / 2
+                    fx = frag_x + frag_w / 2
+                    fy = frag_y + frag_h / 2
 
-                    new_center_x, new_center_y = _rotate_point_around(fx_center, fy_center, node_center_x, node_center_y, rotation)
+                    cx, cy = _rotate_point_around(fx, fy, node_center_x, node_center_y, rotation)
 
-                    rotated_surface = pygame.transform.rotate(surface, rotation)
-                    rw, rh = rotated_surface.get_size()
-                    final_x = new_center_x - rw / 2
-                    final_y = new_center_y - rh / 2
-                    self.surface.blit(rotated_surface, (final_x, final_y))
+                    rotated = pygame.transform.rotate(surface, rotation)
+
+                    rw, rh = rotated.get_size()
+
+                    self.surface.blit(rotated, (cx - rw / 2, cy - rh / 2))
+
                 else:
                     self.surface.blit(surface, (frag_x, frag_y))
 
-        self.surface.set_clip(None)
+        if final_rect:
+            self.surface.set_clip(None)
 
     def _draw_image(self, img_path, x ,y, w, h, alpha, clip_rect, rotation):
         if alpha <= 0:
