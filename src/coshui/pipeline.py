@@ -1,9 +1,9 @@
 from .state import CoshUI
 from .input import CoshInput
-from .node_definitions import Node
+from .node_definitions import Node, TextNode
 from .widgets import Container, Grid
 from .animation import Tween
-from .utility import point_in_rect, get_local_mouse
+from .utility import point_in_rect, get_local_mouse, _find_line_breaks, _justify_offset, _align_offset, resolve_four_value
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
@@ -17,300 +17,14 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
     node._y = y
 
     if isinstance(node, Container):
-        relative_children = [child for child in node.children if child.positioning is not CoshPositioning.ABSOLUTE]
-        absolute_children = [child for child in node.children if child.positioning is CoshPositioning.ABSOLUTE]
-
-        cursor_x = x + node.padding
-        cursor_y = y + node.padding
-
-        if node.direction is CoshDirection.ROW:
-            total_gap = node.gap * max(0, len(relative_children) - 1)
-            distributed_gap = node.gap # Default Fallback
-            
-            available_width = node.width - (node.padding * 2) - total_gap
-            
-            for child in relative_children:
-                if isinstance(child.width, CoshPercentage):
-                    child.width = (node.width - (node.padding * 2)) * child.width.percentage
-                    available_width -= (child.width + child.margin * 2)
-
-            fill_widgets = [child for child in relative_children if child.width is CoshSizing.FILL]
-            static_widgets = [child for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)]
-
-            for widget in static_widgets:
-                available_width -= (widget.width + widget.margin * 2)
-            
-            if fill_widgets:
-                shared_width = max(0, available_width / len(fill_widgets))
-                for child in fill_widgets:
-                        child.width = shared_width
-
-            for child in relative_children:
-                if isinstance(child.height, CoshPercentage):
-                    child.height = (node.height - (node.padding * 2) - (child.margin * 2)) * child.height.percentage
-                elif child.height is CoshSizing.FILL:
-                    child.height = node.height - (node.padding * 2) - (child.margin * 2)
-
-            raw_inner_width = node.width - (node.padding * 2)
-            total_widgets_width = sum(child.width + (child.margin * 2) for child in relative_children)
-            leftover_space = raw_inner_width - total_widgets_width
-
-            total_content_size = total_widgets_width + total_gap
-
-            match node.justify:
-                case CoshJustify.CENTER:
-                    cursor_x = x + (node.width / 2) - (total_content_size / 2)
-                case CoshJustify.END:
-                    cursor_x = x + node.width - node.padding - total_content_size
-                case CoshJustify.SPACE_BETWEEN:
-                    if len(relative_children) > 1:
-                        distributed_gap = leftover_space / (len(relative_children) - 1)
-                        cursor_x = x + node.padding
-                    else:
-                        cursor_x = x + (node.width / 2) - (total_widgets_width / 2)
-                case CoshJustify.SPACE_AROUND:
-                    if relative_children:
-                        half_gap = leftover_space / (len(relative_children) * 2)
-                        cursor_x = x + node.padding + half_gap
-                        distributed_gap = half_gap * 2
-                case CoshJustify.SPACE_EVENLY:
-                    if relative_children:
-                        distributed_gap = leftover_space / (len(relative_children) + 1)
-                        cursor_x = x + node.padding + distributed_gap
-
-        else:
-            total_gap = node.gap * max(0, len(relative_children) - 1)
-            distributed_gap = node.gap # Default Fallback
-
-            available_height = node.height - (node.padding * 2) - total_gap
-
-            for child in relative_children:
-                if isinstance(child.height, CoshPercentage):
-                    child.height = (node.height - (node.padding * 2)) * child.height.percentage
-                    available_height -= (child.height + child.margin * 2)
-
-            fill_widgets = [child for child in relative_children if child.height is CoshSizing.FILL]
-            static_widgets = [child for child in relative_children if child.height is not CoshSizing.FILL]
-
-            for widget in static_widgets:
-                available_height -= (widget.height + widget.margin * 2)
-            
-            if fill_widgets:
-                shared_height = max(0, available_height / len(fill_widgets))
-                for child in fill_widgets:
-                    child.height = shared_height
-
-            for child in relative_children:
-                if isinstance(child.width, CoshPercentage):
-                    child.width = (node.width - (node.padding * 2) - (child.margin * 2)) * child.width.percentage
-                elif child.width is CoshSizing.FILL:
-                    child.width = node.width - (node.padding * 2) - (child.margin * 2)
-
-            raw_inner_height = node.height - (node.padding * 2)
-            total_widgets_height = sum(child.height + (child.margin * 2) for child in relative_children)
-            leftover_space = raw_inner_height - total_widgets_height
-
-            total_content_size = sum(child.height + (child.margin * 2) for child in relative_children) + total_gap
-
-            match node.justify:
-                case CoshJustify.CENTER:
-                    cursor_y = y + (node.height / 2) - (total_content_size / 2)
-                case CoshJustify.END:
-                    cursor_y = y + node.height - node.padding - total_content_size
-                case CoshJustify.SPACE_BETWEEN:
-                    if len(relative_children) > 1:
-                        distributed_gap = leftover_space / (len(relative_children) - 1)
-                        cursor_y = y + node.padding
-                    else:
-                        cursor_y = y + (node.width / 2) - (total_widgets_width / 2)
-                case CoshJustify.SPACE_AROUND:
-                    if relative_children:
-                        half_gap = leftover_space / (len(relative_children) * 2)
-                        cursor_y = y + node.padding + half_gap
-                        distributed_gap = half_gap * 2
-                case CoshJustify.SPACE_EVENLY:
-                    if relative_children:
-                        distributed_gap = leftover_space / (len(relative_children) + 1)
-                        cursor_y = y + node.padding + distributed_gap
-
-        for child in relative_children:
-            if node.direction is CoshDirection.ROW:
-                match node.align:
-                    case CoshAlign.START:  child_y = y + node.padding
-                    case CoshAlign.CENTER: child_y = y + (node.height / 2) - ((child.height + child.margin * 2) / 2)
-                    case CoshAlign.END:    child_y = y + node.height - node.padding - (child.height + child.margin * 2)
-                
-                layout(child, cursor_x + child.margin, child_y + child.margin)
-                cursor_x += child.width + (child.margin * 2) + distributed_gap
-            else:
-                match node.align:
-                    case CoshAlign.START:  child_x = x + node.padding
-                    case CoshAlign.CENTER: child_x = x + (node.width / 2) - ((child.width + child.margin * 2) / 2)
-                    case CoshAlign.END:    child_x = x + node.width - node.padding - (child.width + child.margin * 2)
-                
-                layout(child, child_x + child.margin, cursor_y + child.margin)
-                cursor_y += child.height + (child.margin * 2) + distributed_gap
-
-        for child in absolute_children:
-            if child.width is CoshSizing.FILL:
-                child.width = node.width - (node.padding * 2)
-            elif isinstance(child.width, CoshPercentage):
-                child.width = child.width.percentage * (node.width - (node.padding * 2))
-                
-            if child.height is CoshSizing.FILL:
-                child.height = node.height - (node.padding * 2)
-            elif isinstance(child.height, CoshPercentage):
-                child.height = child.height.percentage * (node.height - (node.padding * 2))
-            if node.direction is CoshDirection.ROW:
-                match node.align:
-                    case CoshAlign.START:  base_y = y + node.padding
-                    case CoshAlign.CENTER: base_y = y + (node.height / 2) - ((child.height + child.margin * 2) / 2)
-                    case CoshAlign.END:    base_y = y + node.height - node.padding - (child.height + child.margin * 2)
-                    case _:                base_y = y + node.padding
-                match node.justify:
-                    case CoshJustify.START:  base_x = x + node.padding
-                    case CoshJustify.CENTER: base_x = x + (node.width / 2) - ((child.width + child.margin * 2) / 2)
-                    case CoshJustify.END:    base_x = x + node.width - node.padding - (child.width + child.margin * 2)
-                    case _:                  base_x = x + node.padding
-            else:
-                match node.align:
-                    case CoshAlign.START:  base_x = x + node.padding
-                    case CoshAlign.CENTER: base_x = x + (node.width / 2) - ((child.width + child.margin * 2) / 2)
-                    case CoshAlign.END:    base_x = x + node.width - node.padding - (child.width + child.margin * 2)
-                    case _:                base_x = x + node.padding
-                match node.justify:
-                    case CoshJustify.START:  base_y = y + node.padding
-                    case CoshJustify.CENTER: base_y = y + (node.height / 2) - ((child.height + child.margin * 2) / 2)
-                    case CoshJustify.END:    base_y = y + node.height - node.padding - (child.height + child.margin * 2)
-                    case _:                  base_y = y + node.padding
-
-            layout(child, base_x + child._x, base_y + child._y)
-
+        _layout_container(node, x, y)
     if isinstance(node, Grid):
-        relative_children = [child for child in node.children if child.positioning is not CoshPositioning.ABSOLUTE]
-        absolute_children = [child for child in node.children if child.positioning is CoshPositioning.ABSOLUTE]
-
-        if relative_children:
-            # 1. Chunk into rows
-            rows = [relative_children[i:i + node.column_count] for i in range(0, len(relative_children), node.column_count)]
-            total_rows = len(rows)
-
-            # 2. Pre-calculate grid track sizes from the parent's fixed dimensions
-            total_col_gaps = node.gap * max(0, node.column_count - 1)
-            total_row_gaps = node.gap * max(0, total_rows - 1)
-            
-            available_width = node.width - (node.padding * 2) - total_col_gaps
-            available_height = node.height - (node.padding * 2) - total_row_gaps
-
-            # This calculates how large each grid cell slot inherently is
-            uniform_cell_width = max(0.0, available_width / node.column_count)
-            uniform_cell_height = max(0.0, available_height / total_rows)
-
-            column_widths = [0.0] * node.column_count
-            row_heights = [0.0] * total_rows
-
-            # 3. Establish track sizes (Respect child's hardcoded sizes if they exceed the uniform cell size)
-            for row_index, row in enumerate(rows):
-                for column_index, child in enumerate(row):
-                    
-                    if isinstance(child.width, CoshPercentage):
-                        calc_w = child.width.percentage * uniform_cell_width
-                        child_width = calc_w + (child.margin * 2)
-                    elif child.width is CoshSizing.FILL:
-                        child_width = 0.0
-                    else:
-                        child_width = child.width + (child.margin * 2)
-                        
-                    if isinstance(child.height, CoshPercentage):
-                        calc_h = child.height.percentage * uniform_cell_height
-                        child_height = calc_h + (child.margin * 2)
-                    elif child.height is CoshSizing.FILL:
-                        child_height = 0.0
-                    else:
-                        child_height = child.height + (child.margin * 2)
-                    
-                    column_widths[column_index] = max(column_widths[column_index], child_width, uniform_cell_width)
-                    row_heights[row_index] = max(row_heights[row_index], child_height, uniform_cell_height)
-
-            # 4. Calculate alignment boundaries
-            total_grid_content_width = sum(column_widths) + total_col_gaps
-            total_grid_content_height = sum(row_heights) + total_row_gaps
-
-            match node.align:
-                case CoshAlign.START:  start_y = y + node.padding
-                case CoshAlign.CENTER: start_y = y + (node.height / 2) - (total_grid_content_height / 2)
-                case CoshAlign.END:    start_y = y + node.height - node.padding - total_grid_content_height
-                case _:  start_y = y + node.padding
-
-            match node.justify:
-                case CoshJustify.START:  start_x = x + node.padding
-                case CoshJustify.CENTER: start_x = x + (node.width / 2) - (total_grid_content_width / 2)
-                case CoshJustify.END:    start_x = x + node.width - node.padding - total_grid_content_width
-                case _:  start_x = x + node.padding
-
-            # 5. Position and expand FILL / PERCENTAGE elements
-            current_y = start_y
-            for row_index, row in enumerate(rows):
-                current_x = start_x
-                
-                for column_index, child in enumerate(row):
-                    # Resolve Widths
-                    if child.width is CoshSizing.FILL:
-                        child.width = column_widths[column_index] - (child.margin * 2)
-                    elif isinstance(child.width, CoshPercentage):
-                        child.width = (child.width.percentage * column_widths[column_index]) - (child.margin * 2)
-
-                    # Resolve Heights
-                    if child.height is CoshSizing.FILL:
-                        child.height = row_heights[row_index] - (child.margin * 2)
-                    elif isinstance(child.height, CoshPercentage):
-                        child.height = (child.height.percentage * row_heights[row_index]) - (child.margin * 2)
-
-                    layout(child, current_x + child.margin, current_y + child.margin)
-                    current_x += column_widths[column_index] + node.gap
-
-                current_y += row_heights[row_index] + node.gap
-
-        for child in absolute_children:
-            if child.width is CoshSizing.FILL:
-                child.width = node.width - (node.padding * 2)
-            elif isinstance(child.width, CoshPercentage):
-                child.width = child.width.percentage * (node.width - (node.padding * 2))
-
-            if child.height is CoshSizing.FILL:
-                child.height = node.height - (node.padding * 2)
-            elif isinstance(child.height, CoshPercentage):
-                child.height = child.height.percentage * (node.height - (node.padding * 2))
-                
-            layout(child, x + node.padding + child._x, y + node.padding + child._y)
+        _layout_grid(node, x, y)
+    if isinstance(node, TextNode):
+        _layout_text(node)
 
 def update(delta : float):
-    for tween in CoshUI._active_tweens:
-        tween._update(delta)
-
-    completed = [tween for tween in CoshUI._active_tweens if tween._finished]
-
-    CoshUI._active_tweens -= { tween for tween in CoshUI._active_tweens if tween._finished }
-
-    for tween in completed:
-        if tween._on_complete is not None:
-            tween._on_complete()
-        # Soon
-        # if tween._loop_config is not None:
-        #     end_value, duration, easing = tween._loop_config
-
-        #     new_tween = Tween(
-        #         tween.property,
-        #         tween.target_id,
-        #         end_value if end_value is not None else tween.start_value,
-        #         duration if duration is not None else tween.duration,
-        #         easing if easing is not None else tween.easing
-        #     )
-
-        #     new_tween.start_value = tween.end_value
-        #     new_tween.loop(end_value=tween.end_value)
-
-        #     CoshUI._active_tweens.add(new_tween)
+    CoshUI._tween_manager.update(delta)
 
 def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
     if not is_root:
@@ -399,6 +113,8 @@ def process_events():
                     consumed_click = True
             if CoshInput.get_mouse_down():
                 CoshUI._emit_signal(data.id, CoshSignals.PRESSED)
+                if data.mouse_filter is CoshMouseFilter.STOP:
+                    consumed_click = True
 
 def finalize_defaults(node):
     targets = [node, node.style, node]
@@ -408,6 +124,12 @@ def finalize_defaults(node):
             # We only apply the fallback if the attribute exists AND is None
             if hasattr(target, key) and getattr(target, key) is None:
                 setattr(target, key, fallback)
+    
+    # This is so padding and margin are already FourSide datatypes by the time layout() rolls around
+    if hasattr(node, "padding"):
+        node.padding = resolve_four_value(node.padding)
+    if hasattr(node, "margin"):
+        node.margin = resolve_four_value(node.margin)
 
     if node.id:
         if node.id not in CoshUI._state_storage:
@@ -424,3 +146,353 @@ def finalize_defaults(node):
 
     for child in node.children:
         finalize_defaults(child)
+
+# region HELPERS
+def _layout_container(node, x, y):
+    relative_children = [child for child in node.children if child.positioning is not CoshPositioning.ABSOLUTE]
+    absolute_children = [child for child in node.children if child.positioning is CoshPositioning.ABSOLUTE]
+
+    cursor_x = x + node.padding.left
+    cursor_y = y + node.padding.top
+
+    if node.direction is CoshDirection.ROW:
+        total_gap = node.gap * max(0, len(relative_children) - 1)
+        distributed_gap = node.gap # Default Fallback
+
+        available_width = node.width - node.padding.horizontal - total_gap
+
+        for child in relative_children:
+            if isinstance(child.width, CoshPercentage):
+                child.width = (node.width - node.padding.horizontal) * child.width.percentage
+                available_width -= (child.width + child.margin.horizontal)
+
+        fill_widgets = [child for child in relative_children if child.width is CoshSizing.FILL]
+        static_widgets = [child for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)]
+
+        for widget in static_widgets:
+            available_width -= (widget.width + widget.margin.horizontal)
+
+        if fill_widgets:
+            shared_width = max(0, available_width / len(fill_widgets))
+            for child in fill_widgets:
+                    child.width = shared_width
+
+        for child in relative_children:
+            if isinstance(child.height, CoshPercentage):
+                child.height = (node.height - node.padding.vertical - child.margin.vertical) * child.height.percentage
+            elif child.height is CoshSizing.FILL:
+                child.height = node.height - node.padding.vertical - child.margin.vertical
+
+        raw_inner_width = node.width - node.padding.horizontal
+        total_widgets_width = sum(child.width + child.margin.horizontal for child in relative_children)
+        leftover_space = raw_inner_width - total_widgets_width
+
+        total_content_size = total_widgets_width + total_gap
+
+        match node.justify:
+            case CoshJustify.CENTER:
+                cursor_x = x + (node.width / 2) - (total_content_size / 2)
+            case CoshJustify.END:
+                cursor_x = x + node.width - node.padding.right - total_content_size
+            case CoshJustify.SPACE_BETWEEN:
+                if len(relative_children) > 1:
+                    distributed_gap = leftover_space / (len(relative_children) - 1)
+                    cursor_x = x + node.padding.left
+                else:
+                    cursor_x = x + (node.width / 2) - (total_widgets_width / 2)
+            case CoshJustify.SPACE_AROUND:
+                if relative_children:
+                    half_gap = leftover_space / (len(relative_children) * 2)
+                    cursor_x = x + node.padding.left + half_gap
+                    distributed_gap = half_gap * 2
+            case CoshJustify.SPACE_EVENLY:
+                if relative_children:
+                    distributed_gap = leftover_space / (len(relative_children) + 1)
+                    cursor_x = x + node.padding.left + distributed_gap
+
+    else:
+        total_gap = node.gap * max(0, len(relative_children) - 1)
+        distributed_gap = node.gap # Default Fallback
+
+        available_height = node.height - node.padding.vertical - total_gap
+
+        for child in relative_children:
+            if isinstance(child.height, CoshPercentage):
+                child.height = (node.height - node.padding.vertical) * child.height.percentage
+                available_height -= (child.height + child.margin.vertical)
+
+        fill_widgets = [child for child in relative_children if child.height is CoshSizing.FILL]
+        static_widgets = [child for child in relative_children if child.height is not CoshSizing.FILL]
+
+        for widget in static_widgets:
+            available_height -= (widget.height + widget.margin.vertical)
+
+        if fill_widgets:
+            shared_height = max(0, available_height / len(fill_widgets))
+            for child in fill_widgets:
+                child.height = shared_height
+
+        for child in relative_children:
+            if isinstance(child.width, CoshPercentage):
+                child.width = (node.width - node.padding.horizontal - child.margin.horizontal) * child.width.percentage
+            elif child.width is CoshSizing.FILL:
+                child.width = node.width - node.padding.horizontal - child.margin.horizontal
+
+        raw_inner_height = node.height - node.padding.vertical
+        total_widgets_height = sum(child.height + child.margin.vertical for child in relative_children)
+        leftover_space = raw_inner_height - total_widgets_height
+
+        total_content_size = sum(child.height + child.margin.vertical for child in relative_children) + total_gap
+
+        match node.justify:
+            case CoshJustify.CENTER:
+                cursor_y = y + (node.height / 2) - (total_content_size / 2)
+            case CoshJustify.END:
+                cursor_y = y + node.height - node.padding.bottom - total_content_size
+            case CoshJustify.SPACE_BETWEEN:
+                if len(relative_children) > 1:
+                    distributed_gap = leftover_space / (len(relative_children) - 1)
+                    cursor_y = y + node.padding.top
+                else:
+                    cursor_y = y + (node.height / 2) - (total_widgets_height / 2)
+            case CoshJustify.SPACE_AROUND:
+                if relative_children:
+                    half_gap = leftover_space / (len(relative_children) * 2)
+                    cursor_y = y + node.padding.top + half_gap
+                    distributed_gap = half_gap * 2
+            case CoshJustify.SPACE_EVENLY:
+                if relative_children:
+                    distributed_gap = leftover_space / (len(relative_children) + 1)
+                    cursor_y = y + node.padding.top + distributed_gap
+
+    for child in relative_children:
+        if node.direction is CoshDirection.ROW:
+            match node.align:
+                case CoshAlign.START:  child_y = y + node.padding.top
+                case CoshAlign.CENTER: child_y = y + (node.height / 2) - ((child.height + child.margin.vertical) / 2)
+                case CoshAlign.END:    child_y = y + node.height - node.padding.bottom - (child.height + child.margin.vertical)
+
+            layout(child, cursor_x + child.margin.left, child_y + child.margin.top)
+            cursor_x += child.width + child.margin.horizontal + distributed_gap
+        else:
+            match node.align:
+                case CoshAlign.START:  child_x = x + node.padding.left
+                case CoshAlign.CENTER: child_x = x + (node.width / 2) - ((child.width + child.margin.horizontal) / 2)
+                case CoshAlign.END:    child_x = x + node.width - node.padding.right - (child.width + child.margin.horizontal)
+
+            layout(child, child_x + child.margin.left, cursor_y + child.margin.top)
+            cursor_y += child.height + child.margin.vertical + distributed_gap
+
+    for child in absolute_children:
+        if child.width is CoshSizing.FILL:
+            child.width = node.width - node.padding.horizontal
+        elif isinstance(child.width, CoshPercentage):
+            child.width = child.width.percentage * (node.width - node.padding.horizontal)
+
+        if child.height is CoshSizing.FILL:
+            child.height = node.height - node.padding.vertical
+        elif isinstance(child.height, CoshPercentage):
+            child.height = child.height.percentage * (node.height - node.padding.vertical)
+        if node.direction is CoshDirection.ROW:
+            match node.align:
+                case CoshAlign.START:  base_y = y + node.padding.top
+                case CoshAlign.CENTER: base_y = y + (node.height / 2) - ((child.height + child.margin.vertical) / 2)
+                case CoshAlign.END:    base_y = y + node.height - node.padding.bottom - (child.height + child.margin.vertical)
+                case _:                base_y = y + node.padding.top
+            match node.justify:
+                case CoshJustify.START:  base_x = x + node.padding.left
+                case CoshJustify.CENTER: base_x = x + (node.width / 2) - ((child.width + child.margin.horizontal) / 2)
+                case CoshJustify.END:    base_x = x + node.width - node.padding.right - (child.width + child.margin.horizontal)
+                case _:                  base_x = x + node.padding.left
+        else:
+            match node.align:
+                case CoshAlign.START:  base_x = x + node.padding.left
+                case CoshAlign.CENTER: base_x = x + (node.width / 2) - ((child.width + child.margin.horizontal) / 2)
+                case CoshAlign.END:    base_x = x + node.width - node.padding.right - (child.width + child.margin.horizontal)
+                case _:                base_x = x + node.padding.left
+            match node.justify:
+                case CoshJustify.START:  base_y = y + node.padding.top
+                case CoshJustify.CENTER: base_y = y + (node.height / 2) - ((child.height + child.margin.vertical) / 2)
+                case CoshJustify.END:    base_y = y + node.height - node.padding.bottom - (child.height + child.margin.vertical)
+                case _:                  base_y = y + node.padding.top
+
+        layout(child, base_x + child._x, base_y + child._y)
+
+def _layout_grid(node, x, y):
+    relative_children = [child for child in node.children if child.positioning is not CoshPositioning.ABSOLUTE]
+    absolute_children = [child for child in node.children if child.positioning is CoshPositioning.ABSOLUTE]
+
+    if relative_children:
+        # 1. Chunk into rows
+        rows = [relative_children[i:i + node.column_count] for i in range(0, len(relative_children), node.column_count)]
+        total_rows = len(rows)
+
+        # 2. Pre-calculate grid track sizes from the parent's fixed dimensions
+        total_col_gaps = node.gap * max(0, node.column_count - 1)
+        total_row_gaps = node.gap * max(0, total_rows - 1)
+
+        available_width = node.width - node.padding.horizontal - total_col_gaps
+        available_height = node.height - node.padding.vertical - total_row_gaps
+
+        # This calculates how large each grid cell slot inherently is
+        uniform_cell_width = max(0.0, available_width / node.column_count)
+        uniform_cell_height = max(0.0, available_height / total_rows)
+
+        column_widths = [0.0] * node.column_count
+        row_heights = [0.0] * total_rows
+
+        # 3. Establish track sizes (Respect child's hardcoded sizes if they exceed the uniform cell size)
+        for row_index, row in enumerate(rows):
+            for column_index, child in enumerate(row):
+
+                if isinstance(child.width, CoshPercentage):
+                    calc_w = child.width.percentage * uniform_cell_width
+                    child_width = calc_w + child.margin.horizontal
+                elif child.width is CoshSizing.FILL:
+                    child_width = 0.0
+                else:
+                    child_width = child.width + child.margin.horizontal
+
+                if isinstance(child.height, CoshPercentage):
+                    calc_h = child.height.percentage * uniform_cell_height
+                    child_height = calc_h + child.margin.vertical
+                elif child.height is CoshSizing.FILL:
+                    child_height = 0.0
+                else:
+                    child_height = child.height + child.margin.vertical
+
+                column_widths[column_index] = max(column_widths[column_index], child_width, uniform_cell_width)
+                row_heights[row_index] = max(row_heights[row_index], child_height, uniform_cell_height)
+
+        # 4. Calculate alignment boundaries
+        total_grid_content_width = sum(column_widths) + total_col_gaps
+        total_grid_content_height = sum(row_heights) + total_row_gaps
+
+        match node.align:
+            case CoshAlign.START:  start_y = y + node.padding.top
+            case CoshAlign.CENTER: start_y = y + (node.height / 2) - (total_grid_content_height / 2)
+            case CoshAlign.END:    start_y = y + node.height - node.padding.bottom - total_grid_content_height
+            case _:  start_y = y + node.padding.top
+
+        match node.justify:
+            case CoshJustify.START:  start_x = x + node.padding.left
+            case CoshJustify.CENTER: start_x = x + (node.width / 2) - (total_grid_content_width / 2)
+            case CoshJustify.END:    start_x = x + node.width - node.padding.right - total_grid_content_width
+            case _:  start_x = x + node.padding.left
+
+        # 5. Position and expand FILL / PERCENTAGE elements
+        current_y = start_y
+        for row_index, row in enumerate(rows):
+            current_x = start_x
+
+            for column_index, child in enumerate(row):
+                # Resolve Widths
+                if child.width is CoshSizing.FILL:
+                    child.width = column_widths[column_index] - child.margin.horizontal
+                elif isinstance(child.width, CoshPercentage):
+                    child.width = (child.width.percentage * column_widths[column_index]) - child.margin.horizontal
+
+                # Resolve Heights
+                if child.height is CoshSizing.FILL:
+                    child.height = row_heights[row_index] - child.margin.vertical
+                elif isinstance(child.height, CoshPercentage):
+                    child.height = (child.height.percentage * row_heights[row_index]) - child.margin.vertical
+
+                layout(child, current_x + child.margin.left, current_y + child.margin.top)
+                current_x += column_widths[column_index] + node.gap
+
+            current_y += row_heights[row_index] + node.gap
+
+    for child in absolute_children:
+        if child.width is CoshSizing.FILL:
+            child.width = node.width - node.padding.horizontal
+        elif isinstance(child.width, CoshPercentage):
+            child.width = child.width.percentage * (node.width - node.padding.horizontal)
+
+        if child.height is CoshSizing.FILL:
+            child.height = node.height - node.padding.vertical
+        elif isinstance(child.height, CoshPercentage):
+            child.height = child.height.percentage * (node.height - node.padding.vertical)
+
+        layout(child, x + node.padding.left + child._x, y + node.padding.top + child._y)
+
+def _layout_text(node):
+    text_data = node.text_data
+    cache_key = (text_data.raw_text, node.width, node.height, text_data.text_overflow, text_data.text_align, text_data.text_justify)
+    if text_data._layout_cache_key == cache_key and text_data.lines:
+        return
+    text_data._layout_cache_key = cache_key
+    runs = text_data.runs
+
+    if not runs:
+        text_data.lines = []
+        return
+
+    # Step 0: flatten all runs into one string, remembering each run's char range
+    full_text = ""
+    run_ranges = []  # (start_char, end_char, run)
+    for run in runs:
+        start = len(full_text)
+        full_text += run.text
+        run_ranges.append((start, len(full_text), run))
+
+    # Step 1: find line breakpoints (word wrap), purely on the flattened string
+    line_ranges = _find_line_breaks(full_text, node.width, node.text_overflow, run_ranges)
+    # line_ranges: list of (start_char, end_char) per line
+
+    # Step 2: for each line, slice against run_ranges to build fragments
+    lines = []
+    cursor_y = 0.0
+    for (line_start, line_end) in line_ranges:
+        fragments = []
+        cursor_x = 0.0
+        line_height = 0.0
+
+        for (run_start, run_end, run) in run_ranges:
+            # does this run overlap this line's char range at all?
+            overlap_start = max(line_start, run_start)
+            overlap_end = min(line_end, run_end)
+            if overlap_start >= overlap_end:
+                continue  # no overlap, skip this run for this line
+
+            # slice out just the part of the run's text that's on this line
+            local_start = overlap_start - run_start
+            local_end = overlap_end - run_start
+            frag_text = run.text[local_start:local_end]
+
+            frag_font_size = run.font_size or ENGINE_DEFAULTS["font_size"]
+            width, height = CoshUI._measure_run(run.font, frag_font_size, frag_text)
+
+            fragments.append(TextFragment(
+                text=frag_text,
+                x=cursor_x,
+                width=width,
+                color=run.color,
+                font=run.font,
+                font_size=frag_font_size,
+                bold=run.bold,
+                italic=run.italic,
+                underline=run.underline,
+                strikethrough=run.strikethrough,
+            ))
+
+            cursor_x += width
+            line_height = max(line_height, height)
+
+        # apply text_justify by shifting all fragments' x
+        total_line_width = cursor_x
+        offset_x = _justify_offset(node.width, total_line_width, node.text_justify)
+        for frag in fragments:
+            frag.x += offset_x
+
+        lines.append(LineLayout(y=cursor_y, height=line_height, fragments=fragments))
+        cursor_y += line_height
+
+    # apply text_align by shifting all lines' y
+    total_text_height = cursor_y
+    offset_y = _align_offset(node.height, total_text_height, node.text_align)
+    for line in lines:
+        line.y += offset_y
+
+    text_data.lines = lines
+# endregion

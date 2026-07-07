@@ -7,7 +7,6 @@ The CoshUI global namespace is private and should only be accessed
 by internal code, never outside."""
 
 import time
-import copy
 
 from .cui_error import CoshUIError
 from .backend import CoshBackend
@@ -29,6 +28,7 @@ class CoshUIRenderer:
         screen_w, screen_h = self.backend.get_size()
         self.root = Container(width=screen_w, height=screen_h)
         CoshUI._measure_text = self.backend.measure_text
+        CoshUI._measure_run = self.backend.measure_run
 
         register_exapanders()
 
@@ -48,7 +48,10 @@ class CoshUIRenderer:
         if delta > 0.1:
             delta = 1/60
 
+        t0 = time.perf_counter()
         update(delta)
+        self.update_time = time.perf_counter() - t0
+
         self.backend.poll_input()
 
         CoshUI._active_renderer = True
@@ -66,18 +69,11 @@ class CoshUIRenderer:
         CoshLifecycle.expand(self.root)
         finalize_defaults(self.root)
 
-        measure(self.root)
-        layout(self.root, self.root._x, self.root._y)
-        render(self.root)
-
-        CoshUI._render_stack.sort(key=lambda d: d.z_index)
-        CoshUI._signals.clear()
-        process_events()
+        timings = _run_pipeline(self.root, self.backend, self.update_time)
 
         if isinstance(CoshUI._debugger, CoshDebug):
-            CoshUI._debugger.render(self.root, CoshUI._render_stack, CoshUI._signals)
-    
-        self.backend.flush(CoshUI._render_stack)
+            CoshUI._debugger.render(self.root, CoshUI._render_stack, CoshUI._signals, timings)
+
         CoshUI._render_stack.clear()
 
         # Clean up stale nodes
@@ -85,3 +81,26 @@ class CoshUIRenderer:
         for key in stale:
             del CoshUI._state_storage[key]
 
+def _run_pipeline(root, backend, update_time=0.0) -> dict:
+    t0 = time.perf_counter()
+    measure(root)
+    t1 = time.perf_counter()
+    layout(root, root._x, root._y)
+    t2 = time.perf_counter()
+    render(root)
+    t3 = time.perf_counter()
+    CoshUI._render_stack.sort(key=lambda d: d.z_index)
+    CoshUI._signals.clear()
+    process_events()
+    t4 = time.perf_counter()
+    backend.flush(CoshUI._render_stack)
+    t5 = time.perf_counter()
+
+    return {
+        "update": update_time,
+        "measure": t1 - t0,
+        "layout": t2 - t1,
+        "render": t3 - t2,
+        "process_events": t4 - t3,
+        "backend_render": t5 - t4
+    }

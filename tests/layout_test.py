@@ -2,6 +2,7 @@ import pytest
 import coshui as cui
 from coshui.state import CoshUI
 from coshui.pipeline import measure, layout, finalize_defaults
+from coshui.text_engine import parse_coshml
 
 def test_container_layout():
     ctr = cui.Container(width=100, height=100)
@@ -16,15 +17,15 @@ def test_container_layout():
 
 def test_container_fill_and_auto_sizing():
     with cui.Container(width=200, padding=10) as parent:
-        child = cui.Button(id="btn", text="Hello", width=cui.FILL, height=30)
+        child = cui.Container(id="container", width=cui.FILL, height=30)
     
     finalize_defaults(parent)
     measure(parent)
     layout(parent, 0.0, 0.0)
 
     assert parent.width == 200
-    assert parent.height == 30 + (parent.padding * 2)
-    assert child.width == 200 - (parent.padding * 2)
+    assert parent.height == 30 + (parent.padding.vertical)
+    assert child.width == 200 - (parent.padding.horizontal)
     assert child._x == 10.0
     assert child._y == 10.0
 
@@ -36,8 +37,8 @@ def test_container_percentage_sizing():
     measure(parent)
     layout(parent, 0.0, 0.0)
 
-    assert child.width == ((parent.width) - (parent.padding * 2)) * 0.50
-    assert child.height == ((parent.width) - (parent.padding * 2)) * 0.75
+    assert child.width == ((parent.width) - (parent.padding.horizontal)) * 0.50
+    assert child.height == ((parent.width) - (parent.padding.vertical)) * 0.75
 
 @pytest.fixture(autouse=True)
 def clear_coshui_state():

@@ -5,11 +5,13 @@ import math
 from dataclasses import dataclass
 
 from .types import *
-from .utility import Ref
+from .utility import Ref, resolve_font_variant
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
-from .node_definitions import Element, TextNode, ParentNode, Widget
+from .node_definitions import Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
+from .text_engine import parse_coshml
+from ._defaults import ENGINE_DEFAULTS
 
 if TYPE_CHECKING:
     from .utility import Ref
@@ -36,15 +38,15 @@ class Container(ParentNode):
 
         match self.direction:
             case CoshDirection.ROW:
-                children_width = sum(child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage))
+                children_width = sum(child.width + (child.margin.horizontal) for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage))
                 total_gap = self.gap * max(0, len(relative_children) - 1)
-                auto_width = children_width + total_gap + (self.padding * 2)
-                auto_height = max([child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL and not isinstance(child.height, CoshPercentage)], default=0) + (self.padding * 2)
+                auto_width = children_width + total_gap + (self.padding.horizontal)
+                auto_height = max([child.height + (child.margin.vertical) for child in relative_children if child.height is not CoshSizing.FILL and not isinstance(child.height, CoshPercentage)], default=0) + (self.padding.vertical)
             case CoshDirection.COLUMN:
-                children_height = sum(child.height + (child.margin * 2) for child in relative_children if child.height is not CoshSizing.FILL and not isinstance(child.height, CoshPercentage))
+                children_height = sum(child.height + (child.margin.vertical) for child in relative_children if child.height is not CoshSizing.FILL and not isinstance(child.height, CoshPercentage))
                 total_gap = self.gap * max(0, len(relative_children) - 1)
-                auto_height = children_height + total_gap + (self.padding * 2)
-                auto_width = max([child.width + (child.margin * 2) for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)], default=0) + (self.padding * 2)
+                auto_height = children_height + total_gap + (self.padding.vertical)
+                auto_width = max([child.width + (child.margin.horizontal) for child in relative_children if child.width is not CoshSizing.FILL and not isinstance(child.width, CoshPercentage)], default=0) + (self.padding.horizontal)
 
         if self.width is CoshSizing.AUTO:
             self.width = auto_width
@@ -82,19 +84,19 @@ class Grid(ParentNode):
             if child.width is CoshSizing.FILL or isinstance(child.width, CoshPercentage):
                 child_width = 0.0
             else:
-                child_width = child.width + (child.margin * 2)
+                child_width = child.width + (child.margin.horizontal)
                 
             # If a child has percentage or FILL sizing, treat its intrinsic minimum height contribution as 0.0
             if child.height is CoshSizing.FILL or isinstance(child.height, CoshPercentage):
                 child_height = 0.0
             else:
-                child_height = child.height + (child.margin * 2)
+                child_height = child.height + (child.margin.vertical)
 
             col_widths[col] = max(col_widths[col], child_width)
             row_heights[row] = max(row_heights[row], child_height)
         
-        min_content_width = sum(col_widths) + (self.gap * max(0, self.column_count - 1)) + (self.padding * 2)
-        min_content_height = sum(row_heights) + (self.gap * max(0, rows - 1)) + (self.padding * 2)
+        min_content_width = sum(col_widths) + (self.gap * max(0, self.column_count - 1)) + (self.padding.horizontal)
+        min_content_height = sum(row_heights) + (self.gap * max(0, rows - 1)) + (self.padding.vertical)
         
         if self.width is CoshSizing.AUTO:
             self.width = min_content_width
@@ -122,6 +124,53 @@ class Button(TextNode):
 @dataclass
 class Label(TextNode):
     pass
+
+@dataclass
+class RichLabel(TextNode):
+    letter_spacing : float | None = None
+    line_spacing : float | None = None
+    word_spacing : float | None = None
+
+    def __post_init__(self):
+        # Skips TextNode straight to Element so we can bypass create_single_text_data()
+        Element.__post_init__(self)
+
+        self.font = resolve_font_variant(CoshUI._font_library.get(self.font, None), self.bold, self.italic, self.font)
+        self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
+        
+        current = {
+            "raw_text" : self.text,
+            "letter_spacing" : self.letter_spacing,
+            "word_spacing" : self.word_spacing,
+            "line_spacing" : self.line_spacing,
+            "text_align" : self.text_align,
+            "text_justify" : self.text_justify,
+            "text_overflow" : self.text_overflow,
+            "font" : self.font,
+            "font_size" : self.font_size,
+            "color" : self.text_color,
+        }
+
+        text = CoshUI.get_state(self.id, "text_data")
+        if text is None or current != text.cached_state():
+            parsed_text = parse_coshml(
+                self.text, self.text_color, 
+                self.font, self.font_size, 
+                self.letter_spacing, self.word_spacing, 
+                self.line_spacing, self.text_justify, self.text_align, 
+                self.text_overflow, self.strikethrough, self.underline,
+                self.bold, self.italic
+            )
+            CoshUI.set_state(self.id, "text_data", parsed_text)
+            text = parsed_text
+
+        self.text_data = text
+    
+    def get_render_data(self):
+        data = self.get_base_render_data()
+        data["text_data"] = self.text_data
+
+        return RenderContext(**data)
 
 @dataclass
 class Checkbox(Element):
