@@ -24,7 +24,9 @@ ModernGLBackend(context, cui.MGLW)
 > `context` is a a `moderngl.Context` object. The second parameter is the supported windower. As of now, only GLFW and MGLW is supported.
 
 ### PyOpenGL
-**Coming Soon...**
+```bash
+PyOpenGLBackend(cui.GLFW)
+```
 
 ---
 

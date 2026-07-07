@@ -2,10 +2,9 @@ import difflib
 import math
 from typing import Callable, Optional
 
-from .state import CoshUI
 from .cui_error import CoshUIError
 
-# region Helper Functions
+# region Easing and Lerp Functions
 # Lerp Functions
 def lerp_float(start_value : float | int, end_value, time):
     return start_value + time * (end_value - start_value)
@@ -27,7 +26,7 @@ def ease_in_out(t : float):
     if t < 0.5:
         return 2 * t * t
     else:
-        return 1 - pow(-2 * t + 2, 2) / 2 
+        return 1 - math.pow(-2 * t + 2, 2) / 2 
 
 def ease_out_bounce(t : float):
     if t < (1 / 2.75):
@@ -84,71 +83,101 @@ PROPERTY_TYPE_MAP = {
 }
 
 class Tween:
-    def __init__(self, n_property : str, target_id, end_value, duration : float, easing : Callable):
+    def __init__(self, n_property : str, target_id, start_value, end_value, duration : float, easing : Callable, path : str, lerp_fn : Callable):
         self.property = n_property
         self.target_id = target_id
+        self.path = path
+        self.lerp_fn = lerp_fn
 
-        self.path, self.lerp_fn = PROPERTY_MAP.get(n_property) 
-
-        val = CoshUI.get_state(self.target_id, self.path)
-        
-        # Should be redundant but it's a good visual check
-        if val is None:
-            if self.lerp_fn == lerp_tuple:
-                val = tuple(0 for _ in end_value) 
-            else:
-                val = 0.0
-
-        self.start_value = val
+        self.start_value = start_value
         self.end_value = end_value
         self.time = 0
         self.duration = duration
         self.easing = easing
+        self._original_start_value = start_value
         self._on_complete = None
-        self._loop_config = None
         self._finished = False
 
+        self._looping = False
+        self._loop_count = None # None = Infinite time
+        self._loops_done = 0
+        self._ping_pong = False
+        self._loop_delay = 0.0
+        self._loop_delay_remaining = 0.0
+        self._waiting = False
+
     def _update(self, delta):
+        from .state import CoshUI
         if self._finished:
             return
-        
+
+        if self._waiting:
+            self._loop_delay_remaining -= delta
+            if self._loop_delay_remaining <= 0:
+                self._waiting = False
+                self.time = 0
+                if self._ping_pong:
+                    self.start_value, self.end_value = self.end_value, self.start_value
+                else:
+                    self.start_value = self._original_start_value
+            return
+
         self.time += delta
         raw_t = min(self.time / self.duration, 1.0)
         eased_t = self.easing(raw_t)
-
         new_value = self.lerp_fn(self.start_value, self.end_value, eased_t)
         CoshUI.set_state(self.target_id, self.path, new_value)
 
         if raw_t >= 1.0:
-            self._finished = True
+            if not self._looping:
+                self._finished = True
+            else:
+                if self._loop_count is not None and self._loops_done + 1 >= self._loop_count:
+                    self._finished = True
+                else:
+                    self._loops_done += 1
+                    if self._loop_delay > 0:
+                        self._waiting = True
+                        self._loop_delay_remaining = self._loop_delay
+                    else:
+                        self.time = 0
+                        if self._ping_pong:
+                            self.start_value, self.end_value = self.end_value, self.start_value
+                        else:
+                            self.start_value = self._original_start_value
 
-    def finished(self, callable : Optional[Callable]):
+    def finished(self, callback : Optional[Callable]):
+        if not callable(callback):
+            raise CoshUIError(f"Callable: `{callback}` is not a callable.")
+        
         if self._on_complete is None:
-            self._on_complete = callable
+            self._on_complete = callback
         return self
 
-    # Soon
-    # def loop(self, end_value=None, duration=None, easing=None):
-    #     if self._loop_config is None:
-    #         ease_fn = EASING_MAP.get(easing, None)
-    #         self._loop_config = (end_value, duration, ease_fn)
-    #     return self
-
-    # Soon
-    # def reverse(self):
-    #     self.start_value = CoshUI.get_state(self.target_id, self.path)
-    #     self.end_value, self.start_value = self.start_value, self.end_value
-    #     self.time = 0
-    #     self._finished = False
+    def loop(self, count=None, ping_pong=False, delay=0.0):
+        if count is not None and (not isinstance(count, int) or count <= 0):
+            raise CoshUIError(f"Animation loop `count` parameter must be a positive integer or None, got `{count}`.")
+        
+        if not isinstance(ping_pong, bool):
+            raise CoshUIError(f"Animation loop `ping_pong` parameter must be a bool, got `{type(ping_pong).__name__}`.")
+        
+        if not isinstance(delay, (int, float)) or delay < 0:
+            raise CoshUIError(f"Animation loop `delay` parameter must be a positive number, got `{type(delay).__name__}`.")
+        
+        self._loop_count = count
+        self._ping_pong = ping_pong
+        self._loop_delay = delay
+        self._looping = True
+        return self
 
 def animate(n_property : str, target_id : str, end_value, duration : float, easing : str) -> Tween:
     """
     Animates a node property over time. 
     
-    This function creates a `Tween` object and adds it
-    to the global `_active_tweens` registry to be updated per frame.
+    This function calls the TweenManager to create a `Tween` object. The TweenManager deals
+    with Tween lifetime, storage, and updates.
 
-    :param n_property: The property you want to animate (e.g., 'position', 'scale', or 'alpha').
+    :param n_property: The property you want to animate (e.g., 'transform_position', 'transform_scale', or 'alpha').
     :param target_id: The id of the node instance the animation is applied to.
     :param end_value: The final target value to reach by the end of the animation.
     :param duration: Animation length in seconds.
@@ -157,6 +186,7 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
     :returns Tween: Returns the tween it's working on.
     """
 
+    from .state import CoshUI
     if n_property not in PROPERTY_MAP:
         close_match = difflib.get_close_matches(n_property, PROPERTY_MAP.keys(), n=1)
         raise CoshUIError(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
@@ -169,21 +199,11 @@ def animate(n_property : str, target_id : str, end_value, duration : float, easi
         close_match = difflib.get_close_matches(easing, EASING_MAP.keys(), n=1)
         raise CoshUIError(f"Unknown easing curve: `{easing}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(EASING_MAP.keys())}.")
 
-    _, lerp_fn = PROPERTY_MAP[n_property]
+    path, lerp_fn = PROPERTY_MAP[n_property]
     expected_type = PROPERTY_TYPE_MAP.get(lerp_fn)
 
     if expected_type and not isinstance(end_value, expected_type):
         raise CoshUIError(f"Property `{n_property}` expects `{expected_type}`, got `{type(end_value).__name__}`.")
 
-    existing_tween = next((tween for tween in CoshUI._active_tweens if tween.target_id == target_id and tween.property == n_property), None)
-
-    if existing_tween:
-        if existing_tween.end_value == end_value:
-            return existing_tween
-        
-        CoshUI._active_tweens.remove(existing_tween)
-
     ease_fn = EASING_MAP.get(easing, ease_linear)
-    tween = Tween(n_property, target_id, end_value, duration, ease_fn)
-    CoshUI._active_tweens.add(tween)
-    return tween
+    return CoshUI._tween_manager.create_tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)

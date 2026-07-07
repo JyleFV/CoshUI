@@ -4,6 +4,9 @@ import sys
 class CoshUIError(Exception):
     __module__ = "builtins"
 
+class CoshMLError(Exception):
+    __module__ = "builtins"
+
 class CoshUIWarning(UserWarning):
     pass
 
@@ -16,6 +19,8 @@ def _coshui_warning_handler(message, category, filename, lineno, file=None, line
 def _coshui_exception_handler(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, CoshUIError):
         print(f"\033[91mCoshUIError: {exc_value}\033[0m")  # red
+    elif issubclass(exc_type, CoshMLError):
+        print(f"\033[95mCoshMLError: {exc_value}\033[0m")  # light purple
     else:
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 

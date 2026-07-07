@@ -66,6 +66,7 @@ def _expand_dropdown(node):
 
     open = CoshUI.get_state(node.id, "open") or False
     selector_index = CoshUI.get_state(node.id, "selector_index") or node.selector_index
+    node.font = CoshUI._font_library.get(node.font) if node.font is not None else CoshUI._default_font
 
     # Toggle open on selector click
     if CoshUI._focused_id == f"{node.id}::selector" and CoshUI._get_signal(f"{node.id}::selector", CoshSignals.CLICKED):

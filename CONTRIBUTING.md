@@ -55,6 +55,7 @@ CoshUI is in its early stages, so our automated unit test suite is currently qui
 
 Before submitting your changes, please test them thoroughly:
 * **Cross-Backend Checks:** Manually run your changes against **all** backends to ensure rendering is consistent.
+* **Debugger:** Use the debugger (accessed by passing `cui.DEBUG` to `CoshUIRenderer()`) to verify correct values and check CoshUI performance.
 * **Use Examples:** Run the scripts in the `/examples` directory (or create a temporary script) to visually inspect that the changed layout, alignment, and behavior work as expected.
 * **Unit Tests (Optional but Awesome):** If you are comfortable writing automated tests, feel free to add them to the existing test file! It would be a massive help to the project.
 
