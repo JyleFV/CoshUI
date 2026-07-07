@@ -13,7 +13,11 @@ BASE_ARGS = dict(
     line_spacing=None,
     text_justify=None,
     text_align=None,
-    text_overflow=None
+    text_overflow=None,
+    bold=False,
+    italic=False,
+    underline=False,
+    strikethrough=False,
 )
 
 
@@ -145,18 +149,23 @@ def test_text_data_different():
 
     assert data_1 != data_2
 
+
 def test_text_data_cache_state():
     data = parse_coshml(
-        "Hello",
-        (255, 255, 255),
-        "Arial.ttf",
-        16,
-        1.0,
-        2.0,
-        3.0,
-        CoshTextJustify.CENTER,
-        CoshTextAlign.CENTER,
-        CoshTextOverflow.VISIBLE,
+        text="Hello",
+        text_color=(255, 255, 255),
+        font="Arial.ttf",
+        font_size=16,
+        letter_spacing=1.0,
+        word_spacing=2.0,
+        line_spacing=3.0,
+        text_justify=CoshTextJustify.CENTER,
+        text_align=CoshTextAlign.CENTER,
+        text_overflow=CoshTextOverflow.VISIBLE,
+        bold=False,
+        italic=False,
+        underline=False,
+        strikethrough=False,
     )
 
     expected = {
@@ -174,33 +183,65 @@ def test_text_data_cache_state():
 
     assert data.cached_state() == expected
 
+
 def test_text_data_cache_state_uses_raw_text():
     red = parse_coshml(
-        "[red]Hello[/]",
-        (255, 255, 255),
-        "Arial.ttf",
-        16,
-        None,
-        None,
-        None,
-        CoshTextJustify.CENTER,
-        CoshTextAlign.CENTER,
-        CoshTextOverflow.VISIBLE,
+        text="[red]Hello[/]",
+        text_color=(255, 255, 255),
+        font="Arial.ttf",
+        font_size=16,
+        letter_spacing=None,
+        word_spacing=None,
+        line_spacing=None,
+        text_justify=CoshTextJustify.CENTER,
+        text_align=CoshTextAlign.CENTER,
+        text_overflow=CoshTextOverflow.VISIBLE,
+        bold=False,
+        italic=False,
+        underline=False,
+        strikethrough=False,
     )
 
     blue = parse_coshml(
-        "[blue]Hello[/]",
-        (255, 255, 255),
-        "Arial.ttf",
-        16,
-        None,
-        None,
-        None,
-        CoshTextJustify.CENTER,
-        CoshTextAlign.CENTER,
-        CoshTextOverflow.VISIBLE,
+        text="[blue]Hello[/]",
+        text_color=(255, 255, 255),
+        font="Arial.ttf",
+        font_size=16,
+        letter_spacing=None,
+        word_spacing=None,
+        line_spacing=None,
+        text_justify=CoshTextJustify.CENTER,
+        text_align=CoshTextAlign.CENTER,
+        text_overflow=CoshTextOverflow.VISIBLE,
+        bold=False,
+        italic=False,
+        underline=False,
+        strikethrough=False,
     )
 
     assert red.text == blue.text
     assert red.raw_text != blue.raw_text
     assert red.cached_state() != blue.cached_state()
+
+
+def test_text_data_bold_italic():
+    data = parse_coshml(
+        text="[bold italic]Hello[/]",
+        text_color=(255, 255, 255),
+        font="Inter",
+        font_size=16,
+        letter_spacing=None,
+        word_spacing=None,
+        line_spacing=None,
+        text_justify=CoshTextJustify.CENTER,
+        text_align=CoshTextAlign.CENTER,
+        text_overflow=CoshTextOverflow.VISIBLE,
+        bold=False,
+        italic=False,
+        underline=False,
+        strikethrough=False,
+    )
+
+    assert len(data.runs) == 1
+    assert data.runs[0].bold is True
+    assert data.runs[0].italic is True

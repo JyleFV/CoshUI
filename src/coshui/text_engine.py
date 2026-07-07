@@ -161,13 +161,13 @@ def parse_tag(tag: str) -> dict:
 
     return style
 
-def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, color, strikethrough, underline, bold, italic) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
     tokens = tokenize(text)
     context = TextData(
         letter_spacing=letter_spacing, word_spacing=word_spacing, 
         line_spacing=line_spacing, text_align=text_align, 
         text_justify=text_justify, text_overflow=text_overflow,
-        raw_text=text, default_color=color, default_font=font, default_font_size=font_size
+        raw_text=text, default_color=text_color, default_font=font, default_font_size=font_size
     )
 
     base_style = TextStyle(color=text_color, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline, bold=bold, italic=italic)
@@ -219,10 +219,8 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
     override_font = overrides.get("font", None)
     override_bold = overrides.get("bold", current.bold)
     override_italic = overrides.get("italic", current.italic)
-    if override_font is not None:
-        font = TAGS["font"](override_font, override_bold, override_italic)
-    else:
-        font = current.font
+
+    font = TAGS["font"](override_font, override_bold, override_italic)
 
     # Font size
     override_font_size = overrides.get("font_size", None)

@@ -180,12 +180,12 @@ class PygameBackend(CoshBackend):
 
             if data.background_color:
                 self._draw_rect(true_x, true_y, scaled_w, scaled_h, data.background_color, data.border_radius, data.alpha, data.border, data.clip_rect, data.transform_rotation)
-            
-            if data.text_data:
-                self._draw_text(data.text_data, true_x, true_y, scaled_w, scaled_h, data.alpha, data.transform_rotation, data.clip_rect, scale)
 
             if data.image_src:
                 self._draw_image(data.image_src, true_x, true_y, scaled_w, scaled_h, data.alpha, data.clip_rect, data.transform_rotation)
+            
+            if data.text_data:
+                self._draw_text(data.text_data, true_x, true_y, scaled_w, scaled_h, data.alpha, data.transform_rotation, data.clip_rect, scale)
 
     def get_size(self) -> tuple[int, int]:
         return pygame.display.get_surface().get_size()

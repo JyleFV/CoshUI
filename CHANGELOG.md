@@ -58,14 +58,21 @@ If you want to learn more about CoshML's internals as a contributor, `text_engin
 - **Profiler**: Added a profiler for CoshUI's internal subsystems which tracks and visualizes execution times for all major engine subsystems.
 
 > [!WARNING]
-> Do note that the profiler only measures the time for the internal pipelines like the animation updates, layout system, event system, and backend rendering. It currently does not take into account Node rebuild time. That will be added in future versions of the profiler.
+> The profiler only measures the time for the internal pipelines like the animation updates, layout system, event system, and backend rendering. It currently does not take into account Node rebuild time. That will be added in a future version of the profiler.
 
 ### Refactors:
 - **Padding & Margin**: Added the ability to pass in a 4-value tuple (top, right, bottom, left) to be more precise with what side needs the values.
 - **User-Side Functions**: Reworked the internals and functionality of `add_class`, `add_font`, and `set_default_font`.
+    - In `add_class()`, you can now pass in `TextStyle` objects that get added to the `_text_style_classes` registry which can be used in CoshML markup text.
+    - The `add_font()` function now accepts `bold`, `italic`, and `bold_italic` paths that let users set the `bold` or `italic` fields to True for that font in `Label` or `RichLabel`.
+    - For `set_default_font()`, this change is mainly internal, it has no difference from before except that it sets the name of the font in `_default_font` instead of the path.
 - **Text System**: Reworked how the CoshUI engine treats text, bundling up text values into a singular `TextData` dataclass.
 - **Layout System**: Layout has been split to make it easier to read and now deals with text positioning where before, each backend had to deal with it.
 - **Ref On Change**: Added `.on_change(callback)` call for the `Ref` class. It takes in a callback for an argument which if the method is called, will run the callback each time the value changes.
+- **Animation Loops**: Added a `.loop()` method to `animate()` which lets you loop your animations. 
+    - It has parameters that lets you customize the loop such as `count` which sets how many times it'll loop (with `None` being the default and treated as infinite iterations).
+    - There's `delay` which sets a timed pause that loops take in between each iteration.
+    - And `ping_pong` which makes it so end and start values smoothly go back in forth instead of resetting the start value every iteration.
 
 ### Performance:
 - **[PygameBackend] Surface Caching**: 20%~ reduction in rendering time for some cases, seeing a drop from 1.4-1.5ms to 1.1-1.2ms when rendering 14-19 of mostly different Nodes. Rotation adds an extra 0.7ms~ to those times so a separate `_rotation_cache` might be a future path.
@@ -74,8 +81,15 @@ If you want to learn more about CoshML's internals as a contributor, `text_engin
 - **GL Minimize Bug**: When clicking minimize on GL backends, the screen-size suddenly becomes (0, 0) which prompts the `_get_orthographic_matrix()` function of the GL Backends to malfunction due to a *"division by 0"* error.
 - **PRESSED Signal Propagation**: The signal `PRESSED` did not consume clicks which naturally propagated it downwards to every Node. So Nodes above, even if their `mouse_filter` field was set to STOP, would still let Nodes below get the `PRESSED` signal.
 - **GL Text Offset**: The GL backend's text used to use the `scaled_font_size` for the text's baseline_y value. This caused a small downwards shift from the actual position.
-- **Text Rotation Pivot**: Backends rotated text from the text's center, this caused problems with Node rotations that had `text_align` or `text_justify` not set to `CENTER`.
+- **Text Rotation Pivot**: Backends rotated text from the text's center, this caused problems with Node rotations that had `text_align` or `text_justify` *not* set to `CENTER`.
 - **Layout FILL/Percentage Sizing**: Cross-axis FILL and percentage-sized children did not subtract `child.margin` before computing available space, causing incorrect sizing in certain layouts.
+
+### Planned for v0.3.3 and above:
+- **Particle System**: Let users emit particles.
+- **Theme System Rework**: Rework of the theme system to make it easier and more viable to use.
+- **More CoshML Capabilities**: Things like `[n]` (newline) tags and letter-word-line spacing support for text.
+- **The Previously Planned**: The plans previously discussed in `v0.3.0`.
+- **And Much More...**
 
 ---
 

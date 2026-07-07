@@ -158,7 +158,7 @@ class RichLabel(TextNode):
                 self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 
-                self.text_overflow, self.text_color, self.strikethrough, self.underline,
+                self.text_overflow, self.strikethrough, self.underline,
                 self.bold, self.italic
             )
             CoshUI.set_state(self.id, "text_data", parsed_text)

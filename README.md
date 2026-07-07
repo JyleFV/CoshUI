@@ -16,7 +16,17 @@
 ## What is CoshUI?
 CoshUI is a Python-first, declarative UI library inspired by CSS, Godot, and Dear ImGui. Unlike most Python UI libraries, CoshUI is fully backend-agnostic — write your UI once and render it with Pygame, Raylib, ModernGL, or any backends you build or are supported.
 
-CoshUI features a full layout engine with flexbox-inspired sizing, a retained-state system, a tween animation system, a signal-based event model, and a theme system — all within in a declarative API that's simple to pick up without sacrificing flexibility.
+CoshUI features:
+- Full layout engine with flexbox-inspired sizing
+- Retained-state reconciliation system
+- Tween animation with configurable easing
+- Signal-based event model
+- Theme system with class support
+- CoshML — a markup language for rich inline text styling
+- Built-in debugger with live node inspector and profiler
+- And more...
+
+All within in a declarative API that's simple to pick up without sacrificing flexibility.
 
 ## How to Install
 
@@ -25,7 +35,6 @@ pip install coshui
 ```
 
 CoshUI is backend-agnostic — install with your renderer of choice:
-
 ```bash
 # Pygame
 pip install coshui[pygame]
@@ -36,7 +45,10 @@ pip install coshui[raylib]
 # ModernGL
 pip install coshui[moderngl] # or [moderngl-mglw]
 
-# Both
+# PyOpenGL
+pip install coshui[pyopengl]
+
+# All
 pip install coshui[all]
 ```
 
