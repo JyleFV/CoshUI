@@ -135,6 +135,7 @@ class RichLabel(TextNode):
         # Skips TextNode straight to Element so we can bypass create_single_text_data()
         Element.__post_init__(self)
 
+        font_name = self.font
         self.font = resolve_font_variant(CoshUI._font_library.get(self.font, None), self.bold, self.italic, self.font)
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         
@@ -154,7 +155,7 @@ class RichLabel(TextNode):
         text = CoshUI.get_state(self.id, "text_data")
         if text is None or current != text.cached_state():
             parsed_text = parse_coshml(
-                self.text, self.text_color, 
+                self.text, self.text_color, font_name,
                 self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 

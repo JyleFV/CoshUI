@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 import difflib
 
@@ -61,6 +61,7 @@ class TextStyle:
     italic: bool = False
     underline: bool = False
     strikethrough: bool = False
+    _font_family: str | None = field(default=None, repr=False)
 
     def _style_dict(self):
         return {
@@ -161,7 +162,7 @@ def parse_tag(tag: str) -> dict:
 
     return style
 
-def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
     tokens = tokenize(text)
     context = TextData(
         letter_spacing=letter_spacing, word_spacing=word_spacing, 
@@ -170,7 +171,7 @@ def parse_coshml(text: str, text_color: tuple, font: str, font_size: int, letter
         raw_text=text, default_color=text_color, default_font=font, default_font_size=font_size
     )
 
-    base_style = TextStyle(color=text_color, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline, bold=bold, italic=italic)
+    base_style = TextStyle(color=text_color, _font_family=font_name, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline, bold=bold, italic=italic)
     style_stack = [base_style]
     full_text = ""
 
@@ -216,11 +217,11 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
         color = current.color
 
     # Font
-    override_font = overrides.get("font", None)
+    override_font_family = overrides.get("font", current._font_family)
     override_bold = overrides.get("bold", current.bold)
     override_italic = overrides.get("italic", current.italic)
 
-    font = TAGS["font"](override_font, override_bold, override_italic)
+    resolved_font = TAGS["font"](override_font_family, override_bold, override_italic)
 
     # Font size
     override_font_size = overrides.get("font_size", None)
@@ -231,11 +232,12 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
 
     return TextStyle(
         color=color,
-        font=font,
+        font=resolved_font,
         font_size=font_size,
         bold=overrides.get("bold", current.bold),
         italic=overrides.get("italic", current.italic),
         underline=overrides.get("underline", current.underline),
         strikethrough=overrides.get("strikethrough", current.strikethrough),
+        _font_family=override_font_family
     )
 # endregion
