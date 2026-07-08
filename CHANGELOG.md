@@ -1,3 +1,11 @@
+# CoshUI - 0.3.2.1 Hotfix
+Posted: `July 7, 2026`
+
+### Bug Fix
+- **Nested Font Bug**: A small bug in CoshML where if users were to do `"[font=Courier]Hello [bold]World[/][/]"`, the `"World"` word wouldn't be set to designated font. The fix for this was adding a `_font_family` private member variable inside the `TextStyle` object that saves the font name to be used in the `validate_style()` function.
+
+---
+
 # CoshUI - 0.3.2 Changelog
 Posted: `July 5, 2026`
 

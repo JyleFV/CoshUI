@@ -24,9 +24,9 @@ class Node(ABC):
     z_index : int = 0
     mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
     positioning : CoshPositioning = CoshPositioning.RELATIVE
-    _was_hovered : bool = False
-    _x : float = 0.0
-    _y : float = 0.0
+    _was_hovered : bool = field(default=False, repr=False)
+    _x : float = field(default=0.0, repr=False)
+    _y : float = field(default=0.0, repr=False)
 
     def __post_init__(self):
         CoshLifecycle.register_node(self)
