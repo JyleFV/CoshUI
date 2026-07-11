@@ -155,17 +155,21 @@ class PygameBackend(CoshBackend):
             _image_cache[cache_key] = image
 
         scaled_image = pygame.transform.smoothscale(image, (int(w), int(h)))
-        finalized_image = scaled_image
+
         if rotation != 0.0:
             finalized_image = pygame.transform.rotate(scaled_image, rotation)
-        if alpha < 255:
-            scaled_image.set_alpha(alpha)
+        else:
+            finalized_image = scaled_image
 
-        self.surface.blit(finalized_image, (x, y))
+        if alpha < 255:
+            finalized_image.set_alpha(alpha)
+
+        rect = finalized_image.get_rect(center=(x + w / 2, y + h / 2))
+        self.surface.blit(finalized_image, rect)
 
         self.surface.set_clip(None)
 
-    def flush(self, render_stack : list[RenderContext]):
+    def flush(self, render_stack: list[RenderContext]):
         for data in render_stack:
             if data.alpha <= 0:
                 continue

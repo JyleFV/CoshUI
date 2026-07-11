@@ -24,7 +24,7 @@ def _coshui_exception_handler(exc_type, exc_value, exc_traceback):
     else:
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
-def warn(message : str):
+def warn(message: str):
     warnings.warn(message, CoshUIWarning, stacklevel=2)
 
 warnings.showwarning = _coshui_warning_handler

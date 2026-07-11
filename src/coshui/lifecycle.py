@@ -48,7 +48,6 @@ class CoshLifecycle:
 
     @staticmethod
     def apply_theme(node):
-        from .widgets import Checkbox
         theme = CoshUI._active_theme
 
         theme_style = theme.get_for(node)
@@ -60,12 +59,6 @@ class CoshLifecycle:
                 setattr(node, key, value)
             if hasattr(node.style, key) and getattr(node.style, key) is None:
                 setattr(node.style, key, value)
-        
-        if isinstance(node, Checkbox):
-            if node.checked:
-                node.style.background_color = node.checked_color
-            else:
-                node.style.background_color = node.unchecked_color
     
     @staticmethod
     def expand(node):

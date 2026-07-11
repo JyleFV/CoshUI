@@ -1,149 +1,15 @@
-from __future__ import annotations
-from typing import TypeVar, Generic, TYPE_CHECKING, Callable, Optional
-import difflib
-import os
 import math
 
 from .cui_error import CoshUIError, warn
 from .state import CoshUI
 from .types import *
 
-if TYPE_CHECKING:
-    from .themes import CoshTheme
-    from .text_engine import TextStyle
-
-T = TypeVar('T')
-class Ref(Generic[T]):
-    def __init__(self, value : T) -> None:
-        self._value : T = value
-        self._on_change = None
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, new_value: T):
-        old_value = self._value
-        self._value = new_value
-        if self._on_change and old_value != new_value:
-            self._on_change(new_value)
-
-    def on_change(self, callback: Callable):
-        self._on_change = callback
-        return self
-
-# ================ Fonts ================
-
-def add_font(name : str, base_path : str, bold : str = None, italic : str = None, bold_italic : str = None):
-    if not name or not base_path:
-        raise CoshUIError("Please input a name or a path when adding fonts.")
-
-    variants = { "base_font" : base_path, "bold" : bold, "italic" : italic, "bold_italic" : bold_italic }
-
-    for variant, path in variants.items():
-        if path is not None and not os.path.isfile(path):
-            raise CoshUIError(f"Font path `{path}` for `{variant}` of `{name}` does not exist or is not a file.")
-
-    CoshUI._font_library[name] = { variant: (os.path.abspath(path) if path is not None else None) for variant, path in variants.items() }
-
-def set_default_font(name: str):
-    if name not in CoshUI._font_library:
-        close_match = difflib.get_close_matches(name, CoshUI._font_library.keys(), n=1)
-        raise CoshUIError(f"That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
-
-    CoshUI._default_font = name
-
-# ================ Fonts ================
-
-# ================ Signal Events ================
-
-def get_signal(node_id : str, signal : CoshSignals):
-    if node_id not in CoshUI._state_storage:
-        close_match = difflib.get_close_matches(node_id, CoshUI._state_storage.keys(), n=1)
-        raise CoshUIError(f"Unknown Node ID: `{node_id}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
-    
-    return CoshUI._get_signal(node_id, signal)
-
-
-# ================ Signal Events ================
-
-# ================ Styling Classes ================
-
-def add_class(name : str, style : CoshStyling | TextStyle):
-    from .text_engine import TextStyle, KEYWORD_MAP, TAGS
-    if isinstance(style, CoshStyling):
-        if name in CoshUI._style_class:
-            raise CoshUIError(f"The class name `{name}` already exists. Did you make duplicate classes?")
-        CoshUI._style_class[name] = style
-    elif isinstance(style, TextStyle):
-        if name in (KEYWORD_MAP.keys() | TAGS.keys()):
-            raise CoshUIError(f"The tag `{name}` already exists and cannot be used as a class name. Please choose a different one.")
-        if name in CoshUI._text_style_class:
-            raise CoshUIError(f"The text class name `{name}` already exists. Did you make duplicate classes?")
-        CoshUI._text_style_class[name] = style
-    else:
-        raise CoshUIError("Passed in style is not a CoshStyling or TextStyle object.")
-
-# ================ Styling Classes ================
-
-# ================ Preload Helpers ================
-
-# NOTE: This currently does practically nothing due to how the architecture is made.
-def preload_images(img_paths : str | list):
-    """
-    Preloads images to the backend to create image textures early.
-
-    :param img_paths: Can be a string with a single value or a list of strings.
-    :type img_paths: `str | list`
-    :raises CoshUIError: If a path does not exist or is not a file
-
-    .. note :: 
-        `preload_images()` converts relative file paths to absolute paths based on the current working directory.
-
-    .. warning::
-        Preloading is not yet fully implemented. Images are currently loaded on first render.
-        True preloading will be available in a future update.
-    """
-
-    if isinstance(img_paths, str):
-        img_paths = [img_paths]
-    
-    for path in img_paths:
-        abs_path = os.path.abspath(path)
-        if not os.path.exists(abs_path) or not os.path.isfile(abs_path):
-            raise CoshUIError(f"Image path `{abs_path}` doesn't exist or is not a file.")
-        
-        CoshUI._temp_paths.add(abs_path)
-
-# ================ Preload Helpers ================
-
-# ================ Themes ================
-
-def create_theme(name : str, theme : CoshTheme):
-    CoshUI._theme_registry[name] = theme
-
-def set_theme(theme_name : str):
-    theme = CoshUI._theme_registry.get(theme_name, None)
-    if theme is None:
-        close_match = difflib.get_close_matches(theme_name, CoshUI._theme_registry.keys(), n=1)
-        raise CoshUIError(f"The theme `{theme_name}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
-    CoshUI._active_theme = theme
-
-# ================ Themes ================
-
-# ================ Themes ================
-# NOTE: user-facing function to create Particles
-def create_particle():
-    pass
-# ================ Themes ================
-
 # ================ Helper Functions ================
 
 def adjust_brightness_value(rgb, factor):
     return tuple(max(0, min(255, int(c * factor))) for c in rgb)
 
-def resolve_border_radius(value : int | float | tuple) -> tuple: 
+def resolve_border_radius(value: int | float | tuple) -> tuple: 
     match value:
         case int() | float():
             return (value, value, value, value)
@@ -152,7 +18,7 @@ def resolve_border_radius(value : int | float | tuple) -> tuple:
         case _:
             raise CoshUIError(f"Invalid border_radius `{value}`. Expected an int/float or a tuple of the 4 corner values (top-left, top-right, bottom-right, bottom-left).")
 
-def resolve_four_value(value : int | float | tuple) -> FourSide:
+def resolve_four_value(value: int | float | tuple) -> FourSide:
     match value:
         case int() | float():
             return FourSide(value, value, value, value)
@@ -173,7 +39,7 @@ def intersect_rect(r1, r2):
         return None
     return (x, y, w, h)
 
-def merge_styles(base : CoshStyling, override : CoshStyling) -> CoshStyling:
+def merge_styles(base: CoshStyling, override: CoshStyling) -> CoshStyling:
     return CoshStyling(
         background_color=override.background_color if override.background_color is not None else base.background_color,
         alpha=override.alpha if override.alpha is not None else base.alpha,
@@ -200,7 +66,7 @@ def get_local_mouse(mouse_x, mouse_y, node_x, node_y, node_w, node_h, angle):
 
     return (center_x + local_dx, center_y + local_dy)
 
-def create_single_text_data(text : str, text_align : CoshTextAlign, text_justify : CoshTextJustify, text_overflow : CoshTextOverflow, text_color : tuple, font_size : int, font : str, strikethrough : bool, underline : bool):
+def create_single_text_data(text: str, text_align: CoshTextAlign, text_justify: CoshTextJustify, text_overflow: CoshTextOverflow, text_color: tuple, font_size: int, font: str, strikethrough: bool, underline: bool):
     from .text_engine import TextRun
     text_data = TextData(text_align=text_align, text_justify=text_justify, text_overflow=text_overflow, default_color=text_color, default_font_size=font_size, default_font=font)
     text_data.text = text

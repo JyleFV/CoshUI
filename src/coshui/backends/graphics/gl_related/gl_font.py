@@ -5,11 +5,11 @@ try:
 except ImportError:
     freetype = None
 
-# FORMAT: { (font_path, font_size) : GlyphAtlas }
+# FORMAT: { (font_path, font_size): GlyphAtlas }
 _atlas_cache = {}
-# FORMAT: { tuple( (run.font, run.font_size, run.text), ... ) : (width, height) }
+# FORMAT: { tuple( (run.font, run.font_size, run.text), ... ): (width, height) }
 _measure_text_cache = {}
-# FORMAT: { (font_path, font_size, text) : (width, height) }
+# FORMAT: { (font_path, font_size, text): (width, height) }
 _measure_run_cache = {}
 
 ATLAS_SIZE = 512
@@ -17,7 +17,7 @@ ATLAS_SIZE = 512
 class GlyphAtlas:
     def __init__(self, texture_data, glyphs, ascender, descender, line_height):
         self.texture_data = texture_data  # (ATLAS_SIZE, ATLAS_SIZE) uint8 array
-        self.glyphs = glyphs # { char : GlyphInfo }
+        self.glyphs = glyphs # { char: GlyphInfo }
         self.ascender = ascender
         self.descender = descender
         self.line_height = line_height
@@ -34,7 +34,7 @@ class GlyphInfo:
         self.width = width
         self.height = height
 
-def get_atlas(font_path : str, font_size : int) -> GlyphAtlas:
+def get_atlas(font_path: str, font_size: int) -> GlyphAtlas:
     cache_key = (font_path, font_size)
     if cache_key in _atlas_cache:
         return _atlas_cache[cache_key]
@@ -120,7 +120,7 @@ def measure_text(text_data) -> tuple:
     _measure_text_cache[cache_key] = result
     return result
 
-def measure_run(font_path : str, font_size : int, text : str) -> tuple:
+def measure_run(font_path: str, font_size: int, text: str) -> tuple:
     cache_key = (font_path, font_size, text)
     if cache_key in _measure_run_cache:
         return _measure_run_cache.get(cache_key)

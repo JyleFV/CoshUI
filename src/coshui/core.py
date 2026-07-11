@@ -19,7 +19,7 @@ from .widgets import Container
 from .pipeline import measure, layout, render, process_events, update, finalize_defaults
 
 class CoshUIRenderer:
-    def __init__(self, backend : CoshBackend, debug : CoshMode = CoshMode.NORMAL):
+    def __init__(self, backend: CoshBackend, debug: CoshMode = CoshMode.NORMAL):
         self.backend = backend
         
         if debug is CoshMode.DEBUG and CoshUI._debugger is None:

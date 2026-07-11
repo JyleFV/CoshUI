@@ -17,15 +17,12 @@ def main():
     backend = cui.ModernGLBackend(ctx, cui.GLFW)
     itemList = ["Hello", "World", "My", "Name"]
     cui.add_class("header", cui.TextStyle(color=(255, 0, 0), italic=False, font="Courier", bold=False, strikethrough=False, underline=False, font_size=48))
-
-    style = cui.TextStyle(color=(255, 0, 0), bold=True)
-    print(style)
     
     while not glfw.window_should_close(window):
         ctx.clear(0.0, 0.0, 0.0, 1.0)
 
         with cui.CoshUIRenderer(backend):
-            cui.RichLabel(id="first_rich", text="[header]Hi [bold italic]Hello[/] I'm JyleFV[/]", text_color=(0, 0, 0), text_align=cui.TEXT_ALIGN_TOP, text_justify=cui.TEXT_JUSTIFY_LEFT, width=200, height=500, text_overflow=cui.TEXT_WRAP, style=cui.CoshStyling(background_color=(255, 255, 255)))
+            cui.RichLabel(id="first_rich", font="Ubuntu", text="[font_size=36]Hi [font=Courier bold italic]there[/][/]", text_color=(0, 0, 0), text_align=cui.TEXT_ALIGN_TOP, text_justify=cui.TEXT_JUSTIFY_LEFT, width=200, height=500, text_overflow=cui.TEXT_WRAP, style=cui.CoshStyling(background_color=(255, 255, 255)))
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", mouse_filter=cui.STOP, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52, text_overflow=cui.TEXT_HIDDEN)
@@ -43,9 +40,9 @@ def main():
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
         if cui.get_signal("quit_button", cui.HOVER_ENTER):
-            cui.animate("transform_rotation", "quit_button", 0.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "test_image", 0.0, 0.5, "ease_in")
         if cui.get_signal("quit_button", cui.HOVER_EXIT):
-            cui.animate("transform_rotation", "quit_button", 45.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "test_image", 45.0, 0.5, "ease_in")
 
         glfw.swap_buffers(window)
         glfw.poll_events()

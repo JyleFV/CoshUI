@@ -19,14 +19,14 @@ def validate_color(value: str) -> tuple:
     
     return parsed
 
-def validate_font(font : str, bold : bool, italic : bool):
+def validate_font(font: str, bold: bool, italic: bool):
     validated_font = resolve_font_variant(CoshUI._font_library.get(font), bold, italic, font)
     if validated_font is None:
         raise CoshMLError(f"`{font}` is not a valid font.")
     
     return validated_font
 
-def validate_font_size(size : str):
+def validate_font_size(size: str):
     try:
         final_size = int(size)
     except ValueError:
@@ -36,9 +36,9 @@ def validate_font_size(size : str):
 # endregion
 
 TAGS = {
-    "color" : validate_color,
-    "font" : validate_font,
-    "font_size" : validate_font_size
+    "color": validate_color,
+    "font": validate_font,
+    "font_size": validate_font_size
 }
 
 KEYWORD_MAP = {
@@ -65,18 +65,18 @@ class TextStyle:
 
     def _style_dict(self):
         return {
-            "color" : self.color,
-            "font_size" : self.font_size,
-            "font" : self.font,
-            "bold" : self.bold,
-            "italic" : self.italic,
-            "underline" : self.underline,
-            "strikethrough" : self.strikethrough,
+            "color": self.color,
+            "font_size": self.font_size,
+            "font": self.font,
+            "bold": self.bold,
+            "italic": self.italic,
+            "underline": self.underline,
+            "strikethrough": self.strikethrough,
         }
 
 @dataclass
 class TextRun(TextStyle):
-    text : str | None = None
+    text: str | None = None
 
 @dataclass
 class Token:
@@ -162,7 +162,7 @@ def parse_tag(tag: str) -> dict:
 
     return style
 
-def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_size: int, letter_spacing: float, word_spacing: float, line_spacing: float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
     tokens = tokenize(text)
     context = TextData(
         letter_spacing=letter_spacing, word_spacing=word_spacing, 

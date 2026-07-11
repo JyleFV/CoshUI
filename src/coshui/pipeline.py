@@ -7,7 +7,7 @@ from .utility import point_in_rect, get_local_mouse, _find_line_breaks, _justify
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
 
-def measure(node : Node):
+def measure(node: Node):
     for child in node.children:
         measure(child)
     node.measure()
@@ -23,10 +23,10 @@ def layout(node: Node, x: float = 0.0, y: float = 0.0):
     if isinstance(node, TextNode):
         _layout_text(node)
 
-def update(delta : float):
+def update(delta: float):
     CoshUI._tween_manager.update(delta)
 
-def render(node : Node, offset_x : float = 0.0, offset_y : float = 0.0, z_offset : int = 0, is_root : bool = False, clip_rect=None, accumulated_alpha : int = 255):
+def render(node: Node, offset_x: float = 0.0, offset_y: float = 0.0, z_offset: int = 0, is_root: bool = False, clip_rect=None, accumulated_alpha: int = 255):
     if not is_root:
         data = node.get_render_data()
         if data:

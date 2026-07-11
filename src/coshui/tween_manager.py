@@ -3,7 +3,7 @@ from .animation import Tween, lerp_tuple
 # Deals with Tween creation, storage, lifetime, and updates.
 class TweenManager:
     def __init__(self):
-        self.tween_registry : dict[tuple, Tween] = {}
+        self.tween_registry: dict[tuple, Tween] = {}
 
     def create_tween(self, n_property, target_id, end_value, duration, easing, path, lerp_fn):
         from .state import CoshUI

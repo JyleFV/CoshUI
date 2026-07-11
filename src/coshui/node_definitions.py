@@ -12,21 +12,21 @@ from ._defaults import ENGINE_DEFAULTS
 class Node(ABC):
     """ This is the top layer of every UI element in the library, it holds all necessary values that all elements need."""
 
-    style : CoshStyling = field(default_factory=lambda: CoshStyling())
-    children : list = field(default_factory=list)
-    width : float | CoshSizing | CoshPercentage | None = None
-    height : float | CoshSizing | CoshPercentage | None = None
-    margin : float | None = None
-    x : float | None = None
-    y : float | None = None
-    classes : str | None = None 
-    id : str | None = None
-    z_index : int = 0
-    mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
-    positioning : CoshPositioning = CoshPositioning.RELATIVE
-    _was_hovered : bool = field(default=False, repr=False)
-    _x : float = field(default=0.0, repr=False)
-    _y : float = field(default=0.0, repr=False)
+    style: CoshStyling = field(default_factory=lambda: CoshStyling())
+    children: list = field(default_factory=list)
+    width: float | CoshSizing | CoshPercentage | None = None
+    height: float | CoshSizing | CoshPercentage | None = None
+    margin: float | None = None
+    x: float | None = None
+    y: float | None = None
+    classes: str | None = None 
+    id: str | None = None
+    z_index: int = 0
+    mouse_filter: CoshMouseFilter = CoshMouseFilter.STOP
+    positioning: CoshPositioning = CoshPositioning.RELATIVE
+    _was_hovered: bool = field(default=False, repr=False)
+    _x: float = field(default=0.0, repr=False)
+    _y: float = field(default=0.0, repr=False)
 
     def __post_init__(self):
         CoshLifecycle.register_node(self)
@@ -49,34 +49,34 @@ class Node(ABC):
     def get_base_render_data(self) -> dict:
         transform_x, transform_y = self.style.transform_position
         return {
-            "id" : self.id,
-            "x" : self._x,
-            "y" : self._y,
-            "transform_x" : transform_x,
-            "transform_y" : transform_y,
-            "width" : self.width,
-            "height" : self.height,
-            "margin" : self.margin,
-            "background_color" : self.style.background_color,
-            "z_index" : self.z_index,
-            "border_radius" : self.style.border_radius,
-            "alpha" : self.style.alpha,
-            "transform_rotation" : self.style.transform_rotation,
-            "transform_scale" : self.style.transform_scale,
-            "border" : self.style.border,
-            "mouse_filter" : self.mouse_filter
+            "id": self.id,
+            "x": self._x,
+            "y": self._y,
+            "transform_x": transform_x,
+            "transform_y": transform_y,
+            "width": self.width,
+            "height": self.height,
+            "margin": self.margin,
+            "background_color": self.style.background_color,
+            "z_index": self.z_index,
+            "border_radius": self.style.border_radius,
+            "alpha": self.style.alpha,
+            "transform_rotation": self.style.transform_rotation,
+            "transform_scale": self.style.transform_scale,
+            "border": self.style.border,
+            "mouse_filter": self.mouse_filter
         }
 
 @dataclass
 class ParentNode(Node):
     """A separate node that still inherits from Node but has custom methods specialized for "container-type" nodes."""
     
-    justify : CoshJustify = CoshJustify.START
-    align : CoshAlign = CoshAlign.START
-    overflow : CoshOverflow = CoshOverflow.VISIBLE
-    padding : float | None = None
-    gap : float | None = None
-    src : str | None = None
+    justify: CoshJustify = CoshJustify.START
+    align: CoshAlign = CoshAlign.START
+    overflow: CoshOverflow = CoshOverflow.VISIBLE
+    padding: float | None = None
+    gap: float | None = None
+    src: str | None = None
 
     def __enter__(self):
         CoshUI._stack.append(self)
@@ -106,17 +106,17 @@ class Element(Node):
 
 @dataclass
 class TextNode(Element):
-    text : str | None = None
-    font : str | None = None
-    font_size : int | None = None
-    text_color : tuple = (255, 255, 255)
-    text_align : CoshTextAlign = CoshTextAlign.CENTER
-    text_justify : CoshTextJustify = CoshTextJustify.CENTER
-    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
-    bold : bool = False
-    italic : bool = False
-    strikethrough : bool = False
-    underline : bool = False
+    text: str | None = None
+    font: str | None = None
+    font_size: int | None = None
+    text_color: tuple = (255, 255, 255)
+    text_align: CoshTextAlign = CoshTextAlign.CENTER
+    text_justify: CoshTextJustify = CoshTextJustify.CENTER
+    text_overflow: CoshTextOverflow = CoshTextOverflow.VISIBLE
+    bold: bool = False
+    italic: bool = False
+    strikethrough: bool = False
+    underline: bool = False
 
     def __post_init__(self):
         super().__post_init__()

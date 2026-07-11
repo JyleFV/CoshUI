@@ -10,7 +10,7 @@ class Particle:
 
 class ParticleManager:
     def __init__(self):
-        self.particles : list[Particle] = []
+        self.particles: list[Particle] = []
 
     def create_particle(self):
         pass

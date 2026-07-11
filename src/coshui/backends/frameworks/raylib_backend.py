@@ -171,7 +171,7 @@ class RaylibBackend(CoshBackend):
         if clip_rect:
             raylibpy.end_scissor_mode()
     
-    def flush(self, render_stack : list[RenderContext]):
+    def flush(self, render_stack: list[RenderContext]):
         for data in render_stack:
             if data.alpha <= 0:
                 continue

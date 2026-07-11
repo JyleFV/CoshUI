@@ -5,7 +5,8 @@ import math
 from dataclasses import dataclass
 
 from .types import *
-from .utility import Ref, resolve_font_variant
+from .user_functions import Ref
+from .utility import resolve_font_variant
 from .state import CoshUI
 from .cui_error import CoshUIError, warn
 from .node_definitions import Element, TextNode, ParentNode
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 class Container(ParentNode):
     """The base Container Node, simple but the most customizable."""
 
-    direction : CoshDirection = CoshDirection.ROW
+    direction: CoshDirection = CoshDirection.ROW
 
     def measure(self):
         if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
@@ -57,7 +58,7 @@ class Container(ParentNode):
 class Grid(ParentNode):
     """A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row."""
     
-    column_count : int = 1
+    column_count: int = 1
 
     def measure(self):
         if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
@@ -127,9 +128,9 @@ class Label(TextNode):
 
 @dataclass
 class RichLabel(TextNode):
-    letter_spacing : float | None = None
-    line_spacing : float | None = None
-    word_spacing : float | None = None
+    letter_spacing: float | None = None
+    line_spacing: float | None = None
+    word_spacing: float | None = None
 
     def __post_init__(self):
         # Skips TextNode straight to Element so we can bypass create_single_text_data()
@@ -140,16 +141,16 @@ class RichLabel(TextNode):
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         
         current = {
-            "raw_text" : self.text,
-            "letter_spacing" : self.letter_spacing,
-            "word_spacing" : self.word_spacing,
-            "line_spacing" : self.line_spacing,
-            "text_align" : self.text_align,
-            "text_justify" : self.text_justify,
-            "text_overflow" : self.text_overflow,
-            "font" : self.font,
-            "font_size" : self.font_size,
-            "color" : self.text_color,
+            "raw_text": self.text,
+            "letter_spacing": self.letter_spacing,
+            "word_spacing": self.word_spacing,
+            "line_spacing": self.line_spacing,
+            "text_align": self.text_align,
+            "text_justify": self.text_justify,
+            "text_overflow": self.text_overflow,
+            "font": self.font,
+            "font_size": self.font_size,
+            "color": self.text_color,
         }
 
         text = CoshUI.get_state(self.id, "text_data")
@@ -176,10 +177,10 @@ class RichLabel(TextNode):
 @dataclass
 class Checkbox(Element):
     """ NOTE: Checkboxes don't support background_color animations as background_color is a direct representation of it's functional state """
-    checked : bool =  False
-    checked_color : tuple | None = None
-    unchecked_color : tuple | None = None
-    bind : Ref | None = None
+    checked: bool =  False
+    checked_color: tuple | None = None
+    unchecked_color: tuple | None = None
+    bind: Ref | None = None
 
     def __post_init__(self):
         if CoshUI._get_signal(self.id, CoshSignals.CLICKED):
@@ -195,12 +196,17 @@ class Checkbox(Element):
         else:
             CoshUI.set_state(self.id, "checked", self.checked)
 
+        if self.checked:
+            self.style.background_color = self.checked_color
+        else:
+            self.style.background_color = self.unchecked_color
+
     def get_render_data(self):
         return RenderContext(**self.get_base_render_data())
 
 @dataclass
 class Image(Element):
-    src : str | None = None
+    src: str | None = None
     
     def __post_init__(self):
         super().__post_init__()
@@ -229,12 +235,12 @@ class Box(Element):
 
 @dataclass
 class Modal(ParentNode):
-    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
-    direction : CoshDirection = CoshDirection.ROW
-    header_color : tuple | None = None
-    header_border_radius : tuple | None = None
-    content_color : tuple | None = None
-    content_border_radius : tuple | None = None
+    positioning: CoshPositioning = CoshPositioning.ABSOLUTE
+    direction: CoshDirection = CoshDirection.ROW
+    header_color: tuple | None = None
+    header_border_radius: tuple | None = None
+    content_color: tuple | None = None
+    content_border_radius: tuple | None = None
 
     def __post_init__(self):
         if self.id is None:
@@ -251,9 +257,9 @@ class InputField(TextNode):
 
 @dataclass
 class Dropdown(TextNode):
-    item_list : list | None = None
-    selector_index : int = 0
-    bind : Ref | None = None
+    item_list: list | None = None
+    selector_index: int = 0
+    bind: Ref | None = None
 
     def __post_init__(self):
         if self.item_list is None:
@@ -276,14 +282,14 @@ class Dropdown(TextNode):
 
 @dataclass
 class Slider(Element):
-    min_value : float = 0.0
-    max_value : float = 100.0
-    step : float = 1.0
-    value : float | None = None
-    bind : Ref | None = None
-    thumb_size : int | None = None
-    thumb_color : tuple | None = None
-    track_color : tuple | None = None
+    min_value: float = 0.0
+    max_value: float = 100.0
+    step: float = 1.0
+    value: float | None = None
+    bind: Ref | None = None
+    thumb_size: int | None = None
+    thumb_color: tuple | None = None
+    track_color: tuple | None = None
     
     def __post_init__(self):
         super().__post_init__()
