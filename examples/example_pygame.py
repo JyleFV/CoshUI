@@ -42,9 +42,9 @@ def main():
             cui.animate("background_color", "main_container", (255, 200, 200), 1.5, "ease_out")
 
         if cui.get_signal("quit_button", cui.HOVER_ENTER):
-            cui.animate("transform_rotation", "test_image", 0.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "test_image", 0.0, 0.5)
         if cui.get_signal("quit_button", cui.HOVER_EXIT):
-            cui.animate("transform_rotation", "test_image", 45.0, 0.5, "ease_in")
+            cui.animate("transform_rotation", "test_image", 45.0, 0.5)
         if cui.get_signal("quit_button", cui.CLICKED):
             running = False
 

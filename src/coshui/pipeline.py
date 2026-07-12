@@ -116,6 +116,7 @@ def process_events():
                 if data.mouse_filter is CoshMouseFilter.STOP:
                     consumed_click = True
 
+# TODO: Add type validation for attributes
 def finalize_defaults(node):
     targets = [node, node.style, node]
     

@@ -118,6 +118,26 @@ class CoshPercentage:
     def __init__(self, percentage: int):
         self.percentage = percentage / 100
 
+class FourSide(NamedTuple):
+    top: float
+    right: float
+    bottom: float
+    left: float
+
+    @property
+    def horizontal(self) -> float:
+        return self.left + self.right
+
+    @property
+    def vertical(self) -> float:
+        return self.top + self.bottom
+
+class FourCorner(NamedTuple):
+    top_left: float
+    top_right: float
+    bottom_right: float
+    bottom_left: float
+
 class RenderContext(NamedTuple):
     # Node-specific
     id: str | None = None
@@ -146,20 +166,6 @@ class RenderContext(NamedTuple):
     image_src: str | None = None
     # Overflow-logic
     clip_rect: tuple | None = None
-
-class FourSide(NamedTuple):
-    top: float
-    right: float
-    bottom: float
-    left: float
-
-    @property
-    def horizontal(self) -> float:
-        return self.left + self.right
-
-    @property
-    def vertical(self) -> float:
-        return self.top + self.bottom
 
 class ParticleContext(NamedTuple):
     particles: list = field(default_factory=list)

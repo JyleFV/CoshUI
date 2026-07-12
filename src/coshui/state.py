@@ -10,14 +10,59 @@ if TYPE_CHECKING:
 
 # DEFAULT VALUES
 DEFAULT_THEME = CoshTheme(
-            button={ "width": 100, "height": 30, "background_color": (86, 115, 143), "border": ((255, 255, 255), 1), "border_radius": 5, "font_size": 18 },
-            label={ "font_size": 18 },
-            checkbox={ "width": 25, "height": 25, "border_radius": 4, "border": ((200, 200, 200), 2), "checked_color": (85, 75, 255), "unchecked_color": (200, 200, 200)},
-            image={ "width": 150, "height": 150 },
-            modal={ "header_color": (60, 60, 80), "header_border_radius": (7.5, 7.5, 0, 0), "content_color": (80, 80, 100), "content_border_radius": (0, 0, 7.5, 7.5) }, 
-            slider={ "thumb_color": (100, 100, 100), "track_color": (200, 200, 200), "border_radius": 50 },
-            dropdown={ "width": 150, "height": 30, "background_color": (100, 100, 100) }
-        )
+    tokens={
+        "btn_width": 100,
+        "btn_height": 30,
+        "default_font_size": 18,
+        "brand_blue": (86, 115, 143),
+        "accent_purple": (85, 75, 255),
+        "light_gray": (200, 200, 200),
+        "dark_gray": (100, 100, 100),
+        "modal_header": (60, 60, 80),
+        "modal_body": (80, 80, 100)
+    },
+    nodes={
+        "Button": {
+            "width": "@btn_width",
+            "height": "@btn_height",
+            "background_color": "@brand_blue",
+            "border": ((255, 255, 255), 1),
+            "border_radius": 5,
+            "font_size": "@default_font_size"
+        },
+        "Label": {
+            "font_size": "@default_font_size"
+        },
+        "Checkbox": {
+            "width": 25,
+            "height": 25,
+            "border_radius": 4,
+            "border": ((200, 200, 200), 2),
+            "checked_color": "@accent_purple",
+            "unchecked_color": "@light_gray"
+        },
+        "Image": {
+            "width": 150,
+            "height": 150
+        },
+        "Modal": {
+            "header_color": "@modal_header",
+            "header_border_radius": (7.5, 7.5, 0, 0),
+            "content_color": "@modal_body",
+            "content_border_radius": (0, 0, 7.5, 7.5)
+        },
+        "Slider": {
+            "thumb_color": "@dark_gray",
+            "track_color": "@light_gray",
+            "border_radius": 50
+        },
+        "Dropdown": {
+            "width": 150,
+            "height": 30,
+            "background_color": "@dark_gray"
+        }
+    }
+)
 
 COURIER = { 
     "base_font": os.path.join(os.path.dirname(__file__), "assets", "fonts", "CourierPrime.ttf"),

@@ -40,15 +40,19 @@ Use the following prefixes:
 """
 Description about the function or class that explains what it is and what it does
 
-Parameters # if it has parameters
-- parameter_x: Description about what it is and what it does.
-- parameter_y: Description about what it is and what it does.
+### Parameters (if it has parameters)
 
-Attributes # if it has attributes needed to be known or are altered by the user
-- attribute_1: What the attribute is, what it holds, and roughly what it does.
+- **parameter_x**: Description about what it is and what it does.
+- **parameter_y**: Description about what it is and what it does.
 
-Returns # if it has a return type
-- return_type: What it returns and anything the user has to know about it.
+### Attributes (if it has attributes needed to be known or are altered by the user)
+
+- **attribute_1**: What the attribute is, what it holds, and roughly what it does.
+- **attribute_2**: What the attribute is, what it holds, and roughly what it does.
+
+### Returns (if it has a return type)
+
+- **return_type**: What it returns and anything the user has to know about it.
 """
 ```
 Check the `animate()` function for a real example. 

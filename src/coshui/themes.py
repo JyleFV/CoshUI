@@ -3,74 +3,48 @@ import difflib
 
 from .cui_error import CoshUIError
 
-# ================ Theme ================
-
 @dataclass
 class CoshTheme:
-    button: dict = field(default_factory=lambda: {...})
-    label: dict = field(default_factory=lambda: {...})
-    modal: dict = field(default_factory=lambda: {...})
-    checkbox: dict = field(default_factory=lambda: {...})
-    image: dict = field(default_factory=lambda: {...})
-    slider: dict = field(default_factory=lambda: {...})
-    dropdown: dict = field(default_factory=lambda: {...})
-
-    def get_for(self, node):
-        from .widgets import Modal, Button, Label, Checkbox, Image, Slider, Dropdown
-        
-        if isinstance(node, Modal):
-            return self.modal
-        if isinstance(node, Button): 
-            return self.button
-        if isinstance(node, Label):
-            return self.label
-        if isinstance(node, Checkbox):
-            return self.checkbox
-        if isinstance(node, Image):
-            return self.image
-        if isinstance(node, Slider):
-            return self.slider
-        if isinstance(node, Dropdown):
-            return self.dropdown
-
-        return None
-
-# NOTE: Rework in Progress
-@dataclass
-class _CoshTheme:
     """
-    CoshTheme is the object that holds all default theme values.
+    CoshTheme is the object that holds theme values.
     
-    Attributes
+    ### Attributes
 
-    - tokens: Reusable values you can pass as values to Node properties (e.g. "primary_color" passed to a Button's "background_color" as "@primary_color"). 
+    - **tokens**: Reusable values you can pass as values to Node properties (e.g. "primary_color" passed to a Button's "background_color" as "@primary_color"). 
     Do remember, when passing tokens as Node values, type "@" before the name of the token or else it will not be parsed as a token and may appear as an error.
-
-    - nodes: The dictionary that holds all Node values. You can set default values for nodes here directly (e.g. dict(Button={ "background_color": (255, 0, 0) }), or pass in tokens (e.g. dict(Button={ "background_color": "@primary_color" }).
+    - **nodes**: The dictionary that holds all Node values. You can set default values for nodes here directly (e.g. dict(Button={ "background_color": (255, 0, 0) }), or pass in tokens (e.g. dict(Button={ "background_color": "@primary_color" }).
     
-    When overriding the "nodes" property. Be sure to set the names EXACTLY as
-    the widgets are named.
+    When overriding the "nodes" property. Be sure to set the names EXACTLY as the widgets are named.
     """
     
-    tokens: dict = field(default_factory=lambda: {...})
-    nodes: dict = field(default_factory=lambda: {...})
+    tokens: dict = field(default_factory=dict)
+    nodes: dict = field(default_factory=dict)
 
-def get_for(theme: _CoshTheme, node):
-    node_style = theme.nodes.get(node.__class__.__name__, None)
+    def __post_init__(self):
+        MASTER_WIDGET_LIST = ['Container', 'Grid', 'Modal', 'Button', 'Label', 'RichLabel', 'Checkbox', 'Image', 'Dropdown', 'Slider']
+
+        for node in self.nodes:
+            if node not in MASTER_WIDGET_LIST:
+                close_match = difflib.get_close_matches(node, MASTER_WIDGET_LIST, n=1)
+                raise Exception(f"Unknown node `{node}` in theme configuration. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+
+def get_for(theme: CoshTheme, node):
+    node_name = node.__class__.__name__
+    node_style = theme.nodes.get(node_name, None)
+
     if node_style is None:
-        raise CoshUIError(f"The node passed into CoshTheme for the node `{node.__class__.__name__}` seems to be wrong or doesn't exist...")
+        return None 
 
     return node_style
 
-def resolve_token(theme: _CoshTheme, token: str):
-    if token and token.startswith("@"):
+def resolve_token(theme: CoshTheme, token: str):
+    if isinstance(token, str) and token.startswith("@"):
         token_value = theme.tokens.get(token[1:])
     
         if token_value is None:
             close_match = difflib.get_close_matches(token[1:], theme.tokens.keys(), n=1)
-            raise CoshUIError(f"Unknown theme token `{token}`. Did you mean `{close_match if close_match else 'Unknown'}`?")
+            raise CoshUIError(f"Unknown theme token `{token}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
         
         return token_value
 
-    raise CoshUIError(f"Token `{token}` is not a real token. Please enter a token that starts with `@`.")
-# ================ Theme ================
+    return token

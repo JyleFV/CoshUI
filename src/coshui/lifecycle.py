@@ -48,17 +48,20 @@ class CoshLifecycle:
 
     @staticmethod
     def apply_theme(node):
+        from .themes import get_for, resolve_token
         theme = CoshUI._active_theme
 
-        theme_style = theme.get_for(node)
+        theme_style = get_for(theme, node)
         if not theme_style or theme_style is None:
             return
         
         for key, value in theme_style.items():
             if hasattr(node, key) and getattr(node, key) is None:
-                setattr(node, key, value)
+                resolved_value = resolve_token(theme, value)
+                setattr(node, key, resolved_value)
             if hasattr(node.style, key) and getattr(node.style, key) is None:
-                setattr(node.style, key, value)
+                resolved_value = resolve_token(theme, value)
+                setattr(node.style, key, resolved_value)
     
     @staticmethod
     def expand(node):

@@ -1,8 +1,13 @@
+from __future__ import annotations
+from typing import TypeVar, Generic, TYPE_CHECKING, Callable, Optional
 import math
 
 from .cui_error import CoshUIError, warn
 from .state import CoshUI
 from .types import *
+
+if TYPE_CHECKING:
+    from .themes import CoshTheme
 
 # ================ Helper Functions ================
 
@@ -22,6 +27,10 @@ def resolve_four_value(value: int | float | tuple) -> FourSide:
     match value:
         case int() | float():
             return FourSide(value, value, value, value)
+        case (vertical, horizontal):
+            return FourSide(vertical, horizontal, vertical, horizontal)
+        case (top, horizontal, bottom):
+            return FourSide(top, horizontal, bottom, horizontal)
         case (top, right, bottom, left):
             return FourSide(top, right, bottom, left)
         case _:
@@ -49,6 +58,20 @@ def merge_styles(base: CoshStyling, override: CoshStyling) -> CoshStyling:
         transform_rotation=override.transform_rotation if override.transform_rotation is not None else base.transform_rotation,
         transform_scale=override.transform_scale if override.transform_scale is not None else base.transform_scale
     )
+
+def merge_themes(base: CoshTheme, override: CoshTheme) -> CoshTheme:
+    merged_tokens = base.tokens | override.tokens
+
+    merged_nodes = {}
+
+    all_widgets = set(base.nodes.keys()) | set(override.nodes.keys())
+    
+    for widget in all_widgets:
+        base_style = base.nodes.get(widget, {})
+        custom_style = override.nodes.get(widget, {})
+        merged_nodes[widget] = base_style | custom_style
+        
+    return CoshTheme(tokens=merged_tokens, nodes=merged_nodes)
 
 def get_local_mouse(mouse_x, mouse_y, node_x, node_y, node_w, node_h, angle):
     center_x = node_x + (node_w / 2)
