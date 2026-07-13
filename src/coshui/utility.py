@@ -1,15 +1,14 @@
-from __future__ import annotations
-from typing import TypeVar, Generic, TYPE_CHECKING, Callable, Optional
+"""
+This file is reserved for helper functions that aren't integral to the core and backends but are generally
+helpful and are used in multiple places in the codebase.
+"""
+
 import math
 
 from .cui_error import CoshUIError, warn
+from .themes import CoshTheme
 from .state import CoshUI
 from .types import *
-
-if TYPE_CHECKING:
-    from .themes import CoshTheme
-
-# ================ Helper Functions ================
 
 def adjust_brightness_value(rgb, factor):
     return tuple(max(0, min(255, int(c * factor))) for c in rgb)

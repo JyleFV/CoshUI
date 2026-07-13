@@ -2,6 +2,7 @@ import difflib
 
 from .cui_error import CoshUIError
 from .state import CoshUI
+from .types import CoshSizing, CoshPercentage
 
 class CoshLifecycle:
     @staticmethod
@@ -86,3 +87,46 @@ class CoshLifecycle:
         
         CoshLifecycle.apply_styling(node)
         CoshLifecycle.apply_theme(node)
+        CoshLifecycle.validate_node_types(node)
+
+    # This method checks if every property is the correct datatype
+    # A runtime type checker if you will.
+    @staticmethod
+    def validate_node_types(node):
+        # Holds properties and their supposed types
+        PROPERTY_RULES = {
+            "width": (int, float, CoshSizing, CoshPercentage),
+            "height": (int, float, CoshSizing, CoshPercentage),
+            "margin": (int, float),
+            "padding": (int, float),
+            "gap": (int, float),
+            "alpha": (int,),
+            "border_radius": (int, float),
+            "font_size": (int,),
+            "transform_scale": (int, float),
+            "transform_rotation": (int, float),
+            "transform_position": (tuple,),
+            "text_color": (tuple,),
+            "background_color": (tuple,)
+        }
+
+        for target in (node, node.style):
+            if not target:
+                continue
+                
+            for property, allowed_types in PROPERTY_RULES.items():
+                if not hasattr(target, property):
+                    continue
+                    
+                val = getattr(target, property)
+                if val is None:
+                    continue
+                
+                if not isinstance(val, allowed_types):
+                    node_name = node.id if node.id else type(node).__name__
+                    expected = ", ".join([t.__name__ for t in allowed_types])
+                    
+                    raise CoshUIError(
+                        f"Type Error on '{node_name}': Property `{property}` is set to `{val}` ({type(val).__name__}), "
+                        f"but expected types are ({expected})."
+                    )

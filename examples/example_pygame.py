@@ -12,6 +12,12 @@ def main():
     clock = py.time.Clock()
 
     cui.add_class("label_color", cui.CoshStyling(background_color=(100, 255, 100)))
+    cui.create_theme("dark", cui.CoshTheme(
+        tokens=dict(primary_color=(100, 100, 100)),
+        nodes=dict(Button=dict(background_color="@primary_color"))
+    ),
+    inherit="DEFAULT")
+    cui.set_theme("dark")
 
     itemList = ["Hello", "World", "My", "Name"]
 
@@ -23,7 +29,7 @@ def main():
 
         screen.fill(BLACK)
 
-        with cui.CoshUIRenderer(cui.PygameBackend(screen)):
+        with cui.CoshUIRenderer(cui.PygameBackend(screen), cui.DEBUG):
             with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", mouse_filter=cui.STOP, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52, text_overflow=cui.TEXT_HIDDEN)

@@ -134,7 +134,6 @@ def create_theme(name: str, theme: CoshTheme, inherit: str | None = None):
     When inheriting from an existing theme, it will act as the **base** that your new theme overrides. If it does not have a value (meaning it's None), it will act as a completely new override.
     """
 
-    # NOTE: Rework in progress
     final_theme = theme
 
     if inherit is not None:

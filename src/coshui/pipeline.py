@@ -1,8 +1,14 @@
+"""
+This file is for functions that act as the main pipeline of the CoshUI engine.
+From the measure and layout systems all the way to the finalization of default values, this file
+holds all the step by step.
+"""
+
 from .state import CoshUI
 from .input import CoshInput
 from .node_definitions import Node, TextNode
 from .widgets import Container, Grid
-from .animation import Tween
+from .cui_error import CoshUIError
 from .utility import point_in_rect, get_local_mouse, _find_line_breaks, _justify_offset, _align_offset, resolve_four_value
 from ._defaults import ENGINE_DEFAULTS
 from .types import *
@@ -116,9 +122,8 @@ def process_events():
                 if data.mouse_filter is CoshMouseFilter.STOP:
                     consumed_click = True
 
-# TODO: Add type validation for attributes
 def finalize_defaults(node):
-    targets = [node, node.style, node]
+    targets = [node, node.style]
     
     for key, fallback in ENGINE_DEFAULTS.items():
         for target in targets:

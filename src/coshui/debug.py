@@ -9,7 +9,9 @@ from .cui_error import warn
 # Most this file was vibecoded, so I'm not sure what's going on here most of the time
 class CoshDebug:
     GRAPH_COLORS = {
+        "build_time": "#ff1cf0", 
         "update": "#e9ff42",
+        "final_default": "#20ffe5",
         "measure": "#4fc3f7",
         "layout": "#81c784",
         "render": "#ffb74d",
