@@ -30,7 +30,7 @@ def main():
         screen.fill(BLACK)
 
         with cui.CoshUIRenderer(cui.PygameBackend(screen), cui.DEBUG):
-            with cui.Container(id="container_1", width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
+            with cui.Container(id="container_1", padding=(10, 10, 0, 0), width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
                 with cui.Container(id="main_container", mouse_filter=cui.STOP, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI Menu", font_size=52, text_overflow=cui.TEXT_HIDDEN)
                     cui.Button(id="settings_button", text="Settings", height=50, text_justify=cui.TEXT_JUSTIFY_CENTER)

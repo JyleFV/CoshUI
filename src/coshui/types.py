@@ -114,6 +114,10 @@ class CoshMode(Enum):
     NORMAL = 0
     DEBUG = 1
 
+class CoshShape(Enum):
+    RECT = 0
+    CIRCLE = 1
+
 class CoshPercentage:
     def __init__(self, percentage: int):
         self.percentage = percentage / 100
@@ -235,4 +239,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['FourSide', 'LineLayout', 'CoshShape', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

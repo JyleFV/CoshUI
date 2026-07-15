@@ -8,9 +8,12 @@ class ParticleData:
 class Particle:
     pass
 
+class ParticleContext:
+    pass
+
 class ParticleManager:
     def __init__(self):
-        self.particles: list[Particle] = []
+        self.particles: list[ParticleContext] = []
 
     def create_particle(self):
         pass

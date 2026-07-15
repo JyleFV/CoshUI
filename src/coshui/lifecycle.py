@@ -89,32 +89,34 @@ class CoshLifecycle:
         CoshLifecycle.apply_theme(node)
         CoshLifecycle.validate_node_types(node)
 
-    # This method checks if every property is the correct datatype
-    # A runtime type checker if you will.
     @staticmethod
     def validate_node_types(node):
         # Holds properties and their supposed types
-        PROPERTY_RULES = {
+        # TODO: Add all property's types on every Node
+        VALID_PROPERTY_TYPES = {
+            "id": (str,),
             "width": (int, float, CoshSizing, CoshPercentage),
             "height": (int, float, CoshSizing, CoshPercentage),
-            "margin": (int, float),
-            "padding": (int, float),
+            "margin": (tuple, int, float),
+            "padding": (tuple, int, float),
             "gap": (int, float),
+            "background_color": (tuple,),
             "alpha": (int,),
-            "border_radius": (int, float),
+            "border": (tuple,),
+            "border_radius": (tuple, int, float),
             "font_size": (int,),
             "transform_scale": (int, float),
             "transform_rotation": (int, float),
             "transform_position": (tuple,),
             "text_color": (tuple,),
-            "background_color": (tuple,)
+            "text": (str,)
         }
 
         for target in (node, node.style):
             if not target:
                 continue
                 
-            for property, allowed_types in PROPERTY_RULES.items():
+            for property, allowed_types in VALID_PROPERTY_TYPES.items():
                 if not hasattr(target, property):
                     continue
                     
@@ -127,6 +129,5 @@ class CoshLifecycle:
                     expected = ", ".join([t.__name__ for t in allowed_types])
                     
                     raise CoshUIError(
-                        f"Type Error on '{node_name}': Property `{property}` is set to `{val}` ({type(val).__name__}), "
-                        f"but expected types are ({expected})."
+                        f"Type Error on {type(node).__name__} Widget with name '{node_name}': Property `{property}` is set to `{val}` ({type(val).__name__}), but expected types are ({expected})."
                     )

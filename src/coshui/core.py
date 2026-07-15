@@ -41,7 +41,7 @@ class CoshUIRenderer:
             delta = now - CoshUI._last_time
         
         CoshUI._last_time = now
-        print(CoshUI._theme_registry)
+
         if delta > 0.1:
             delta = 1/60
 
