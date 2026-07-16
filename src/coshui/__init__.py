@@ -135,7 +135,7 @@ __all__ = [
 
     # Types (raw enums)
     "CoshStyling",
-    "TextStyle"
+    "TextStyle",
 
     # Align
     "ALIGN_START",

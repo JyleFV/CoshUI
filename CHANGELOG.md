@@ -1,3 +1,8 @@
+# CoshUI - 0.3.3 Changelog
+
+### Bug Fix
+- **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`
+
 # CoshUI - 0.3.2.1 Hotfix
 Posted: `July 7, 2026`
 
