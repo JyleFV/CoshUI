@@ -1,7 +1,46 @@
 # CoshUI - 0.3.3 Changelog
 
+### Particle System v1.0
+To be added...
+
+### Theme System v2.0
+The new theme rework has made it a lot more accessible and actually worth it to make your own themes, by introducing a `token` system that lets users define values and reuse it and also an `inheritance` system that lets themes simply create a copy of an existing theme and override those values as opposed to making new themes from scratch.
+
+An example of how the new `CoshTheme` system works:
+```python
+cui.CoshTheme(
+    tokens={"button_color": (85, 100, 255)},
+    nodes={"Button": {"background_color": "@button_color"}}
+)
+```
+This new system lets users create tokens that can then be passed as values to Node defaults. The `@` is what separates a string from an actual token, if that isn't present, it might just accept that as the real value.
+
+For `inheritance`:
+```python
+cui.create_theme(
+    "my_theme", 
+    cui.CoshTheme(
+        tokens={"primary_color": (255, 100, 100)}
+    ),
+    inherit="DEFAULT"
+)
+```
+This creates a new theme with `DEFAULT` as the base theme, it will take all the values inside the `DEFAULT` theme and use your new theme as an override. The example will override the `primary_color` token which will change the value of every Node that uses that token.
+
+### Refactors
+- **Create Theme Function**: The `create_theme()` function has gotten an overhaul with the new `inherit` parameter (which if passed the name of an existing theme, that theme will be used as a base of the users new theme).
+- **Type Validation for Properties**: Most Node properties now has type validation in their lifecycle, it runs after class styles, theme values, and explicit styles are set on a Node so it should always catch those values properly. There's still some problematic places like `None` types being able to bypass the check (e.g. `width=None`) but it is currently being worked on. 
+- **Build Time & Finalized Defaults**: The Debugger has added the Node build time and `finalized_defaults` pass in its `Profiler`.
+- **Errors**: Reworked Errors to all be under the `CoshUIError` namespace. This makes it easier to handle future error types thanks to centralizing them into one namespace. There are currently 2 types of *"errors"*:
+    - `CoshUIError.Main`: Formerly `CoshUIError`, this error is for general errors concerning the main API and callsites.
+    - `CoshUIError.CoshML`: Formerly `CoshMLError`, this error is strictly for catching CoshML-related issues.
+> [!IMPORTANT]
+> For contributors, `warn` is also part of CoshUIError, so when calling `warn()`, do `CoshUIError.warn()`. 
+
 ### Bug Fix
 - **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`
+
+---
 
 # CoshUI - 0.3.2.1 Hotfix
 Posted: `July 7, 2026`

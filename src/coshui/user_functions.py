@@ -4,7 +4,7 @@ import difflib
 import os
 
 from .animation import PROPERTY_MAP, PROPERTY_TYPE_MAP, EASING_MAP, Tween, ease_linear
-from .cui_error import CoshUIError, warn
+from .cui_error import CoshUIError
 from .utility import merge_themes
 from .state import CoshUI
 from .types import *
@@ -34,7 +34,7 @@ class Ref(Generic[T]):
         self._on_change = callback
         return self
 
-def add_font(name: str, base_path: str, bold: str = None, italic: str = None, bold_italic: str = None):
+def add_font(name: str, base_path: str, bold: str | None = None, italic: str | None = None, bold_italic: str | None = None):
     """
     Adds a new font that users can set text to.
 
@@ -48,13 +48,13 @@ def add_font(name: str, base_path: str, bold: str = None, italic: str = None, bo
     """
 
     if not name or not base_path:
-        raise CoshUIError("Please input a name or a path when adding fonts.")
+        raise CoshUIError.Main("Please input a name or a path when adding fonts.")
 
     variants = { "base_font": base_path, "bold": bold, "italic": italic, "bold_italic": bold_italic }
 
     for variant, path in variants.items():
         if path is not None and not os.path.isfile(path):
-            raise CoshUIError(f"Font path `{path}` for `{variant}` of `{name}` does not exist or is not a file.")
+            raise CoshUIError.Main(f"Font path `{path}` for `{variant}` of `{name}` does not exist or is not a file.")
 
     CoshUI._font_library[name] = { variant: (os.path.abspath(path) if path is not None else None) for variant, path in variants.items() }
 
@@ -71,7 +71,7 @@ def set_default_font(name: str):
     
     if name not in CoshUI._font_library:
         close_match = difflib.get_close_matches(name, CoshUI._font_library.keys(), n=1)
-        raise CoshUIError(f"That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+        raise CoshUIError.Main(f"That font does not exist in the system. Please do add_font() before this function call with the name and path as arguments. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
 
     CoshUI._default_font = name
 
@@ -91,7 +91,7 @@ def get_signal(node_id: str, signal: CoshSignals):
 
     if node_id not in CoshUI._state_storage:
         close_match = difflib.get_close_matches(node_id, CoshUI._state_storage.keys(), n=1)
-        raise CoshUIError(f"Unknown Node ID: `{node_id}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+        raise CoshUIError.Main(f"Unknown Node ID: `{node_id}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
     
     return CoshUI._get_signal(node_id, signal)
 
@@ -110,16 +110,16 @@ def add_class(name: str, style: CoshStyling | TextStyle):
     from .text_engine import TextStyle, KEYWORD_MAP, TAGS
     if isinstance(style, CoshStyling):
         if name in CoshUI._style_class:
-            raise CoshUIError(f"The class name `{name}` already exists. Did you make duplicate classes?")
+            raise CoshUIError.Main(f"The class name `{name}` already exists. Did you make duplicate classes?")
         CoshUI._style_class[name] = style
     elif isinstance(style, TextStyle):
         if name in (KEYWORD_MAP.keys() | TAGS.keys()):
-            raise CoshUIError(f"The tag `{name}` already exists and cannot be used as a class name. Please choose a different one.")
+            raise CoshUIError.Main(f"The tag `{name}` already exists and cannot be used as a class name. Please choose a different one.")
         if name in CoshUI._text_style_class:
-            raise CoshUIError(f"The text class name `{name}` already exists. Did you make duplicate classes?")
+            raise CoshUIError.Main(f"The text class name `{name}` already exists. Did you make duplicate classes?")
         CoshUI._text_style_class[name] = style
     else:
-        raise CoshUIError("Passed in style is not a CoshStyling or TextStyle object.")
+        raise CoshUIError.Main("Passed in style is not a CoshStyling or TextStyle object.")
 
 def create_theme(name: str, theme: CoshTheme, inherit: str | None = None):
     """
@@ -140,7 +140,7 @@ def create_theme(name: str, theme: CoshTheme, inherit: str | None = None):
         base_theme = CoshUI._theme_registry.get(inherit, None)
         if base_theme is None:
             close_match = difflib.get_close_matches(inherit, CoshUI._theme_registry.keys(), n=1)
-            raise CoshUIError(f"The theme `{inherit}` doesn't exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+            raise CoshUIError.Main(f"The theme `{inherit}` doesn't exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
         else:
             final_theme = merge_themes(base_theme, theme)
 
@@ -158,7 +158,7 @@ def set_theme(theme_name: str):
     theme = CoshUI._theme_registry.get(theme_name, None)
     if theme is None:
         close_match = difflib.get_close_matches(theme_name, CoshUI._theme_registry.keys(), n=1)
-        raise CoshUIError(f"The theme `{theme_name}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+        raise CoshUIError.Main(f"The theme `{theme_name}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
     CoshUI._active_theme = theme
 
 def animate(n_property: str, target_id: str, end_value, duration: float, easing: str = "linear") -> Tween:
@@ -180,21 +180,21 @@ def animate(n_property: str, target_id: str, end_value, duration: float, easing:
 
     if n_property not in PROPERTY_MAP:
         close_match = difflib.get_close_matches(n_property, PROPERTY_MAP.keys(), n=1)
-        raise CoshUIError(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
+        raise CoshUIError.Main(f"Unknown property `{n_property}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(PROPERTY_MAP.keys())}.")
     
     if target_id not in CoshUI._state_storage:
         close_match = difflib.get_close_matches(target_id, CoshUI._state_storage.keys(), n=1)
-        raise CoshUIError(f"ID `{target_id}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+        raise CoshUIError.Main(f"ID `{target_id}` does not exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
     
     if easing not in EASING_MAP:
         close_match = difflib.get_close_matches(easing, EASING_MAP.keys(), n=1)
-        raise CoshUIError(f"Unknown easing curve: `{easing}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(EASING_MAP.keys())}.")
+        raise CoshUIError.Main(f"Unknown easing curve: `{easing}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`? Valid properties are: {list(EASING_MAP.keys())}.")
 
     path, lerp_fn = PROPERTY_MAP[n_property]
     expected_type = PROPERTY_TYPE_MAP.get(lerp_fn)
 
     if expected_type and not isinstance(end_value, expected_type):
-        raise CoshUIError(f"Property `{n_property}` expects `{expected_type}`, got `{type(end_value).__name__}`.")
+        raise CoshUIError.Main(f"Property `{n_property}` expects `{expected_type}`, got `{type(end_value).__name__}`.")
 
     ease_fn = EASING_MAP.get(easing, ease_linear)
     return CoshUI._tween_manager.create_tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)

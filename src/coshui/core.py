@@ -31,7 +31,7 @@ class CoshUIRenderer:
 
     def __enter__(self):
         if CoshUI._active_renderer:
-            raise CoshUIError("Cannot nest renderer objects.")
+            raise CoshUIError.Main("Cannot nest renderer objects.")
         
         now = time.perf_counter()
 

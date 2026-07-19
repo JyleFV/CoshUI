@@ -148,7 +148,7 @@ class Tween:
 
     def finished(self, callback: Optional[Callable]):
         if not callable(callback):
-            raise CoshUIError(f"Callable: `{callback}` is not a callable.")
+            raise CoshUIError.Main(f"Callable: `{callback}` is not a callable.")
         
         if self._on_complete is None:
             self._on_complete = callback
@@ -156,13 +156,13 @@ class Tween:
 
     def loop(self, count=None, ping_pong=False, delay=0.0):
         if count is not None and (not isinstance(count, int) or count <= 0):
-            raise CoshUIError(f"Animation loop `count` parameter must be a positive integer or None, got `{count}`.")
+            raise CoshUIError.Main(f"Animation loop `count` parameter must be a positive integer or None, got `{count}`.")
         
         if not isinstance(ping_pong, bool):
-            raise CoshUIError(f"Animation loop `ping_pong` parameter must be a bool, got `{type(ping_pong).__name__}`.")
+            raise CoshUIError.Main(f"Animation loop `ping_pong` parameter must be a bool, got `{type(ping_pong).__name__}`.")
         
         if not isinstance(delay, (int, float)) or delay < 0:
-            raise CoshUIError(f"Animation loop `delay` parameter must be a positive number, got `{type(delay).__name__}`.")
+            raise CoshUIError.Main(f"Animation loop `delay` parameter must be a positive number, got `{type(delay).__name__}`.")
         
         self._loop_count = count
         self._ping_pong = ping_pong

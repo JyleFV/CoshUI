@@ -43,7 +43,7 @@ def resolve_token(theme: CoshTheme, token: str):
     
         if token_value is None:
             close_match = difflib.get_close_matches(token[1:], theme.tokens.keys(), n=1)
-            raise CoshUIError(f"Unknown theme token `{token}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+            raise CoshUIError.Main(f"Unknown theme token `{token}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
         
         return token_value
 

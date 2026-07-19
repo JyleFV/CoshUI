@@ -1,31 +1,30 @@
 import warnings
 import sys
 
-class CoshUIError(Exception):
-    __module__ = "builtins"
+class CoshUIError:
+    class Main(Exception):
+        __module__ = "builtins"
 
-class CoshMLError(Exception):
-    __module__ = "builtins"
+    class CoshML(Exception):
+        __module__ = "builtins"
 
-class CoshUIWarning(UserWarning):
-    pass
+    class Warning(UserWarning):
+        pass
+
+    @staticmethod
+    def warn(message: str):
+        warnings.warn(
+            message,
+            CoshUIError.Warning,
+            stacklevel=2
+        )
+
+_original_showwarning = warnings.showwarning
 
 def _coshui_warning_handler(message, category, filename, lineno, file=None, line=None):
-    if issubclass(category, CoshUIWarning):
-        print(f"\033[93mCoshUIWarning: {message}\033[0m")  # yellow
+    if issubclass(category, CoshUIError.Warning):
+        print(f"\033[93mCoshUIWarning: {message}\033[0m")
     else:
-        warnings._showwarning_orig(message, category, filename, lineno, file, line)
-
-def _coshui_exception_handler(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, CoshUIError):
-        print(f"\033[91mCoshUIError: {exc_value}\033[0m")  # red
-    elif issubclass(exc_type, CoshMLError):
-        print(f"\033[95mCoshMLError: {exc_value}\033[0m")  # light purple
-    else:
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-
-def warn(message: str):
-    warnings.warn(message, CoshUIWarning, stacklevel=2)
+        _original_showwarning(message, category, filename, lineno, file, line)
 
 warnings.showwarning = _coshui_warning_handler
-sys.excepthook = _coshui_exception_handler

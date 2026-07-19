@@ -3,7 +3,7 @@ from typing import Literal
 import difflib
 
 from .state import CoshUI
-from .cui_error import CoshMLError
+from .cui_error import CoshUIError
 from .types import TextData
 from .utility import resolve_font_variant
 
@@ -12,17 +12,17 @@ def validate_color(value: str) -> tuple:
     try:
         parsed = tuple(int(x.strip()) for x in value.strip("()").split(","))
     except ValueError:
-        raise CoshMLError(f"Invalid color value `{value}`. Expected a tuple of 3 integers e.g. `(255, 0, 0)`.")
+        raise CoshUIError.CoshML(f"Invalid color value `{value}`. Expected a tuple of 3 integers e.g. `(255, 0, 0)`.")
     
     if len(parsed) != 3 or not all(0 <= c <= 255 for c in parsed):
-        raise CoshMLError(f"Invalid color value `{value}`. Each channel must be between 0 and 255.")
+        raise CoshUIError.CoshML(f"Invalid color value `{value}`. Each channel must be between 0 and 255.")
     
     return parsed
 
 def validate_font(font: str, bold: bool, italic: bool):
     validated_font = resolve_font_variant(CoshUI._font_library.get(font), bold, italic, font)
     if validated_font is None:
-        raise CoshMLError(f"`{font}` is not a valid font.")
+        raise CoshUIError.CoshML(f"`{font}` is not a valid font.")
     
     return validated_font
 
@@ -30,7 +30,7 @@ def validate_font_size(size: str):
     try:
         final_size = int(size)
     except ValueError:
-        raise CoshMLError(f"Invalid size value `{size}` for font_size. Input a proper integer.")
+        raise CoshUIError.CoshML(f"Invalid size value `{size}` for font_size. Input a proper integer.")
     
     return final_size 
 # endregion
@@ -90,7 +90,7 @@ def tokenize(text: str) -> list[Token]:
         if text[i] == "[":
             end = text.find("]", i)
             if end == -1:
-                raise CoshMLError("Missing `]` closing tag. Did you forget to close a tag?")
+                raise CoshUIError.CoshML("Missing `]` closing tag. Did you forget to close a tag?")
             tag_content = text[i + 1:end]
             if tag_content == "/":
                 tokens.append(Token("close", ""))
@@ -118,7 +118,7 @@ def parse_tag(tag: str) -> dict:
         elif char == ")":
             depth -= 1
             if depth < 0:
-                raise CoshMLError(f"Unexpected ')' at position {i + 1} of CoshML tag `{tag}`.")
+                raise CoshUIError.CoshML(f"Unexpected ')' at position {i + 1} of CoshML tag `{tag}`.")
             current += char
 
         elif char == " " and depth == 0:
@@ -130,20 +130,20 @@ def parse_tag(tag: str) -> dict:
             current += char
 
     if depth > 0:
-        raise CoshMLError(f"Unclosed parenthesis in CoshML tag `{tag}`.")
+        raise CoshUIError.CoshML(f"Unclosed parenthesis in CoshML tag `{tag}`.")
     
     if current:
         parts.append(current)
 
     for part in parts:
         if part in TAGS: # This means the part is a TAG that has no value
-            raise CoshMLError(f"The tag `{part}` needs a value.")
+            raise CoshUIError.CoshML(f"The tag `{part}` needs a value.")
         elif "=" in part:
             key, value = part.split("=", 1)
             known_keys = set(TAGS.keys())
             if key not in known_keys:
                 close_match = difflib.get_close_matches(key, known_keys, n=1)
-                raise CoshMLError(
+                raise CoshUIError.CoshML(
                     f"Unknown CoshML attribute `{key}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?"
                 )
             style[key] = value
@@ -156,7 +156,7 @@ def parse_tag(tag: str) -> dict:
         else:
             all_known = list(KEYWORD_MAP.keys()) + list(CoshUI._text_style_class.keys())
             close_match = difflib.get_close_matches(part, all_known, n=1)
-            raise CoshMLError(
+            raise CoshUIError.CoshML(
                 f"Unknown CoshML tag `{part}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?"
             )
 
@@ -196,12 +196,12 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
                 style_stack.append(validate_style(current, overrides))
             case "close":
                 if len(style_stack) == 1:
-                    raise CoshMLError("Closing tag found without any tags, please follow the appropriate use of CoshML.")
+                    raise CoshUIError.CoshML("Closing tag found without any tags, please follow the appropriate use of CoshML.")
                 if len(style_stack) > 1:
                     style_stack.pop()
 
     if len(style_stack) != 1:
-        raise CoshMLError(f"{len(style_stack) - 1} unclosed tag(s). Did you forget a closing tag `[/]`?")
+        raise CoshUIError.CoshML(f"{len(style_stack) - 1} unclosed tag(s). Did you forget a closing tag `[/]`?")
 
     context.text = full_text
 

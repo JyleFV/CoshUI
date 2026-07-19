@@ -38,9 +38,9 @@ class CoshStyling:
                     r, g, b, width = self.border
                     self.border = ((r, g, b), width)
                 except TypeError:
-                    raise CoshUIError(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.") from None
+                    raise CoshUIError.Main(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.") from None
             else:
-                raise CoshUIError(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.")
+                raise CoshUIError.Main(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.")
 
 class CoshOverflow(Enum):
     HIDDEN = 0
@@ -192,7 +192,7 @@ class TextData:
     text_align: CoshTextAlign = CoshTextAlign.CENTER
     text_overflow: CoshTextOverflow = CoshTextOverflow.VISIBLE
     text: str | None = None
-    raw_text: str = None
+    raw_text: str | None = None
     runs: list[TextRun] = field(default_factory=list)
     lines: list[LineLayout] = field(default_factory=list)
     _layout_cache_key: tuple | None = None

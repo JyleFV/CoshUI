@@ -8,7 +8,7 @@ from .types import *
 from .user_functions import Ref
 from .utility import resolve_font_variant
 from .state import CoshUI
-from .cui_error import CoshUIError, warn
+from .cui_error import CoshUIError
 from .node_definitions import Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 from .text_engine import parse_coshml
@@ -27,7 +27,7 @@ class Container(ParentNode):
 
     def measure(self):
         if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
-            warn(f"Container has `AUTO` sizing with no children, setting sizing to `FILL`.")
+            CoshUIError.warn(f"Container has `AUTO` sizing with no children, setting sizing to `FILL`.")
             if self.width is CoshSizing.AUTO:
                 self.width = CoshSizing.FILL
             if self.height is CoshSizing.AUTO:
@@ -62,7 +62,7 @@ class Grid(ParentNode):
 
     def measure(self):
         if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
-            warn(f"Grid has `AUTO` sizing with no children, setting sizing to `FILL`.")
+            CoshUIError.warn(f"Grid has `AUTO` sizing with no children, setting sizing to `FILL`.")
             if self.width is CoshSizing.AUTO:
                 self.width = CoshSizing.FILL
             if self.height is CoshSizing.AUTO:
@@ -214,9 +214,9 @@ class Image(Element):
         if self.src:
             self.src = os.path.abspath(self.src)
             if not os.path.isfile(self.src):
-                raise CoshUIError(f"Image path `{self.src}` does not exist or is not a file.")
+                raise CoshUIError.Main(f"Image path `{self.src}` does not exist or is not a file.")
         else:
-            raise CoshUIError(f"Expected path value in `src` field.")
+            raise CoshUIError.Main(f"Expected path value in `src` field.")
 
     def get_render_data(self):
         data = self.get_base_render_data()
@@ -244,7 +244,7 @@ class Modal(ParentNode):
 
     def __post_init__(self):
         if self.id is None:
-            raise CoshUIError("ParentNode `Modal` must have an id.")
+            raise CoshUIError.Main("ParentNode `Modal` must have an id.")
 
         super().__post_init__()
 
@@ -263,7 +263,7 @@ class Dropdown(TextNode):
 
     def __post_init__(self):
         if self.item_list is None:
-            raise CoshUIError("Widget `Dropdown` must have a valid `item_list`")
+            raise CoshUIError.Main("Widget `Dropdown` must have a valid `item_list`")
 
         super().__post_init__()
 

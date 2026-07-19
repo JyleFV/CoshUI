@@ -23,7 +23,7 @@ class CoshLifecycle:
             for name in class_names:
                 if name not in CoshUI._style_class.keys():
                     close_match = difflib.get_close_matches(name, CoshUI._style_class.keys(), n=1)
-                    raise CoshUIError(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")   
+                    raise CoshUIError.Main(f"Class `{name}` doesn't exist. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")   
                 merged_style = merge_styles(merged_style, CoshUI._style_class.get(name))
 
             node.style = merge_styles(merged_style, node.style)
@@ -81,7 +81,7 @@ class CoshLifecycle:
     def prepare_node(node):
         if node.id:
             if node.id in CoshUI._active_ids:
-                raise CoshUIError(f"A node with id `{node.id}` already exists.")
+                raise CoshUIError.Main(f"A node with id `{node.id}` already exists.")
             CoshUI._active_ids.add(node.id)
             CoshLifecycle.reconcile(node)
         
@@ -124,10 +124,11 @@ class CoshLifecycle:
                 if val is None:
                     continue
                 
-                if not isinstance(val, allowed_types):
+                is_invalid_bool = isinstance(val, bool) and bool not in allowed_types
+                if not isinstance(val, allowed_types) or is_invalid_bool:
                     node_name = node.id if node.id else type(node).__name__
                     expected = ", ".join([t.__name__ for t in allowed_types])
                     
-                    raise CoshUIError(
+                    raise CoshUIError.Main(
                         f"Type Error on {type(node).__name__} Widget with name '{node_name}': Property `{property}` is set to `{val}` ({type(val).__name__}), but expected types are ({expected})."
                     )

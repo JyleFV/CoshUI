@@ -5,7 +5,7 @@ helpful and are used in multiple places in the codebase.
 
 import math
 
-from .cui_error import CoshUIError, warn
+from .cui_error import CoshUIError
 from .themes import CoshTheme
 from .state import CoshUI
 from .types import *
@@ -20,7 +20,7 @@ def resolve_border_radius(value: int | float | tuple) -> tuple:
         case (a, b, c, d):
             return (a, b, c, d)
         case _:
-            raise CoshUIError(f"Invalid border_radius `{value}`. Expected an int/float or a tuple of the 4 corner values (top-left, top-right, bottom-right, bottom-left).")
+            raise CoshUIError.Main(f"Invalid border_radius `{value}`. Expected an int/float or a tuple of the 4 corner values (top-left, top-right, bottom-right, bottom-left).")
 
 def resolve_four_value(value: int | float | tuple) -> FourSide:
     match value:
@@ -33,7 +33,7 @@ def resolve_four_value(value: int | float | tuple) -> FourSide:
         case (top, right, bottom, left):
             return FourSide(top, right, bottom, left)
         case _:
-            raise CoshUIError(f"Invalid padding/margin value `{value}`. Expected an int/float or a tuple of 4 values (top, right, bottom, left).")
+            raise CoshUIError.Main(f"Invalid padding/margin value `{value}`. Expected an int/float or a tuple of 4 values (top, right, bottom, left).")
 
 def point_in_rect(px, py, rx, ry, rw, rh):
     return (rx <= px <= rx + rw and ry <= py <= ry + rh)
@@ -162,7 +162,7 @@ def resolve_font_variant(font_entry, bold=False, italic=False, font_name=None):
     if font_entry is None:
         # Handles misspelled fonts
         if font_name is not None:
-            warn(f"Requested font `{font_name}` but it doesn't seem to be an existing font. Falling back to the default.")
+            CoshUIError.warn(f"Requested font `{font_name}` but it doesn't seem to be an existing font. Falling back to the default.")
 
         # Uses default font and handles different variants
         default_entry = CoshUI._font_library[CoshUI._default_font]
@@ -172,7 +172,7 @@ def resolve_font_variant(font_entry, bold=False, italic=False, font_name=None):
 
         variant = default_entry.get(variant_key)
         if variant is None:
-            warn(f"Default font `{CoshUI._default_font}` has no `{variant_key}` variant. Falling back to `base_font`.")
+            CoshUIError.warn(f"Default font `{CoshUI._default_font}` has no `{variant_key}` variant. Falling back to `base_font`.")
             return default_entry["base_font"]
         return variant
 
@@ -183,6 +183,6 @@ def resolve_font_variant(font_entry, bold=False, italic=False, font_name=None):
 
     variant = font_entry.get(variant_key)
     if variant is None:
-        warn(f"Requested `{variant_key}` variant for font `{font_name}` but it wasn't added with `add_font()`. Falling back to `base_font`.")
+        CoshUIError.warn(f"Requested `{variant_key}` variant for font `{font_name}` but it wasn't added with `add_font()`. Falling back to `base_font`.")
         return font_entry["base_font"]
     return variant

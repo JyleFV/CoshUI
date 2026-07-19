@@ -11,6 +11,11 @@ def main():
     itemList = ["Hello", "World", "My", "Name"]
     cui.add_class("label_color", cui.CoshStyling(background_color=(100, 255, 100)))
     cui.add_class("header", cui.TextStyle(color=(0, 0, 255), italic=True, font="Courier", bold=True, strikethrough=True, underline=True, font_size=48))
+    cui.create_theme("dark", cui.CoshTheme(
+        tokens=dict(primary_color=(255, 100, 100)),
+    ),
+    inherit="DEFAULT")
+    cui.set_theme("dark")
 
     while not rl.window_should_close():
         rl.begin_drawing()

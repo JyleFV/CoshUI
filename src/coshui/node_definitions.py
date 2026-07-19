@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from .types import *
 from .state import CoshUI
-from .cui_error import CoshUIError, warn
+from .cui_error import CoshUIError
 from .lifecycle import CoshLifecycle
 from .utility import create_single_text_data, resolve_font_variant
 from ._defaults import ENGINE_DEFAULTS
@@ -33,7 +33,7 @@ class Node(ABC):
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning is not CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
-            warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
+            CoshUIError.warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
         
         self._x = self.x if self.x is not None else 0.0
         self._y = self.y if self.y is not None else 0.0
@@ -97,7 +97,7 @@ class Element(Node):
 
     def __post_init__(self):
         if self.id is None:
-            raise CoshUIError(f"Widget `{self.__class__.__name__}` must have an id.")
+            raise CoshUIError.Main(f"Widget `{self.__class__.__name__}` must have an id.")
 
         super().__post_init__()
 

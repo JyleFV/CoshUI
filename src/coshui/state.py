@@ -14,7 +14,7 @@ DEFAULT_THEME = CoshTheme(
         "btn_width": 100,
         "btn_height": 30,
         "default_font_size": 18,
-        "brand_blue": (86, 115, 143),
+        "primary_color": (86, 115, 143),
         "accent_purple": (85, 75, 255),
         "light_gray": (200, 200, 200),
         "dark_gray": (100, 100, 100),
@@ -25,7 +25,7 @@ DEFAULT_THEME = CoshTheme(
         "Button": {
             "width": "@btn_width",
             "height": "@btn_height",
-            "background_color": "@brand_blue",
+            "background_color": "@primary_color",
             "border": ((255, 255, 255), 1),
             "border_radius": 5,
             "font_size": "@default_font_size"
