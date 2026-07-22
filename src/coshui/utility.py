@@ -104,40 +104,58 @@ def _rotate_point_around(px, py, cx, cy, angle_degrees):
 def _find_line_breaks(full_text, max_width, text_overflow, run_ranges):
     from ._defaults import ENGINE_DEFAULTS
 
-    if text_overflow is not CoshTextOverflow.WRAP:
-        return [(0, len(full_text))]  # one line, no wrapping
-
     def measure(text_slice, start_char):
-        # find which run covers this char to get its font/size for measuring
         for run_start, run_end, run in run_ranges:
             if run_start <= start_char < run_end:
                 size = run.font_size or ENGINE_DEFAULTS["font_size"]
                 return CoshUI._measure_run(run.font, size, text_slice)[0]
         return 0
 
+    # Split on hard newlines first. Each paragraph is laid out (and
+    # word-wrapped, if applicable) independently, so a `[n]` tag always
+    # forces a break regardless of text_overflow mode.
+    paragraph_bounds = []
+    para_start = 0
+    for idx, ch in enumerate(full_text):
+        if ch == '\n':
+            paragraph_bounds.append((para_start, idx))
+            para_start = idx + 1
+    paragraph_bounds.append((para_start, len(full_text)))
+
     lines = []
-    line_start = 0
-    current_line_end = 0
-    i = 0
-    while i <= len(full_text):
-        next_space = full_text.find(' ', i)
-        word_end = next_space if next_space != -1 else len(full_text)
 
-        test_slice = full_text[line_start:word_end]
-        test_width = measure(test_slice, line_start)
+    for p_start, p_end in paragraph_bounds:
+        if text_overflow is not CoshTextOverflow.WRAP:
+            lines.append((p_start, p_end))
+            continue
 
-        if test_width <= max_width or current_line_end == line_start:
-            current_line_end = word_end
-            i = word_end + 1
-        else:
-            lines.append((line_start, current_line_end))
-            line_start = current_line_end + 1
-            i = line_start
+        if p_start == p_end:
+            lines.append((p_start, p_end))  # blank line (e.g. "[n][n]")
+            continue
 
-        if next_space == -1:
-            break
+        line_start = p_start
+        current_line_end = p_start
+        i = p_start
+        while i <= p_end:
+            next_space = full_text.find(' ', i, p_end)
+            word_end = next_space if next_space != -1 else p_end
 
-    lines.append((line_start, len(full_text)))
+            test_slice = full_text[line_start:word_end]
+            test_width = measure(test_slice, line_start)
+
+            if test_width <= max_width or current_line_end == line_start:
+                current_line_end = word_end
+                i = word_end + 1
+            else:
+                lines.append((line_start, current_line_end))
+                line_start = current_line_end + 1
+                i = line_start
+
+            if next_space == -1:
+                break
+
+        lines.append((line_start, p_end))
+
     return lines
 
 def _justify_offset(node_width, line_width, justify):

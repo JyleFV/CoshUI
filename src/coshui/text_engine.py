@@ -80,7 +80,7 @@ class TextRun(TextStyle):
 
 @dataclass
 class Token:
-    type: Literal["text", "tag", "close"]
+    type: Literal["text", "tag", "close", "newline"]
     value: str
 
 def tokenize(text: str) -> list[Token]:
@@ -94,6 +94,8 @@ def tokenize(text: str) -> list[Token]:
             tag_content = text[i + 1:end]
             if tag_content == "/":
                 tokens.append(Token("close", ""))
+            elif tag_content == "n": # Newline
+                tokens.append(Token("newline", ""))
             else:
                 tokens.append(Token("tag", tag_content))
             i = end + 1
@@ -178,22 +180,13 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
     for token in tokens:
         match token.type:
             case "text":
-                current = style_stack[-1]
-                context.runs.append(TextRun(
-                    text=token.value,
-                    color=current.color,
-                    font=current.font,
-                    font_size=current.font_size,
-                    bold=current.bold,
-                    italic=current.italic,
-                    underline=current.underline,
-                    strikethrough=current.strikethrough,
-                ))
-                full_text += token.value
+                full_text += emit_characters(style_stack, context, token.value)
             case "tag":
                 current = style_stack[-1]
                 overrides = parse_tag(token.value)
                 style_stack.append(validate_style(current, overrides))
+            case "newline":
+                full_text += emit_characters(style_stack, context, "\n")
             case "close":
                 if len(style_stack) == 1:
                     raise CoshUIError.CoshML("Closing tag found without any tags, please follow the appropriate use of CoshML.")
@@ -201,6 +194,7 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
                     style_stack.pop()
 
     if len(style_stack) != 1:
+        print(style_stack)
         raise CoshUIError.CoshML(f"{len(style_stack) - 1} unclosed tag(s). Did you forget a closing tag `[/]`?")
 
     context.text = full_text
@@ -240,4 +234,18 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
         strikethrough=overrides.get("strikethrough", current.strikethrough),
         _font_family=override_font_family
     )
+
+def emit_characters(style_stack, context, value):
+    current = style_stack[-1]
+    context.runs.append(TextRun(
+        text=value,
+        color=current.color,
+        font=current.font,
+        font_size=current.font_size,
+        bold=current.bold,
+        italic=current.italic,
+        underline=current.underline,
+        strikethrough=current.strikethrough,
+    ))
+    return value
 # endregion
