@@ -202,21 +202,8 @@ class PygameBackend(CoshBackend):
         CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]
 
     def measure_text(self, text_data) -> tuple:
-        if not text_data.runs:
-            return (0, 0)
-        
-        total_width = 0
-        max_height = 0
-        
-        for run in text_data.runs:
-            font = _get_font(run.font, run.font_size)
-        
-            width, height = font.size(run.text)
-        
-            total_width += width
-            max_height = max(height, max_height)
-        
-        return (total_width, max_height)
+        from ...utility import measure_intrinsic_text  # adjust relative import per backend depth
+        return measure_intrinsic_text(text_data)
     
     def measure_run(self, font_path, font_size, text):
         font = _get_font(font_path, font_size)

@@ -103,20 +103,11 @@ def get_atlas(font_path: str, font_size: int) -> GlyphAtlas:
 def measure_text(text_data) -> tuple:
     if not text_data.runs:
         return (0, 0)
-
     cache_key = tuple((run.font, run.font_size, run.text) for run in text_data.runs)
     if cache_key in _measure_text_cache:
-        return _measure_text_cache.get(cache_key)
-
-    total_width = 0
-    max_height = 0
-
-    for run in text_data.runs:
-        width, height = measure_run(run.font, run.font_size, run.text)
-        total_width += width
-        max_height = max(max_height, height)
-
-    result = (total_width, max_height)
+        return _measure_text_cache[cache_key]
+    from ....utility import measure_intrinsic_text
+    result = measure_intrinsic_text(text_data)
     _measure_text_cache[cache_key] = result
     return result
 

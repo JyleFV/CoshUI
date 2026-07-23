@@ -1,4 +1,5 @@
 # CoshUI - 0.3.3 Changelog
+Posted: `August X, 2026`
 
 ### Theme System v2.0:
 The new theme rework has made it a lot more accessible and actually worth it to make your own themes, by introducing a `token` system that lets users define values and reuse it and also an `inheritance` system that lets themes simply create a copy of an existing theme and override those values as opposed to making new themes from scratch.
@@ -25,7 +26,10 @@ cui.create_theme(
 This creates a new theme with `DEFAULT` as the base theme, it will take all the values inside the `DEFAULT` theme and use your new theme as an override. The example will override the `primary_color` token which will change the value of every Node that uses that token.
 
 ### New Features:
-- **Newline**: CoshML now supports the `[n]` (newline) tag. Breaks the current line and puts the text after it to the new line.
+- **Newline**: CoshML now supports the `[n]` (newline) tag. Breaks the current line and puts the text after it to the new line. You can also just use `\n` to indicate newline, there is *almost* no difference for the system.
+- **Property Type Checker**: CoshUI now raises errors if a Node's property is the wrong type (e.g. `width="Hello"`, `font=21`, or `alpha=True`). This works with `inline` properties, `class` properties, and `theme` properties.
+> [!WARNING]
+> The type checker skips `None` values, so those can still raise weird errors if a property which ***should*** have a value is set to `None`. Not only that, it currently doesn't check *every* Node property. 
 
 ### Refactors:
 - **Create Theme Function**: The `create_theme()` function has gotten an overhaul with the new `inherit` parameter (which if passed the name of an existing theme, that theme will be used as a base of the users new theme).
@@ -38,7 +42,7 @@ This creates a new theme with `DEFAULT` as the base theme, it will take all the 
 > For contributors, `warn` is also part of CoshUIError, so when calling `warn()`, do `CoshUIError.warn()`.
 
 ### Bug Fixes:
-- **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`
+- **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`.
 
 ### Planned for 0.3.4 and above:
 - **Particle System**: v1.0 of the particle system.

@@ -101,6 +101,39 @@ def _rotate_point_around(px, py, cx, cy, angle_degrees):
     cos_a, sin_a = math.cos(rad), math.sin(rad)
     return (cx + dx * cos_a - dy * sin_a, cy + dx * sin_a + dy * cos_a)
 
+def measure_intrinsic_text(text_data) -> tuple:
+    from ._defaults import ENGINE_DEFAULTS
+
+    runs = text_data.runs
+    if not runs:
+        return (0.0, 0.0)
+
+    max_width = 0.0
+    total_height = 0.0
+    line_width = 0.0
+    line_height = 0.0
+
+    for run in runs:
+        font_size = run.font_size or ENGINE_DEFAULTS["font_size"]
+        segments = run.text.split("\n")
+
+        for i, segment in enumerate(segments):
+            if segment:
+                w, h = CoshUI._measure_run(run.font, font_size, segment)
+                line_width += w
+                line_height = max(line_height, h)
+
+            if i < len(segments) - 1:  # hit a hard break
+                max_width = max(max_width, line_width)
+                total_height += line_height or font_size
+                line_width = 0.0
+                line_height = 0.0
+
+    max_width = max(max_width, line_width)
+    total_height += line_height or (runs[-1].font_size or ENGINE_DEFAULTS["font_size"])
+
+    return (max_width, total_height)
+
 def _find_line_breaks(full_text, max_width, text_overflow, run_ranges):
     from ._defaults import ENGINE_DEFAULTS
 
