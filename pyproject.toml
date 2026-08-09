@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coshui"
-version = "0.3.2.1"
+version = "0.3.3"
 authors = [{name = "Jyle Frazier Villareal", email = "jylefraziervillareal@gmail.com"}]
 description = "A Python-first — Declarative-Mode — Backend-Agnostic — UI Library"
 readme = "README.md"

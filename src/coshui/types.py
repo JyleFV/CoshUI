@@ -42,6 +42,18 @@ class CoshStyling:
             else:
                 raise CoshUIError.Main(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.")
 
+    @staticmethod
+    def valid_property_types() -> dict:
+        return {
+            "background_color": (TupleLength(3, 4, element_types=(int, float)), int, float, type(None)),
+            "alpha": (int,),
+            "border": (tuple, type(None)), # already has a check, so there's no point in doing TupleLength
+            "border_radius": (TupleLength(4, element_types=(int, float)), int, float),
+            "transform_scale": (int, float),
+            "transform_rotation": (int, float),
+            "transform_position": (TupleLength(2, element_types=(int, float)),)
+        }
+
 class CoshOverflow(Enum):
     HIDDEN = 0
     VISIBLE = 1
@@ -142,6 +154,35 @@ class FourCorner(NamedTuple):
     bottom_right: float
     bottom_left: float
 
+class TupleLength:
+    """
+    A class that helps with type checking tuple properties, it stores tuple lengths
+    and the types of the values within the tuples. This should be used as a substitute for 
+    the `tuple` data structure in `valid_property_types()` calls.
+    """
+    def __init__(self, *lengths: int, element_types: tuple[type, ...] | None = None, label: str | None = None):
+        self.lengths = lengths
+        self.element_types = element_types
+        self.label = label or self._build_label()
+
+    def _build_label(self) -> str:
+        base = f"a {'/'.join(map(str, self.lengths))}-value tuple"
+        if self.element_types:
+            type_names = "/".join(t.__name__ for t in self.element_types)
+            base += f" of {type_names}"
+        return base
+
+    def matches(self, val) -> bool:
+        if not isinstance(val, tuple) or len(val) not in self.lengths:
+            return False
+        if self.element_types is not None:
+            for v in val:
+                if isinstance(v, bool) and bool not in self.element_types:
+                    return False
+                if not isinstance(v, self.element_types):
+                    return False
+        return True
+
 class RenderContext(NamedTuple):
     # Node-specific
     id: str | None = None
@@ -239,4 +280,4 @@ def is_valid_border(border):
         isinstance(border[1], int)
     )
 
-__all__ = ['FourSide', 'LineLayout', 'CoshShape', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['TupleLength', 'FourSide', 'LineLayout', 'CoshShape', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

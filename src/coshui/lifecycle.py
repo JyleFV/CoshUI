@@ -2,7 +2,7 @@ import difflib
 
 from .cui_error import CoshUIError
 from .state import CoshUI
-from .types import CoshSizing, CoshPercentage
+from .types import TupleLength
 
 class CoshLifecycle:
     @staticmethod
@@ -91,44 +91,40 @@ class CoshLifecycle:
 
     @staticmethod
     def validate_node_types(node):
-        # Holds properties and their supposed types
-        # TODO: Add all property's types on every Node
-        VALID_PROPERTY_TYPES = {
-            "id": (str,),
-            "width": (int, float, CoshSizing, CoshPercentage),
-            "height": (int, float, CoshSizing, CoshPercentage),
-            "margin": (tuple, int, float),
-            "padding": (tuple, int, float),
-            "gap": (int, float),
-            "background_color": (tuple,),
-            "alpha": (int,),
-            "border": (tuple,),
-            "border_radius": (tuple, int, float),
-            "font_size": (int,),
-            "transform_scale": (int, float),
-            "transform_rotation": (int, float),
-            "transform_position": (tuple,),
-            "text_color": (tuple,),
-            "text": (str,)
-        }
+        from ._defaults import ENGINE_DEFAULTS
 
-        for target in (node, node.style):
-            if not target:
-                continue
-                
-            for property, allowed_types in VALID_PROPERTY_TYPES.items():
+        for target, type_map in ((node, node.valid_property_types()), (node.style, node.style.valid_property_types())):
+            for property, allowed_types in type_map.items():
                 if not hasattr(target, property):
                     continue
-                    
+
                 val = getattr(target, property)
+
                 if val is None:
-                    continue
-                
-                is_invalid_bool = isinstance(val, bool) and bool not in allowed_types
-                if not isinstance(val, allowed_types) or is_invalid_bool:
+                    if property in ENGINE_DEFAULTS or type(None) in allowed_types:
+                        continue
                     node_name = node.id if node.id else type(node).__name__
-                    expected = ", ".join([t.__name__ for t in allowed_types])
-                    
+                    raise CoshUIError.Main(
+                        f"Type Error on {type(node).__name__} Widget with name '{node_name}': Property `{property}` cannot be None."
+                    )
+
+                # Split length-constrained checks from plain isinstance checks
+                length_checks = [t for t in allowed_types if isinstance(t, TupleLength)]
+                plain_types = tuple(t for t in allowed_types if not isinstance(t, TupleLength))
+
+                is_valid = False
+                if length_checks and any(lc.matches(val) for lc in length_checks):
+                    is_valid = True
+                elif plain_types:
+                    is_invalid_bool = isinstance(val, bool) and bool not in plain_types
+                    is_valid = isinstance(val, plain_types) and not is_invalid_bool
+
+                if not is_valid:
+                    node_name = node.id if node.id else type(node).__name__
+                    expected_parts = [t.__name__ if t is not type(None) else "None" for t in plain_types]
+                    expected_parts += [lc.label for lc in length_checks]
+                    expected = ", ".join(expected_parts)
+
                     raise CoshUIError.Main(
                         f"Type Error on {type(node).__name__} Widget with name '{node_name}': Property `{property}` is set to `{val}` ({type(val).__name__}), but expected types are ({expected})."
                     )

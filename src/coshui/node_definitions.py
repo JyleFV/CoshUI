@@ -46,6 +46,18 @@ class Node(ABC):
     def get_render_data(self) -> RenderContext:
         pass
 
+    def valid_property_types(self) -> dict:
+        return {
+            "width": (int, float, CoshSizing, CoshPercentage),
+            "height": (int, float, CoshSizing, CoshPercentage),
+            "margin": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
+            "classes": (str, type(None)),
+            "mouse_filter": (CoshMouseFilter,),
+            "positioning": (CoshPositioning,),
+            "z_index": (int,),
+            "id": (str, type(None))
+        }
+    
     def get_base_render_data(self) -> dict:
         transform_x, transform_y = self.style.transform_position
         return {
@@ -84,6 +96,19 @@ class ParentNode(Node):
 
     def __exit__(self, *args):
         CoshUI._stack.pop()
+
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "justify": (CoshJustify,),
+            "align": (CoshAlign,),
+            "overflow": (CoshOverflow,),
+            "padding": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
+            "gap": (int, float, type(None)),
+            "src": (str, type(None))
+        }
+        return base_types
+
 
     def get_render_data(self) -> RenderContext:
         data = self.get_base_render_data()
@@ -124,7 +149,7 @@ class TextNode(Element):
         self.font = resolve_font_variant(CoshUI._font_library.get(self.font, None), self.bold, self.italic, self.font)
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         self.text_data = create_single_text_data(
-            self.text, self.text_align, 
+            self.text if self.text is not None else "", self.text_align, 
             self.text_justify, self.text_overflow, 
             self.text_color, self.font_size , self.font,
             self.strikethrough, self.underline
@@ -139,6 +164,23 @@ class TextNode(Element):
                 self.width = w
             if self.height is CoshSizing.AUTO:
                 self.height = h
+
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "text": (str, type(None)),
+            "font": (str, type(None)),
+            "font_size": (int,),
+            "text_color": (TupleLength(3, element_types=(int,)),),
+            "text_align": (CoshTextAlign,),
+            "text_justify": (CoshTextJustify,),
+            "text_overflow": (CoshTextOverflow,),
+            "bold": (bool,),
+            "italic": (bool,),
+            "strikethrough": (bool,),
+            "underline": (bool,)
+        }
+        return base_types
 
     def get_render_data(self):
         data = self.get_base_render_data()

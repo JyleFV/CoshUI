@@ -35,12 +35,20 @@ def validate_font_size(size: str):
     return final_size 
 # endregion
 
+"""
+Tags are keywords in the language that require a value that's set using `=`.
+These require "validators", functions that check whether the value can be submitted
+"""
 TAGS = {
     "color": validate_color,
     "font": validate_font,
     "font_size": validate_font_size
 }
 
+"""
+Keywords are words that automatically set the TextStyle values of a TextRun without 
+requiring those values to be set using `=`.
+"""
 KEYWORD_MAP = {
     "bold": ("bold", True),
     "italic": ("italic", True),

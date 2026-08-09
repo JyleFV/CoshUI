@@ -21,8 +21,9 @@ if TYPE_CHECKING:
 
 @dataclass
 class Container(ParentNode):
-    """The base Container Node, simple but the most customizable."""
-
+    """
+    The base Container Node, simple but the most customizable.
+    """
     direction: CoshDirection = CoshDirection.ROW
 
     def measure(self):
@@ -54,10 +55,18 @@ class Container(ParentNode):
         if self.height is CoshSizing.AUTO:
             self.height = auto_height
 
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "direction": (CoshDirection,)
+        }
+        return base_types
+
 @dataclass
 class Grid(ParentNode):
-    """A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row."""
-    
+    """
+    A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row.
+    """
     column_count: int = 1
 
     def measure(self):
@@ -103,6 +112,13 @@ class Grid(ParentNode):
             self.width = min_content_width
         if self.height is CoshSizing.AUTO:
             self.height = min_content_height
+
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "column_count": (int,)
+        }
+        return base_types
 
 # ======================== Widgets ========================
 
@@ -156,7 +172,7 @@ class RichLabel(TextNode):
         text = CoshUI.get_state(self.id, "text_data")
         if text is None or current != text.cached_state():
             parsed_text = parse_coshml(
-                self.text, self.text_color, font_name,
+                self.text if self.text is not None else "", self.text_color, font_name,
                 self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 
@@ -174,9 +190,20 @@ class RichLabel(TextNode):
 
         return RenderContext(**data)
 
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "letter_spacing": (int, float, type(None)),
+            "line_spacing": (int, float, type(None)),
+            "word_spacing": (int, float, type(None))
+        }
+        return base_types
+
 @dataclass
 class Checkbox(Element):
-    """ NOTE: Checkboxes don't support background_color animations as background_color is a direct representation of it's functional state """
+    """
+    Checkboxes don't support background_color animations as background_color is a direct representation of it's functional state
+    """
     checked: bool =  False
     checked_color: tuple | None = None
     unchecked_color: tuple | None = None
@@ -204,6 +231,16 @@ class Checkbox(Element):
     def get_render_data(self):
         return RenderContext(**self.get_base_render_data())
 
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "checked": (bool,),
+            "checked_color": (TupleLength(3, element_types=(int,)), type(None)),
+            "unchecked_color": (TupleLength(3, element_types=(int,)), type(None)),
+            "bind": (Ref, type(None))
+        }
+        return base_types
+
 @dataclass
 class Image(Element):
     src: str | None = None
@@ -223,6 +260,13 @@ class Image(Element):
         data["image_src"] = self.src
         return RenderContext(**data)
 
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "src": (str, type(None))
+        }
+        return base_types
+
 # Literally just a filler datatype
 @dataclass
 class Box(Element):
@@ -235,8 +279,8 @@ class Box(Element):
 
 @dataclass
 class Modal(ParentNode):
-    positioning: CoshPositioning = CoshPositioning.ABSOLUTE
-    direction: CoshDirection = CoshDirection.ROW
+    positioning: CoshPositioning = CoshPositioning.ABSOLUTE # overrides Node
+    direction: CoshDirection = CoshDirection.ROW # overrides ParentNode
     header_color: tuple | None = None
     header_border_radius: tuple | None = None
     content_color: tuple | None = None
@@ -250,6 +294,17 @@ class Modal(ParentNode):
 
     def measure(self):
         pass
+
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "direction": (CoshDirection,), # This class inherits ParentNode, not Container, so this needs to be set.
+            "header_color": (TupleLength(3, element_types=(int,)), type(None)),
+            "header_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None)),
+            "content_color": (TupleLength(3, element_types=(int,)), type(None)),
+            "content_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None))
+        }
+        return base_types
 
 @dataclass
 class InputField(TextNode):
@@ -280,6 +335,15 @@ class Dropdown(TextNode):
     def get_render_data(self):
         return None
 
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "item_list": (list,),
+            "selector_index": (int,),
+            "bind": (Ref, type(None))
+        }
+        return base_types
+
 @dataclass
 class Slider(Element):
     min_value: float = 0.0
@@ -304,3 +368,17 @@ class Slider(Element):
 
     def get_render_data(self):
         return None
+
+    def valid_property_types(self):
+        base_types = {
+            **super().valid_property_types(),
+            "min_value": (int, float),
+            "max_value": (int, float),
+            "step": (int, float),
+            "value": (float,type(None)),
+            "bind": (Ref, type(None)),
+            "thumb_size": (int, type(None)),
+            "thumb_color": (TupleLength(3, element_types=(int,)), type(None)),
+            "track_color": (TupleLength(3, element_types=(int,)), type(None))
+        }
+        return base_types
