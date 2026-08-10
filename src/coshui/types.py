@@ -23,6 +23,7 @@ class CoshStyling:
     transform_scale: float | None = None
 
     def __post_init__(self):
+        from .utility import is_valid_border
         # Lets user use a 4 value tuple for background_color or a 3 value tuple with an explicit alpha field or default.
         if self.background_color is not None and len(self.background_color) == 4:
             r, g, b, a = self.background_color
@@ -45,7 +46,7 @@ class CoshStyling:
     @staticmethod
     def valid_property_types() -> dict:
         return {
-            "background_color": (TupleLength(3, 4, element_types=(int, float)), int, float, type(None)),
+            "background_color": (TupleLength(3, 4, element_types=(int, float)), type(None)),
             "alpha": (int,),
             "border": (tuple, type(None)), # already has a check, so there's no point in doing TupleLength
             "border_radius": (TupleLength(4, element_types=(int, float)), int, float),
@@ -212,9 +213,6 @@ class RenderContext(NamedTuple):
     # Overflow-logic
     clip_rect: tuple | None = None
 
-class ParticleContext(NamedTuple):
-    particles: list = field(default_factory=list)
-
 class RectData:
     pass
 
@@ -270,14 +268,5 @@ class LineLayout:
     y: float
     height: float
     fragments: list = field(default_factory=list)
-
-# HELPER
-def is_valid_border(border):
-    return (
-        isinstance(border, tuple) and len(border) == 2 and
-        isinstance(border[0], tuple) and len(border[0]) == 3 and
-        all(isinstance(x, int) for x in border[0]) and
-        isinstance(border[1], int)
-    )
 
 __all__ = ['TupleLength', 'FourSide', 'LineLayout', 'CoshShape', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

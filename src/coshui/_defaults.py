@@ -1,6 +1,6 @@
 from .user_functions import animate
 from .state import CoshUI
-from .types import CoshSizing, CoshPercentage
+from .types import CoshSizing
 from .utility import adjust_brightness_value
 
 ENGINE_DEFAULTS = {
@@ -17,19 +17,6 @@ ENGINE_DEFAULTS = {
     "font_size": 16,
     "text_color": (255, 255, 255),
     "thumb_size": 20
-}
-
-VALID_STYLE_TYPES = {
-    "background_color": tuple,  # e.g., (255, 255, 255)
-    "text_color": tuple,
-    "width": (int, float, CoshSizing, CoshPercentage),
-    "height": (int, float, CoshSizing, CoshPercentage),
-    "margin": (int, float),
-    "padding": (int, float),
-    "gap": (int, float),
-    "alpha": (int,),
-    "border_radius": (int, float),
-    "font_size": (int,),
 }
 
 # Button

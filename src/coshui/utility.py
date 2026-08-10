@@ -203,6 +203,14 @@ def _align_offset(node_height, total_height, align):
         case CoshTextAlign.CENTER: return (node_height - total_height) / 2
         case CoshTextAlign.BOTTOM: return node_height - total_height
 
+def is_valid_border(border):
+    return (
+        isinstance(border, tuple) and len(border) == 2 and
+        isinstance(border[0], tuple) and len(border[0]) == 3 and
+        all(isinstance(x, int) for x in border[0]) and
+        isinstance(border[1], int)
+    )
+
 def print_tree(node):
     print(f"Node: {node.__class__.__name__} with node_id: {node.id}\n")
     for child in node.children:

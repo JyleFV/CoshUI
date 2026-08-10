@@ -1,10 +1,12 @@
+COSHUI_VERSION = "0.3.3"
+
 from .core import CoshUIRenderer
 
 from .widgets import Container, Grid, Modal, Button, Label, Checkbox, Image, Slider, Dropdown, RichLabel
 
 from .text_engine import TextStyle
 
-from .user_functions import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme, animate
+from .user_functions import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme, animate, type_checking
 
 from .types import CoshMode, CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
 
@@ -97,6 +99,8 @@ from .backends.graphics.gl_related.gl_window_drivers import Windower
 GLFW = Windower.GLFW
 MGLW = Windower.MGLW
 
+print(f"CoshUI {COSHUI_VERSION}")
+
 # TODO: Add the different flat variables
 __all__ = [
     # Core
@@ -132,6 +136,7 @@ __all__ = [
     "add_font",
     "add_class",
     "set_default_font",
+    "type_checking",
 
     # Types (raw enums)
     "CoshStyling",

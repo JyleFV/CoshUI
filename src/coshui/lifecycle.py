@@ -17,6 +17,9 @@ class CoshLifecycle:
         if node.classes:
             from .utility import merge_styles
             from .types import CoshStyling
+
+            if not isinstance(node.classes, (str, list, tuple)):
+                raise CoshUIError.Main(f"Type Error for class in Node `{node.id if node.id is not None else type(node).__name__}`. Ecxpected `(str, list, tuple)` but got `{type(node.classes).__name__}`.")
             class_names = node.classes.split() if isinstance(node.classes, str) else node.classes
 
             merged_style = CoshStyling()
@@ -87,7 +90,8 @@ class CoshLifecycle:
         
         CoshLifecycle.apply_styling(node)
         CoshLifecycle.apply_theme(node)
-        CoshLifecycle.validate_node_types(node)
+        if CoshUI._type_check:
+            CoshLifecycle.validate_node_types(node)
 
     @staticmethod
     def validate_node_types(node):

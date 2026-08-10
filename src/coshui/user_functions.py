@@ -199,22 +199,14 @@ def animate(n_property: str, target_id: str, end_value, duration: float, easing:
     ease_fn = EASING_MAP.get(easing, ease_linear)
     return CoshUI._tween_manager.create_tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)
 
-def create_particle(x: int, y: int, direction: float | int = 0.0, spread: float | int = 0.0, count: int = 1, speed: int | float | tuple = 0, lifetime: int | float | tuple = 1, shape: CoshShape = CoshShape.CIRCLE, color: tuple = (255, 255, 255)):
+def type_checking(value: bool):
     """
-    Calls the ParticleManager to create Particles. Spawns `count` amount of particles that spread in a specified direction with the specified speed.
+    A function to turn off type checking which may reduce build time. Recommended to set this once your programs types are fool proof.
 
     ### Parameters
 
-    - **x**: The x coordinate of the Particles position.
-    - **y**: The y coordinate of the Particles position.
-    - **direction**: The direction the Particles will fly to in degrees.
-    - **spread**: The spread of the Particles when they fly in that direction (set this to 360.0 so particles spread everywhere).
-    - **count**: The amount of Particles to be spawned.
-    - **speed**: The speed of the Particles (this can be a range by passing in a 2-value tuple of speed values).
-    - **lifetime**: How long the Particles survive before being deleted. Like speed, you can also pass in a range of lifetime values.
-    - **shape**: The shape of the Particles.
-    - **color**: The color of the emitted Particles.
+    - **value**: A boolean value that determines whether type checking is turned on.
     """
 
-
-    pass
+    if not value:
+        CoshUI._type_check = value

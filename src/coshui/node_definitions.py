@@ -48,8 +48,8 @@ class Node(ABC):
 
     def valid_property_types(self) -> dict:
         return {
-            "width": (int, float, CoshSizing, CoshPercentage),
-            "height": (int, float, CoshSizing, CoshPercentage),
+            "width": (int, float, CoshSizing, CoshPercentage, type(None)),
+            "height": (int, float, CoshSizing, CoshPercentage, type(None)),
             "margin": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
             "classes": (str, type(None)),
             "mouse_filter": (CoshMouseFilter,),

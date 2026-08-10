@@ -28,11 +28,15 @@ This creates a new theme with `DEFAULT` as the base theme, it will take all the 
 ### New Features:
 - **Newline**: CoshML now supports the `[n]` (newline) tag. Breaks the current line and puts the text after it to the new line. You can also just use `\n` to indicate newline, there is *almost* no difference for the system.
 - **Property Type Checker**: CoshUI now raises errors if a Node's property is the wrong type (e.g. `width="Hello"`, `font=21`, or `alpha=True`). This works with `inline` properties (and with `class` and `theme` properties if used).
-    - **Note for Contributors**: The type checker has a lot of subtleties that is non-obvious, such as `type(None)`, the use of `TupleLength`, and `super()` calls in class inheritance. Remember that new widgets which add new properties *should always* have a `valid_property_types()` method that copy's the parent's types by calling and unpacking `super().valid_property_types()` inside the new dict and adding the types of the new value. Also remember that overriding a parent's property with a new base value doesn't count as a *new* property and ***should not*** be added as a `valid_property_types()` entry if any of its parent already covers it.
+    - **Toggleable Type Checking**: Type checking is toggleable with the new function `type_checking()`. When type checking is turned off, it may *slightly* or ***significantly*** reduce "build time". It's recommended to call this before your main loop once your programs types are fool-proof.
+    - **Note for Contributors**: The type checker has a lot of subtleties that are non-obvious, such as `type(None)`, the use of `TupleLength`, and `super()` calls in class inheritance. Remember that new widgets which add new properties *should always* have a `valid_property_types()` method that copy's the parent's types by calling and unpacking `super().valid_property_types()` inside the new dict and adding the types of the new value. Also remember that overriding a parent's property with a new base value doesn't count as a *new* property and ***should not*** be added as a `valid_property_types()` entry if any of its parent already covers it.
+- **Type Error for Classes**: Added type error for Node classes. If an unexpected datatype is passed (i.e. `classes=10` or `classes=False`), it will provide a proper error. This is slightly different from the **type checker** as classes are checked before the type checker runs.
+
+### Breaking Changes:
+- **Theme Creation**: The `create_theme()` function has gotten an addition with the new `inherit` parameter (which if passed the name of an existing theme, that theme will be used as a base of the users new theme) along with the `CoshTheme()` API overhaul, introducing the new `tokens` and `nodes` parameters.
 
 ### Refactors:
-- **Create Theme Function**: The `create_theme()` function has gotten an overhaul with the new `inherit` parameter (which if passed the name of an existing theme, that theme will be used as a base of the users new theme).
-- **Type Validation for Properties**: Most Node properties now has type validation in their lifecycle, it runs after class styles, theme values, and explicit styles are set on a Node so it should always catch those values properly.
+- **Type Validation in Lifecycle**: Node properties now has type validation in their lifecycle, it runs after class styles, theme values, and explicit styles are set on a Node so it *should* always catch those values properly. This slightly increases `build_time` but is an overall good change.
 - **Build Time & Finalized Defaults**: The Debugger has added the Node build time and `finalized_defaults` pass in its `Profiler`.
 - **Errors**: Reworked Errors to all be under the `CoshUIError` namespace. This makes it easier to handle future error types thanks to centralizing them into one namespace. There are currently 2 types of *"errors"*:
     - `CoshUIError.Main`: Formerly `CoshUIError`, this error is for general errors concerning the main API and callsites.
@@ -41,12 +45,13 @@ This creates a new theme with `DEFAULT` as the base theme, it will take all the 
 
 ### Bug Fixes:
 - **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`.
-- **Empty Text**: RichLabel and Label making an error if `text` is set to None.
+- **Empty Text**: RichLabel and Label making an error if `text` is set to None. (This is a little weird)
 
 ### Planned for 0.3.4 and above:
-- **Particle System**: v1.0 of the particle system.
 - **Previously Planned**: All the plans previously discussed.
 
+### Deprecated Plans:
+- **Particle System**: Decided it's not worth making a Particle System as it's not really in-scope with CoshUI.
 ---
 
 # CoshUI - 0.3.2.1 Hotfix
