@@ -90,8 +90,7 @@ class CoshLifecycle:
         
         CoshLifecycle.apply_styling(node)
         CoshLifecycle.apply_theme(node)
-        if CoshUI._type_check:
-            CoshLifecycle.validate_node_types(node)
+        CoshLifecycle.validate_node_types(node)
 
     @staticmethod
     def validate_node_types(node):

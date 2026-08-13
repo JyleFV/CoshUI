@@ -31,7 +31,7 @@ class CoshDebug:
     MAUVE = "#cba6f7"
 
     def __init__(self):
-        CoshUIError.warn("Debug Mode is active, expect performance issues on the main process. Also be careful of leaving this turned on in production.")
+        CoshUIError.warn("Debug Mode is active, expect performance issues on the main process. Be careful of leaving this turned on in production.")
 
         self.window = tk.Tk()
         self.window.title("CoshUI - Debug View")

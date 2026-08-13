@@ -6,7 +6,7 @@ from .widgets import Container, Grid, Modal, Button, Label, Checkbox, Image, Sli
 
 from .text_engine import TextStyle
 
-from .user_functions import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme, animate, type_checking
+from .user_functions import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme, animate
 
 from .types import CoshMode, CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
 
@@ -136,7 +136,7 @@ __all__ = [
     "add_font",
     "add_class",
     "set_default_font",
-    "type_checking",
+    # "type_checking",
 
     # Types (raw enums)
     "CoshStyling",

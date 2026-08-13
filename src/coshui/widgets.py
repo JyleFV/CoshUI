@@ -9,7 +9,7 @@ from .user_functions import Ref
 from .utility import resolve_font_variant
 from .state import CoshUI
 from .cui_error import CoshUIError
-from .node_definitions import Element, TextNode, ParentNode
+from .node_definitions import _type_cache, Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 from .text_engine import parse_coshml
 from ._defaults import ENGINE_DEFAULTS
@@ -56,11 +56,16 @@ class Container(ParentNode):
             self.height = auto_height
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "direction": (CoshDirection,)
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "direction": (CoshDirection,)
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 @dataclass
 class Grid(ParentNode):
@@ -114,11 +119,16 @@ class Grid(ParentNode):
             self.height = min_content_height
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "column_count": (int,)
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "column_count": (int,)
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 # ======================== Widgets ========================
 
@@ -191,13 +201,18 @@ class RichLabel(TextNode):
         return RenderContext(**data)
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "letter_spacing": (int, float, type(None)),
-            "line_spacing": (int, float, type(None)),
-            "word_spacing": (int, float, type(None))
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "letter_spacing": (int, float, type(None)),
+                "line_spacing": (int, float, type(None)),
+                "word_spacing": (int, float, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 @dataclass
 class Checkbox(Element):
@@ -232,14 +247,19 @@ class Checkbox(Element):
         return RenderContext(**self.get_base_render_data())
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "checked": (bool,),
-            "checked_color": (TupleLength(3, element_types=(int,)), type(None)),
-            "unchecked_color": (TupleLength(3, element_types=(int,)), type(None)),
-            "bind": (Ref, type(None))
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "checked": (bool,),
+                "checked_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "unchecked_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "bind": (Ref, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 @dataclass
 class Image(Element):
@@ -261,11 +281,16 @@ class Image(Element):
         return RenderContext(**data)
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "src": (str, type(None))
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "src": (str, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 # Literally just a filler datatype
 @dataclass
@@ -296,15 +321,20 @@ class Modal(ParentNode):
         pass
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "direction": (CoshDirection,), # This class inherits ParentNode, not Container, so this needs to be set.
-            "header_color": (TupleLength(3, element_types=(int,)), type(None)),
-            "header_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None)),
-            "content_color": (TupleLength(3, element_types=(int,)), type(None)),
-            "content_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None))
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "direction": (CoshDirection,), # This class inherits ParentNode, not Container, so this needs to be set.
+                "header_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "header_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None)),
+                "content_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "content_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 @dataclass
 class InputField(TextNode):
@@ -336,13 +366,18 @@ class Dropdown(TextNode):
         return None
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "item_list": (list,),
-            "selector_index": (int,),
-            "bind": (Ref, type(None))
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "item_list": (list,),
+                "selector_index": (int,),
+                "bind": (Ref, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 @dataclass
 class Slider(Element):
@@ -370,15 +405,20 @@ class Slider(Element):
         return None
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "min_value": (int, float),
-            "max_value": (int, float),
-            "step": (int, float),
-            "value": (float,type(None)),
-            "bind": (Ref, type(None)),
-            "thumb_size": (int, type(None)),
-            "thumb_color": (TupleLength(3, element_types=(int,)), type(None)),
-            "track_color": (TupleLength(3, element_types=(int,)), type(None))
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "min_value": (int, float),
+                "max_value": (int, float),
+                "step": (int, float),
+                "value": (float,type(None)),
+                "bind": (Ref, type(None)),
+                "thumb_size": (int, type(None)),
+                "thumb_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "track_color": (TupleLength(3, element_types=(int,)), type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache

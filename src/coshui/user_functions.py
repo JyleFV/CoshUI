@@ -198,15 +198,3 @@ def animate(n_property: str, target_id: str, end_value, duration: float, easing:
 
     ease_fn = EASING_MAP.get(easing, ease_linear)
     return CoshUI._tween_manager.create_tween(n_property, target_id, end_value, duration, ease_fn, path, lerp_fn)
-
-def type_checking(value: bool):
-    """
-    A function to turn off type checking which may reduce build time. Recommended to set this once your programs types are fool proof.
-
-    ### Parameters
-
-    - **value**: A boolean value that determines whether type checking is turned on.
-    """
-
-    if not value:
-        CoshUI._type_check = value

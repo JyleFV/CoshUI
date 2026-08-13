@@ -8,6 +8,8 @@ from .lifecycle import CoshLifecycle
 from .utility import create_single_text_data, resolve_font_variant
 from ._defaults import ENGINE_DEFAULTS
 
+_type_cache = {}
+
 @dataclass
 class Node(ABC):
     """ This is the top layer of every UI element in the library, it holds all necessary values that all elements need."""
@@ -47,16 +49,22 @@ class Node(ABC):
         pass
 
     def valid_property_types(self) -> dict:
-        return {
-            "width": (int, float, CoshSizing, CoshPercentage, type(None)),
-            "height": (int, float, CoshSizing, CoshPercentage, type(None)),
-            "margin": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
-            "classes": (str, type(None)),
-            "mouse_filter": (CoshMouseFilter,),
-            "positioning": (CoshPositioning,),
-            "z_index": (int,),
-            "id": (str, type(None))
-        }
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                "width": (int, float, CoshSizing, CoshPercentage),
+                "height": (int, float, CoshSizing, CoshPercentage),
+                "margin": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
+                "classes": (str, type(None)),
+                "mouse_filter": (CoshMouseFilter,),
+                "positioning": (CoshPositioning,),
+                "z_index": (int,),
+                "id": (str, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
     
     def get_base_render_data(self) -> dict:
         transform_x, transform_y = self.style.transform_position
@@ -98,17 +106,21 @@ class ParentNode(Node):
         CoshUI._stack.pop()
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "justify": (CoshJustify,),
-            "align": (CoshAlign,),
-            "overflow": (CoshOverflow,),
-            "padding": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
-            "gap": (int, float, type(None)),
-            "src": (str, type(None))
-        }
-        return base_types
-
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "justify": (CoshJustify,),
+                "align": (CoshAlign,),
+                "overflow": (CoshOverflow,),
+                "padding": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
+                "gap": (int, float, type(None)),
+                "src": (str, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
     def get_render_data(self) -> RenderContext:
         data = self.get_base_render_data()
@@ -166,21 +178,26 @@ class TextNode(Element):
                 self.height = h
 
     def valid_property_types(self):
-        base_types = {
-            **super().valid_property_types(),
-            "text": (str, type(None)),
-            "font": (str, type(None)),
-            "font_size": (int,),
-            "text_color": (TupleLength(3, element_types=(int,)),),
-            "text_align": (CoshTextAlign,),
-            "text_justify": (CoshTextJustify,),
-            "text_overflow": (CoshTextOverflow,),
-            "bold": (bool,),
-            "italic": (bool,),
-            "strikethrough": (bool,),
-            "underline": (bool,)
-        }
-        return base_types
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "text": (str, type(None)),
+                "font": (str, type(None)),
+                "font_size": (int,),
+                "text_color": (TupleLength(3, element_types=(int,)),),
+                "text_align": (CoshTextAlign,),
+                "text_justify": (CoshTextJustify,),
+                "text_overflow": (CoshTextOverflow,),
+                "bold": (bool,),
+                "italic": (bool,),
+                "strikethrough": (bool,),
+                "underline": (bool,)
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
     def get_render_data(self):
         data = self.get_base_render_data()

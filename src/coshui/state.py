@@ -112,7 +112,6 @@ class CoshUI:
     _measure_run: callable = None
     # ---------------- Debug ----------------
     _debugger: None | CoshDebug = None
-    _type_check: bool = True
 
     @classmethod
     def get_state(cls, node_id, key, default=None):
