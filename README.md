@@ -14,7 +14,7 @@
 </div>
 
 ## What is CoshUI?
-CoshUI is a Python-first, declarative UI library inspired by CSS, Godot, and Dear ImGui. Unlike most Python UI libraries, CoshUI is fully backend-agnostic — write your UI once and render it with Pygame, Raylib, ModernGL, or any backends you build or are supported.
+CoshUI is a Python-first, declarative UI library inspired by CSS, Godot, React, and Dear ImGui. Unlike most Python UI libraries, CoshUI is fully backend-agnostic — write your UI once and render it with Pygame, Raylib, ModernGL, or any backends you build or are supported.
 
 CoshUI features:
 - Full layout engine with flexbox-inspired sizing

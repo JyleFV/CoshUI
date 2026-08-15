@@ -41,15 +41,20 @@ This creates a new theme with `DEFAULT` as the base theme, it will take all the 
     - `CoshUIError.Main`: Formerly `CoshUIError`, this error is for general errors concerning the main API and callsites.
     - `CoshUIError.CoshML`: Formerly `CoshMLError`, this error is strictly for catching CoshML-related issues.
     - **For Contributors**: `warn` is also part of CoshUIError, so when calling `warn()`, do `CoshUIError.warn()`.
+- **More Explicit Errors**: Errors for CoshML are slightly more explicit, showing the exact position in the text and the exact tags the error is talking about.
+    - **Note**: Text positions in errors are 0-indexed, so expect them to start at 0.
 
 ### Bug Fixes:
 - **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`.
 - **Empty Text**: RichLabel and Label making an error if `text` is set to None. (This is a little weird)
 
 ### Planned for 0.3.4 and above:
-- **Previously Planned**: All the plans previously discussed.
+- **Scrollable ParentNodes**: Adding the `scroll` property to `ParentNode` objects.
+- **InputField**: Focusing and adding the oldest widget stub in the library, `InputField`.
+- **`CLAMP()` and `MINMAX()`**: Adding more options for sizing properties such as `width` and `height`.
+- **Previously Planned**: The plans previously discussed.
 
-### Deprecated Plans:
+### Discarded Plans:
 - **Particle System**: Decided it's not worth making a Particle System as it's not really in-scope with CoshUI.
 ---
 

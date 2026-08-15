@@ -26,7 +26,7 @@ class CoshTheme:
         for node in self.nodes:
             if node not in MASTER_WIDGET_LIST:
                 close_match = difflib.get_close_matches(node, MASTER_WIDGET_LIST, n=1)
-                raise Exception(f"Unknown node `{node}` in theme configuration. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
+                raise CoshUIError.Main(f"Unknown node `{node}` in theme configuration. Did you mean `{close_match[0] if close_match else 'Unknown'}`?")
 
 def get_for(theme: CoshTheme, node):
     node_name = node.__class__.__name__

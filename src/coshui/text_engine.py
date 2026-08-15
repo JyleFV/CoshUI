@@ -90,6 +90,8 @@ class TextRun(TextStyle):
 class Token:
     type: Literal["text", "tag", "close", "newline"]
     value: str
+    start: int
+    end: int
 
 def tokenize(text: str) -> list[Token]:
     tokens = []
@@ -101,16 +103,16 @@ def tokenize(text: str) -> list[Token]:
                 raise CoshUIError.CoshML("Missing `]` closing tag. Did you forget to close a tag?")
             tag_content = text[i + 1:end]
             if tag_content == "/":
-                tokens.append(Token("close", ""))
+                tokens.append(Token("close", "", i, end + 1))
             elif tag_content == "n": # Newline
-                tokens.append(Token("newline", ""))
+                tokens.append(Token("newline", "", i, end + 1))
             else:
-                tokens.append(Token("tag", tag_content))
+                tokens.append(Token("tag", tag_content, i, end + 1))
             i = end + 1
         else:
             end = text.find("[", i)
             end = end if end != -1 else len(text)
-            tokens.append(Token("text", text[i:end]))
+            tokens.append(Token("text", text[i:end], i, end))
             i = end
     return tokens
 
@@ -182,7 +184,7 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
     )
 
     base_style = TextStyle(color=text_color, _font_family=font_name, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline, bold=bold, italic=italic)
-    style_stack = [base_style]
+    style_stack = [(base_style, None, None, None)] # style, tag_name, start, end
     full_text = ""
 
     for token in tokens:
@@ -190,20 +192,18 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
             case "text":
                 full_text += emit_characters(style_stack, context, token.value)
             case "tag":
-                current = style_stack[-1]
+                current = style_stack[-1][0]
                 overrides = parse_tag(token.value)
-                style_stack.append(validate_style(current, overrides))
+                style_stack.append((validate_style(current, overrides), token.value, token.start, token.end))
             case "newline":
                 full_text += emit_characters(style_stack, context, "\n")
             case "close":
                 if len(style_stack) == 1:
-                    raise CoshUIError.CoshML("Closing tag found without any tags, please follow the appropriate use of CoshML.")
-                if len(style_stack) > 1:
-                    style_stack.pop()
+                    raise CoshUIError.CoshML(f"Closing tag `[/]` found at position {token.start} with no open tag to close, please follow the appropriate use of CoshML.")
+                style_stack.pop()
 
     if len(style_stack) != 1:
-        print(style_stack)
-        raise CoshUIError.CoshML(f"{len(style_stack) - 1} unclosed tag(s). Did you forget a closing tag `[/]`?")
+        raise CoshUIError.CoshML(f"The `[{style_stack[-1][1]}]` tag at position {style_stack[-1][2]}-{style_stack[-1][3]} is unclosed. Did you forget a closing tag `[/]`?")
 
     context.text = full_text
 
@@ -244,7 +244,7 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
     )
 
 def emit_characters(style_stack, context, value):
-    current = style_stack[-1]
+    current = style_stack[-1][0]
     context.runs.append(TextRun(
         text=value,
         color=current.color,

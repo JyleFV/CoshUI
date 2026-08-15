@@ -8,6 +8,10 @@ the process for contributing and the conventions we follow.
 
 ## Getting Started
 
+> [!IMPORTANT]
+> Remember that CoshUI's main philosophy is to **never** interfere with a user's code, it should exist alongside it, not control it.
+> ***"UI is what gets drawn and interacted with, not what dictates the structure of the program around it."***
+
 1. Fork the repository
 2. Clone your fork locally
 3. Create a virtual environment and install dependencies:
@@ -83,7 +87,7 @@ Open an issue with:
 - A potential fix if you have one
 - A screenshot of UI and/or error traceback
 
-If you're still unsure, here's a guide (these should be followed in this exact order):
+If you're still unsure, here's a guide (this is a guide, but should be followed in this order if this format is followed):
 ```markdown
 ### Description
 Description of the bug.

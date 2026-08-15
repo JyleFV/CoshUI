@@ -58,7 +58,19 @@ class CoshStyling:
 class CoshOverflow(Enum):
     HIDDEN = 0
     VISIBLE = 1
-    SCROLL = 2
+
+class CoshScrollMode(Enum):
+    NONE = 0
+    X = 1
+    Y = 2
+    ALL = 3
+
+@dataclass
+class CoshScroll:
+    mode: CoshScrollMode = CoshScrollMode.NONE
+    overshoot: bool = False
+    scrollbar_visible: bool = False
+    scroll_speed: float | int = 1.0
 
 class CoshMouseButton(Enum):
     LEFT = 0
@@ -72,10 +84,6 @@ class CoshSignals(Enum):
     HOVERED = 3
     HOVER_ENTER = 4
     HOVER_EXIT = 5
-    # Keyboard Keys
-    KEY_CLICKED = 6
-    KEY_RELEASED = 7
-    KEY_PRESSED = 8
 
 class CoshTextOverflow(Enum):
     HIDDEN = 0  
@@ -127,13 +135,17 @@ class CoshMode(Enum):
     NORMAL = 0
     DEBUG = 1
 
-class CoshShape(Enum):
-    RECT = 0
-    CIRCLE = 1
-
 class CoshPercentage:
     def __init__(self, percentage: int):
         self.percentage = percentage / 100
+
+class CoshClamp:
+    pass
+
+class CoshMinMax:
+    def __init__(self, min_value: int | float, max_value: int | float):
+        self.min_value = min_value
+        self.max_valuy = max_value
 
 class FourSide(NamedTuple):
     top: float
@@ -269,4 +281,4 @@ class LineLayout:
     height: float
     fragments: list = field(default_factory=list)
 
-__all__ = ['TupleLength', 'FourSide', 'LineLayout', 'CoshShape', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['CoshClamp', 'CoshMinMax', 'CoshScroll', 'TupleLength', 'FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
