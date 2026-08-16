@@ -47,6 +47,7 @@ This creates a new theme with `DEFAULT` as the base theme, it will take all the 
 ### Bug Fixes:
 - **Asterisk Import**: Stupidly forgot `,` after `"TextStyle"` in `__all__`.
 - **Empty Text**: RichLabel and Label making an error if `text` is set to None. (This is a little weird)
+- **Raylib DASH Py**: `pip install coshui[all]` and `pip install coshui[raylib]` not working because of putting down `raylibpy` instead of `raylib-py`... 
 
 ### Planned for 0.3.4 and above:
 - **Scrollable ParentNodes**: Adding the `scroll` property to `ParentNode` objects.

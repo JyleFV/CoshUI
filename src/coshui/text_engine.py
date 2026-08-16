@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 import difflib
+import io
 
 from .state import CoshUI
 from .cui_error import CoshUIError
@@ -119,33 +120,33 @@ def tokenize(text: str) -> list[Token]:
 def parse_tag(tag: str) -> dict:
     style = {}
     parts = []
-    current = ""
+    current = [] # better to use a list than string concatenation
     depth = 0
 
     for i, char in enumerate(tag):
         if char == "(":
             depth += 1
-            current += char
+            current.append(char)
 
         elif char == ")":
             depth -= 1
             if depth < 0:
                 raise CoshUIError.CoshML(f"Unexpected ')' at position {i + 1} of CoshML tag `{tag}`.")
-            current += char
+            current.append(char)
 
         elif char == " " and depth == 0:
             if current:
-                parts.append(current)
-            current = ""
+                parts.append("".join(current))
+            current = []
 
         else:
-            current += char
+            current.append(char)
 
     if depth > 0:
         raise CoshUIError.CoshML(f"Unclosed parenthesis in CoshML tag `{tag}`.")
     
     if current:
-        parts.append(current)
+        parts.append("".join(current))
 
     for part in parts:
         if part in TAGS: # This means the part is a TAG that has no value
@@ -185,18 +186,20 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
 
     base_style = TextStyle(color=text_color, _font_family=font_name, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline, bold=bold, italic=italic)
     style_stack = [(base_style, None, None, None)] # style, tag_name, start, end
-    full_text = ""
+    full_text = io.StringIO()
 
     for token in tokens:
         match token.type:
             case "text":
-                full_text += emit_characters(style_stack, context, token.value)
+                emit_characters(style_stack, context, token.value)
+                full_text.write(token.value)
             case "tag":
                 current = style_stack[-1][0]
                 overrides = parse_tag(token.value)
                 style_stack.append((validate_style(current, overrides), token.value, token.start, token.end))
             case "newline":
-                full_text += emit_characters(style_stack, context, "\n")
+                emit_characters(style_stack, context, "\n")
+                full_text.write(token.value)
             case "close":
                 if len(style_stack) == 1:
                     raise CoshUIError.CoshML(f"Closing tag `[/]` found at position {token.start} with no open tag to close, please follow the appropriate use of CoshML.")
@@ -205,8 +208,7 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
     if len(style_stack) != 1:
         raise CoshUIError.CoshML(f"The `[{style_stack[-1][1]}]` tag at position {style_stack[-1][2]}-{style_stack[-1][3]} is unclosed. Did you forget a closing tag `[/]`?")
 
-    context.text = full_text
-
+    context.text = full_text.getvalue()
     return context
 
 # region HELPERS
@@ -255,5 +257,4 @@ def emit_characters(style_stack, context, value):
         underline=current.underline,
         strikethrough=current.strikethrough,
     ))
-    return value
 # endregion

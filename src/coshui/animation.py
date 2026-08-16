@@ -106,6 +106,13 @@ class Tween:
         self._loop_delay_remaining = 0.0
         self._waiting = False
 
+    def _reset_next_cycle(self):
+        self.time = 0
+        if self._ping_pong:
+            self.start_value, self.end_value = self.end_value, self.start_value
+        else:
+            self.start_value = self._original_start_value
+
     def _update(self, delta):
         from .state import CoshUI
         if self._finished:
@@ -115,11 +122,7 @@ class Tween:
             self._loop_delay_remaining -= delta
             if self._loop_delay_remaining <= 0:
                 self._waiting = False
-                self.time = 0
-                if self._ping_pong:
-                    self.start_value, self.end_value = self.end_value, self.start_value
-                else:
-                    self.start_value = self._original_start_value
+                self._reset_next_cycle()
             return
 
         self.time += delta
@@ -128,23 +131,20 @@ class Tween:
         new_value = self.lerp_fn(self.start_value, self.end_value, eased_t)
         CoshUI.set_state(self.target_id, self.path, new_value)
 
-        if raw_t >= 1.0:
-            if not self._looping:
-                self._finished = True
-            else:
-                if self._loop_count is not None and self._loops_done + 1 >= self._loop_count:
-                    self._finished = True
-                else:
-                    self._loops_done += 1
-                    if self._loop_delay > 0:
-                        self._waiting = True
-                        self._loop_delay_remaining = self._loop_delay
-                    else:
-                        self.time = 0
-                        if self._ping_pong:
-                            self.start_value, self.end_value = self.end_value, self.start_value
-                        else:
-                            self.start_value = self._original_start_value
+        if raw_t < 1.0:
+            return
+        if not self._looping:
+            self._finished = True
+            return
+        if self._loop_count is not None and self._loops_done + 1 >= self._loop_count:
+            self._finished = True
+            return
+        self._loops_done += 1
+        if self._loop_delay > 0:
+            self._waiting = True
+            self._loop_delay_remaining = self._loop_delay
+            return
+        self._reset_next_cycle()
 
     def finished(self, callback: Optional[Callable]):
         if not callable(callback):

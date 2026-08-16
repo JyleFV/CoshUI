@@ -115,7 +115,7 @@ class ParentNode(Node):
                 "justify": (CoshJustify,),
                 "align": (CoshAlign,),
                 "overflow": (CoshOverflow,),
-                "scroll": (CoshScroll,),
+                # "scroll": (CoshScroll,),
                 "padding": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
                 "gap": (int, float, type(None)),
                 "src": (str, type(None))
