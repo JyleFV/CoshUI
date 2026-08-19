@@ -171,7 +171,7 @@ class RaylibBackend(CoshBackend):
         if clip_rect:
             raylibpy.end_scissor_mode()
     
-    def flush(self, render_stack : list[RenderContext]):
+    def flush(self, render_stack: list[RenderContext]):
         for data in render_stack:
             if data.alpha <= 0:
                 continue
@@ -207,31 +207,8 @@ class RaylibBackend(CoshBackend):
         CoshInput._current_mouse_pressed = raylibpy.is_mouse_button_down(raylibpy.MOUSE_BUTTON_LEFT)
 
     def measure_text(self, text_data) -> tuple:
-        if not text_data.runs:
-            return (0, 0)
-
-        FONT_LOAD_SIZE = 128
-
-        total_width = 0
-        max_height = 0
-
-        for run in text_data.runs:
-            font_size = run.font_size or 16
-
-            cache_key = run.font
-            font = _font_cache.get(cache_key)
-
-            if font is None:
-                font = raylibpy.load_font_ex(run.font, FONT_LOAD_SIZE, None, 0)
-                raylibpy.set_texture_filter(font.texture, raylibpy.TEXTURE_FILTER_BILINEAR)
-                _font_cache[cache_key] = font
-
-            size = raylibpy.measure_text_ex(font, run.text, font_size, 1.0)
-
-            total_width += size.x
-            max_height = max(max_height, size.y)
-
-        return (int(total_width), int(max_height))
+        from ...utility import measure_intrinsic_text  # adjust relative import per backend depth
+        return measure_intrinsic_text(text_data)
 
     def measure_run(self, font_path, font_size, text):
         FONT_LOAD_SIZE = 128

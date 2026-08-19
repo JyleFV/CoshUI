@@ -3,13 +3,15 @@ from tkinter import ttk
 from collections import deque
 
 from .types import CoshSignals
-from .cui_error import warn
+from .cui_error import CoshUIError
 
 # Kinda horrendous but it's a debug tool so I don't really care
 # Most this file was vibecoded, so I'm not sure what's going on here most of the time
 class CoshDebug:
     GRAPH_COLORS = {
+        "build_time": "#ff1cf0", 
         "update": "#e9ff42",
+        "final_default": "#20ffe5",
         "measure": "#4fc3f7",
         "layout": "#81c784",
         "render": "#ffb74d",
@@ -29,7 +31,7 @@ class CoshDebug:
     MAUVE = "#cba6f7"
 
     def __init__(self):
-        warn("Debug Mode is active, expect performance issues on the main process. Also be careful of leaving this turned on in production.")
+        CoshUIError.warn("Debug Mode is active, expect performance issues on the main process. Be careful of leaving this turned on in production.")
 
         self.window = tk.Tk()
         self.window.title("CoshUI - Debug View")

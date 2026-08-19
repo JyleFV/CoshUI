@@ -1,10 +1,7 @@
-"""CoshUI module for the global and main processes of the UI Engine.
-
-Set the main loop of the UI tree with CoshUIRenderer where every process
-runs within its __enter__ and __exit__ dunder operators.
-
-The CoshUI global namespace is private and should only be accessed 
-by internal code, never outside."""
+"""
+This is the main entrance of CoshUI. UI Elements live and die
+within the CoshUIRenderer context manager.
+"""
 
 import time
 
@@ -19,7 +16,7 @@ from .widgets import Container
 from .pipeline import measure, layout, render, process_events, update, finalize_defaults
 
 class CoshUIRenderer:
-    def __init__(self, backend : CoshBackend, debug : CoshMode = CoshMode.NORMAL):
+    def __init__(self, backend: CoshBackend, debug: CoshMode = CoshMode.NORMAL):
         self.backend = backend
         
         if debug is CoshMode.DEBUG and CoshUI._debugger is None:
@@ -34,7 +31,7 @@ class CoshUIRenderer:
 
     def __enter__(self):
         if CoshUI._active_renderer:
-            raise CoshUIError("Cannot nest renderer objects.")
+            raise CoshUIError.Main("Cannot nest renderer objects.")
         
         now = time.perf_counter()
 
@@ -60,16 +57,18 @@ class CoshUIRenderer:
         CoshUI._stack.clear()  
         self.root.children.clear()
         CoshUI._stack.append(self.root)
+
+        self.build_t0 = time.perf_counter()
         return self
 
     def __exit__(self, *args):
+        build_time = time.perf_counter() - self.build_t0
         CoshUI._stack.pop()
         CoshUI._active_renderer = False
 
         CoshLifecycle.expand(self.root)
-        finalize_defaults(self.root)
-
-        timings = _run_pipeline(self.root, self.backend, self.update_time)
+        
+        timings = _run_pipeline(self.root, self.backend, self.update_time, build_time)
 
         if isinstance(CoshUI._debugger, CoshDebug):
             CoshUI._debugger.render(self.root, CoshUI._render_stack, CoshUI._signals, timings)
@@ -81,26 +80,30 @@ class CoshUIRenderer:
         for key in stale:
             del CoshUI._state_storage[key]
 
-def _run_pipeline(root, backend, update_time=0.0) -> dict:
+def _run_pipeline(root, backend, update_time=0.0, build_time=0.0) -> dict:
     t0 = time.perf_counter()
-    measure(root)
+    finalize_defaults(root)
     t1 = time.perf_counter()
-    layout(root, root._x, root._y)
+    measure(root)
     t2 = time.perf_counter()
-    render(root)
+    layout(root, root._x, root._y)
     t3 = time.perf_counter()
+    render(root)
+    t4 = time.perf_counter()
     CoshUI._render_stack.sort(key=lambda d: d.z_index)
     CoshUI._signals.clear()
     process_events()
-    t4 = time.perf_counter()
-    backend.flush(CoshUI._render_stack)
     t5 = time.perf_counter()
+    backend.flush(CoshUI._render_stack)
+    t6 = time.perf_counter()
 
     return {
+        "build_time": build_time,
         "update": update_time,
-        "measure": t1 - t0,
-        "layout": t2 - t1,
-        "render": t3 - t2,
-        "process_events": t4 - t3,
-        "backend_render": t5 - t4
+        "final_default": t1 - t0, 
+        "measure": t2 - t1,
+        "layout": t3 - t2,
+        "render": t4 - t3,
+        "process_events": t5 - t4,
+        "backend_render": t6 - t5
     }

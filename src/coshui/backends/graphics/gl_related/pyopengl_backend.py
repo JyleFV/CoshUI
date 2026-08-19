@@ -28,7 +28,7 @@ class PyOpenGLBackend(CoshBackend):
                 "PyOpenGL is not installed. Please install it using `pip install coshui[pyopengl]`."
             )
         if driver is Windower.MGLW:
-            raise CoshUIError("PyOpenGL does not take in the MGLW driver.")
+            raise CoshUIError.Main("PyOpenGL does not take in the MGLW driver.")
         
         self.driver = driver.value()
 

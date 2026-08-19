@@ -11,18 +11,19 @@ if TYPE_CHECKING:
 
 @dataclass
 class CoshStyling:
-    background_color : tuple | None = None
-    alpha : int | None = None
-    # gradients : tuple | None = None
-    # glow : tuple | None = None
-    # drop_shadow : tuple | None = None
-    border : tuple | None = None
-    border_radius : int | tuple | None = None
-    transform_position : tuple | None = None
-    transform_rotation : float | None = None
-    transform_scale : float | None = None
+    background_color: tuple | None = None
+    alpha: int | None = None
+    # gradients: tuple | None = None
+    # glow: tuple | None = None
+    # drop_shadow: tuple | None = None
+    border: tuple | None = None
+    border_radius: int | tuple | None = None
+    transform_position: tuple | None = None
+    transform_rotation: float | None = None
+    transform_scale: float | None = None
 
     def __post_init__(self):
+        from .utility import is_valid_border
         # Lets user use a 4 value tuple for background_color or a 3 value tuple with an explicit alpha field or default.
         if self.background_color is not None and len(self.background_color) == 4:
             r, g, b, a = self.background_color
@@ -38,14 +39,38 @@ class CoshStyling:
                     r, g, b, width = self.border
                     self.border = ((r, g, b), width)
                 except TypeError:
-                    raise CoshUIError(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.") from None
+                    raise CoshUIError.Main(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.") from None
             else:
-                raise CoshUIError(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.")
+                raise CoshUIError.Main(f"Invalid `border` value `{self.border}`. Expected `((r, g, b), width)` or `(r, g, b, width)` e.g. `((255, 0, 0), 2)` or `(255, 0, 0, 2)`.")
+
+    @staticmethod
+    def valid_property_types() -> dict:
+        return {
+            "background_color": (TupleLength(3, 4, element_types=(int, float)), type(None)),
+            "alpha": (int,),
+            "border": (tuple, type(None)), # already has a check, so there's no point in doing TupleLength
+            "border_radius": (TupleLength(4, element_types=(int, float)), int, float),
+            "transform_scale": (int, float),
+            "transform_rotation": (int, float),
+            "transform_position": (TupleLength(2, element_types=(int, float)),)
+        }
 
 class CoshOverflow(Enum):
     HIDDEN = 0
     VISIBLE = 1
-    SCROLL = 2
+
+class CoshScrollMode(Enum):
+    NONE = 0
+    X = 1
+    Y = 2
+    ALL = 3
+
+@dataclass
+class CoshScroll:
+    mode: CoshScrollMode = CoshScrollMode.NONE
+    overshoot: bool = False
+    scrollbar_visible: bool = False
+    scroll_speed: float | int = 1.0
 
 class CoshMouseButton(Enum):
     LEFT = 0
@@ -59,10 +84,6 @@ class CoshSignals(Enum):
     HOVERED = 3
     HOVER_ENTER = 4
     HOVER_EXIT = 5
-    # Keyboard Keys
-    KEY_CLICKED = 6
-    KEY_RELEASED = 7
-    KEY_PRESSED = 8
 
 class CoshTextOverflow(Enum):
     HIDDEN = 0  
@@ -115,43 +136,22 @@ class CoshMode(Enum):
     DEBUG = 1
 
 class CoshPercentage:
-    def __init__(self, percentage : int):
+    def __init__(self, percentage: int):
         self.percentage = percentage / 100
 
-class RenderContext(NamedTuple):
-    # Node-specific
-    id : str | None = None
-    # Layout
-    x : float = 0.0
-    y : float = 0.0
-    width : float = 0.0
-    height : float = 0.0
-    padding : float = 0.0
-    margin : float = 0.0
-    # Visual
-    z_index : int = 0
-    transform_x : float = 0.0
-    transform_y : float = 0.0
-    background_color : tuple | None = None
-    border_radius : int | tuple = 0
-    transform_scale : float = 1.0
-    transform_rotation : float = 0.0
-    border : tuple | None = None
-    alpha : int = 0
-    # Interaction
-    mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
-    # Text
-    text_data : TextData | None = None
-    # Image
-    image_src : str | None = None
-    # Overflow-logic
-    clip_rect : tuple | None = None
+class CoshClamp:
+    pass
+
+class CoshMinMax:
+    def __init__(self, min_value: int | float, max_value: int | float):
+        self.min_value = min_value
+        self.max_valuy = max_value
 
 class FourSide(NamedTuple):
-    top : float
-    right : float
-    bottom : float
-    left : float
+    top: float
+    right: float
+    bottom: float
+    left: float
 
     @property
     def horizontal(self) -> float:
@@ -161,8 +161,69 @@ class FourSide(NamedTuple):
     def vertical(self) -> float:
         return self.top + self.bottom
 
-class ParticleContext(NamedTuple):
-    particles : list = field(default_factory=list)
+class FourCorner(NamedTuple):
+    top_left: float
+    top_right: float
+    bottom_right: float
+    bottom_left: float
+
+class TupleLength:
+    """
+    A class that helps with type checking tuple properties, it stores tuple lengths
+    and the types of the values within the tuples. This should be used as a substitute for 
+    the `tuple` data structure in `valid_property_types()` calls.
+    """
+    def __init__(self, *lengths: int, element_types: tuple[type, ...] | None = None, label: str | None = None):
+        self.lengths = lengths
+        self.element_types = element_types
+        self.label = label or self._build_label()
+
+    def _build_label(self) -> str:
+        base = f"a {'/'.join(map(str, self.lengths))}-value tuple"
+        if self.element_types:
+            type_names = "/".join(t.__name__ for t in self.element_types)
+            base += f" of {type_names}"
+        return base
+
+    def matches(self, val) -> bool:
+        if not isinstance(val, tuple) or len(val) not in self.lengths:
+            return False
+        if self.element_types is not None:
+            for v in val:
+                if isinstance(v, bool) and bool not in self.element_types:
+                    return False
+                if not isinstance(v, self.element_types):
+                    return False
+        return True
+
+class RenderContext(NamedTuple):
+    # Node-specific
+    id: str | None = None
+    # Layout
+    x: float = 0.0
+    y: float = 0.0
+    width: float = 0.0
+    height: float = 0.0
+    padding: float = 0.0
+    margin: float = 0.0
+    # Visual
+    z_index: int = 0
+    transform_x: float = 0.0
+    transform_y: float = 0.0
+    background_color: tuple | None = None
+    border_radius: int | tuple = 0
+    transform_scale: float = 1.0
+    transform_rotation: float = 0.0
+    border: tuple | None = None
+    alpha: int = 0
+    # Interaction
+    mouse_filter: CoshMouseFilter = CoshMouseFilter.STOP
+    # Text
+    text_data: TextData | None = None
+    # Image
+    image_src: str | None = None
+    # Overflow-logic
+    clip_rect: tuple | None = None
 
 class RectData:
     pass
@@ -172,61 +233,52 @@ class ImageData:
 
 @dataclass
 class TextData:
-    letter_spacing : float | None = None
-    word_spacing : float | None = None
-    line_spacing : float | None = None
-    default_font : str | None = None
-    default_font_size : int | None = None
-    default_color : tuple | None = None
-    text_justify : CoshTextJustify = CoshTextJustify.CENTER
-    text_align : CoshTextAlign = CoshTextAlign.CENTER
-    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
-    text : str | None = None
-    raw_text : str = None
-    runs : list[TextRun] = field(default_factory=list)
-    lines : list[LineLayout] = field(default_factory=list)
-    _layout_cache_key : tuple | None = None
+    letter_spacing: float | None = None
+    word_spacing: float | None = None
+    line_spacing: float | None = None
+    default_font: str | None = None
+    default_font_size: int | None = None
+    default_color: tuple | None = None
+    text_justify: CoshTextJustify = CoshTextJustify.CENTER
+    text_align: CoshTextAlign = CoshTextAlign.CENTER
+    text_overflow: CoshTextOverflow = CoshTextOverflow.VISIBLE
+    text: str | None = None
+    raw_text: str | None = None
+    runs: list[TextRun] = field(default_factory=list)
+    lines: list[LineLayout] = field(default_factory=list)
+    _layout_cache_key: tuple | None = None
     
     def cached_state(self):
         return {
-            "raw_text" : self.raw_text,
-            "letter_spacing" : self.letter_spacing,
-            "word_spacing" : self.word_spacing,
-            "line_spacing" : self.line_spacing,
-            "text_align" : self.text_align,
-            "text_justify" : self.text_justify,
-            "text_overflow" : self.text_overflow,
-            "font" : self.default_font,
-            "font_size" : self.default_font_size,
-            "color" : self.default_color,
+            "raw_text": self.raw_text,
+            "letter_spacing": self.letter_spacing,
+            "word_spacing": self.word_spacing,
+            "line_spacing": self.line_spacing,
+            "text_align": self.text_align,
+            "text_justify": self.text_justify,
+            "text_overflow": self.text_overflow,
+            "font": self.default_font,
+            "font_size": self.default_font_size,
+            "color": self.default_color,
         }
 
 @dataclass
 class TextFragment:
-    text : str
-    x : float
-    width : float
-    color : tuple
-    font : str | None
-    font_size : int
-    bold : bool = False
-    italic : bool = False
-    underline : bool = False
-    strikethrough : bool = False
+    text: str
+    x: float
+    width: float
+    color: tuple
+    font: str | None
+    font_size: int
+    bold: bool = False
+    italic: bool = False
+    underline: bool = False
+    strikethrough: bool = False
 
 @dataclass
 class LineLayout:
-    y : float
-    height : float
-    fragments : list = field(default_factory=list)
+    y: float
+    height: float
+    fragments: list = field(default_factory=list)
 
-# HELPER
-def is_valid_border(border):
-    return (
-        isinstance(border, tuple) and len(border) == 2 and
-        isinstance(border[0], tuple) and len(border[0]) == 3 and
-        all(isinstance(x, int) for x in border[0]) and
-        isinstance(border[1], int)
-    )
-
-__all__ = ['FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['CoshClamp', 'CoshMinMax', 'CoshScroll', 'TupleLength', 'FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

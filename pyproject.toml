@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coshui"
-version = "0.3.2"
+version = "0.3.3"
 authors = [{name = "Jyle Frazier Villareal", email = "jylefraziervillareal@gmail.com"}]
 description = "A Python-first — Declarative-Mode — Backend-Agnostic — UI Library"
 readme = "README.md"
@@ -19,11 +19,11 @@ classifiers = [
 
 [project.optional-dependencies]
 pygame = ["pygame-ce"]
-raylib = ["raylibpy"]
+raylib = ["raylib-py"]
 moderngl = ["moderngl", "glfw", "freetype-py", "Pillow"]
 moderngl-mglw = ["moderngl", "moderngl-window", "freetype-py", "Pillow"]
 pyopengl = ["PyOpenGL", "PyOpenGL_accelerate", "glfw", "freetype-py", "Pillow"]
-all = ["pygame-ce", "raylibpy", "PyOpenGL", "PyOpenGL_accelerate", "glfw", "moderngl", "moderngl-window", "freetype-py", "Pillow"]
+all = ["pygame-ce", "raylib-py", "PyOpenGL", "PyOpenGL_accelerate", "glfw", "moderngl", "moderngl-window", "freetype-py", "Pillow"]
 
 [tool.setuptools]
 include-package-data = true

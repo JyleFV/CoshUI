@@ -3,37 +3,39 @@ from dataclasses import dataclass, field
 
 from .types import *
 from .state import CoshUI
-from .cui_error import CoshUIError, warn
+from .cui_error import CoshUIError
 from .lifecycle import CoshLifecycle
 from .utility import create_single_text_data, resolve_font_variant
 from ._defaults import ENGINE_DEFAULTS
+
+_type_cache = {}
 
 @dataclass
 class Node(ABC):
     """ This is the top layer of every UI element in the library, it holds all necessary values that all elements need."""
 
-    style : CoshStyling = field(default_factory=lambda: CoshStyling())
-    children : list = field(default_factory=list)
-    width : float | CoshSizing | CoshPercentage | None = None
-    height : float | CoshSizing | CoshPercentage | None = None
-    margin : float | None = None
-    x : float | None = None
-    y : float | None = None
-    classes : str | None = None 
-    id : str | None = None
-    z_index : int = 0
-    mouse_filter : CoshMouseFilter = CoshMouseFilter.STOP
-    positioning : CoshPositioning = CoshPositioning.RELATIVE
-    _was_hovered : bool = field(default=False, repr=False)
-    _x : float = field(default=0.0, repr=False)
-    _y : float = field(default=0.0, repr=False)
+    style: CoshStyling = field(default_factory=lambda: CoshStyling())
+    children: list = field(default_factory=list)
+    width: float | CoshSizing | CoshPercentage | None = None
+    height: float | CoshSizing | CoshPercentage | None = None
+    margin: float | None = None
+    x: float | None = None
+    y: float | None = None
+    classes: str | None = None 
+    id: str | None = None
+    z_index: int = 0
+    mouse_filter: CoshMouseFilter = CoshMouseFilter.STOP
+    positioning: CoshPositioning = CoshPositioning.RELATIVE
+    _was_hovered: bool = field(default=False, repr=False)
+    _x: float = field(default=0.0, repr=False)
+    _y: float = field(default=0.0, repr=False)
 
     def __post_init__(self):
         CoshLifecycle.register_node(self)
 
         # Warning for users who explicitly set x and y but positioning isn't set to ABSOLUTE
         if self.positioning is not CoshPositioning.ABSOLUTE and not all(item is None for item in (self.x, self.y)):
-            warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
+            CoshUIError.warn("Current `positioning` property is currently set to RELATIVE. `x` and `y` properties will be ignored.")
         
         self._x = self.x if self.x is not None else 0.0
         self._y = self.y if self.y is not None else 0.0
@@ -46,37 +48,56 @@ class Node(ABC):
     def get_render_data(self) -> RenderContext:
         pass
 
+    def valid_property_types(self) -> dict:
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                "width": (int, float, CoshSizing, CoshPercentage),
+                "height": (int, float, CoshSizing, CoshPercentage),
+                "margin": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
+                "classes": (str, type(None)),
+                "mouse_filter": (CoshMouseFilter,),
+                "positioning": (CoshPositioning,),
+                "z_index": (int,),
+                "id": (str, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
+    
     def get_base_render_data(self) -> dict:
         transform_x, transform_y = self.style.transform_position
         return {
-            "id" : self.id,
-            "x" : self._x,
-            "y" : self._y,
-            "transform_x" : transform_x,
-            "transform_y" : transform_y,
-            "width" : self.width,
-            "height" : self.height,
-            "margin" : self.margin,
-            "background_color" : self.style.background_color,
-            "z_index" : self.z_index,
-            "border_radius" : self.style.border_radius,
-            "alpha" : self.style.alpha,
-            "transform_rotation" : self.style.transform_rotation,
-            "transform_scale" : self.style.transform_scale,
-            "border" : self.style.border,
-            "mouse_filter" : self.mouse_filter
+            "id": self.id,
+            "x": self._x,
+            "y": self._y,
+            "transform_x": transform_x,
+            "transform_y": transform_y,
+            "width": self.width,
+            "height": self.height,
+            "margin": self.margin,
+            "background_color": self.style.background_color,
+            "z_index": self.z_index,
+            "border_radius": self.style.border_radius,
+            "alpha": self.style.alpha,
+            "transform_rotation": self.style.transform_rotation,
+            "transform_scale": self.style.transform_scale,
+            "border": self.style.border,
+            "mouse_filter": self.mouse_filter
         }
 
 @dataclass
 class ParentNode(Node):
     """A separate node that still inherits from Node but has custom methods specialized for "container-type" nodes."""
     
-    justify : CoshJustify = CoshJustify.START
-    align : CoshAlign = CoshAlign.START
-    overflow : CoshOverflow = CoshOverflow.VISIBLE
-    padding : float | None = None
-    gap : float | None = None
-    src : str | None = None
+    justify: CoshJustify = CoshJustify.START
+    align: CoshAlign = CoshAlign.START
+    overflow: CoshOverflow = CoshOverflow.VISIBLE
+    # scroll: CoshScroll = field(default_factory=lambda: CoshScroll())
+    padding: float | None = None
+    gap: float | None = None
+    src: str | None = None
 
     def __enter__(self):
         CoshUI._stack.append(self)
@@ -84,6 +105,24 @@ class ParentNode(Node):
 
     def __exit__(self, *args):
         CoshUI._stack.pop()
+
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "justify": (CoshJustify,),
+                "align": (CoshAlign,),
+                "overflow": (CoshOverflow,),
+                # "scroll": (CoshScroll,),
+                "padding": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
+                "gap": (int, float, type(None)),
+                "src": (str, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
     def get_render_data(self) -> RenderContext:
         data = self.get_base_render_data()
@@ -97,7 +136,7 @@ class Element(Node):
 
     def __post_init__(self):
         if self.id is None:
-            raise CoshUIError(f"Widget `{self.__class__.__name__}` must have an id.")
+            raise CoshUIError.Main(f"Widget `{self.__class__.__name__}` must have an id.")
 
         super().__post_init__()
 
@@ -106,17 +145,17 @@ class Element(Node):
 
 @dataclass
 class TextNode(Element):
-    text : str | None = None
-    font : str | None = None
-    font_size : int | None = None
-    text_color : tuple = (255, 255, 255)
-    text_align : CoshTextAlign = CoshTextAlign.CENTER
-    text_justify : CoshTextJustify = CoshTextJustify.CENTER
-    text_overflow : CoshTextOverflow = CoshTextOverflow.VISIBLE
-    bold : bool = False
-    italic : bool = False
-    strikethrough : bool = False
-    underline : bool = False
+    text: str | None = None
+    font: str | None = None
+    font_size: int | None = None
+    text_color: tuple = (255, 255, 255)
+    text_align: CoshTextAlign = CoshTextAlign.CENTER
+    text_justify: CoshTextJustify = CoshTextJustify.CENTER
+    text_overflow: CoshTextOverflow = CoshTextOverflow.VISIBLE
+    bold: bool = False
+    italic: bool = False
+    strikethrough: bool = False
+    underline: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -124,7 +163,7 @@ class TextNode(Element):
         self.font = resolve_font_variant(CoshUI._font_library.get(self.font, None), self.bold, self.italic, self.font)
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         self.text_data = create_single_text_data(
-            self.text, self.text_align, 
+            self.text if self.text is not None else "", self.text_align, 
             self.text_justify, self.text_overflow, 
             self.text_color, self.font_size , self.font,
             self.strikethrough, self.underline
@@ -139,6 +178,28 @@ class TextNode(Element):
                 self.width = w
             if self.height is CoshSizing.AUTO:
                 self.height = h
+
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "text": (str, type(None)),
+                "font": (str, type(None)),
+                "font_size": (int,),
+                "text_color": (TupleLength(3, element_types=(int,)),),
+                "text_align": (CoshTextAlign,),
+                "text_justify": (CoshTextJustify,),
+                "text_overflow": (CoshTextOverflow,),
+                "bold": (bool,),
+                "italic": (bool,),
+                "strikethrough": (bool,),
+                "underline": (bool,)
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
     def get_render_data(self):
         data = self.get_base_render_data()

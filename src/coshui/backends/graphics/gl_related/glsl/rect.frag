@@ -12,8 +12,8 @@ uniform vec4 uBorderColor;
 
 float sdRoundedBox(vec2 p, vec2 b, vec4 r)
 {
-    vec2 select_r = (p.x > 0.0) ? r.yz : r.xw;
-    float radius = (p.y < 0.0) ? select_r.x : select_r.y;
+    vec2 select_r = (p.x > 0.0) ? r.yz: r.xw;
+    float radius = (p.y < 0.0) ? select_r.x: select_r.y;
 
     vec2 q = abs(p) - b + vec2(radius);
 

@@ -20,7 +20,7 @@ _texture_cache = {}
 
 # NOTE: An optimization route in the future is batching, but I'm not very good at GLSL so I can't make an uber shader that helps with that.
 class ModernGLBackend(CoshBackend):
-    def __init__(self, context, driver : Windower):
+    def __init__(self, context, driver: Windower):
         if moderngl is None:
             raise ImportError(
                 "ModernGL is not installed. Please install it using `pip install coshui[moderngl]`."
@@ -241,7 +241,7 @@ class ModernGLBackend(CoshBackend):
         if clip_rect:
             self.context.scissor = None
 
-    def flush(self, render_stack : list[RenderContext]):
+    def flush(self, render_stack: list[RenderContext]):
         for data in render_stack:
             if data.alpha <= 0:
                 continue

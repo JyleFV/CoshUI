@@ -13,11 +13,6 @@ class CoshBackend(ABC):
     def _draw_image(self):
         pass
     
-    # Stub for particle system
-    # @abstractmethod
-    # def _draw_particles(self):
-    #     pass
-
     @abstractmethod
     def flush(self):
         pass
