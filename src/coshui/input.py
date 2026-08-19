@@ -27,7 +27,3 @@ class CoshInput:
     @classmethod
     def get_mouse_position(cls) -> tuple:
         return cls._mouse_position
-
-    @classmethod
-    def get_key_presses(cls) -> list:
-        return cls._text_buffer

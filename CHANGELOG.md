@@ -1,5 +1,5 @@
 # CoshUI - 0.3.3 Changelog
-Posted: `August X, 2026`
+Posted: `August 19, 2026`
 
 ### Theme System v2.0:
 The new theme rework has made it a lot more accessible and actually worth it to make your own themes, by introducing a `token` system that lets users define values and reuse it and also an "inheritance" system that lets themes simply create a copy of an existing theme and override those values as opposed to making new themes from scratch.
