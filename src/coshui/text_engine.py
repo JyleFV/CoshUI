@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Literal
 import difflib
+import io
 
 from .state import CoshUI
-from .cui_error import CoshMLError
+from .cui_error import CoshUIError
 from .types import TextData
 from .utility import resolve_font_variant
 
@@ -12,35 +13,43 @@ def validate_color(value: str) -> tuple:
     try:
         parsed = tuple(int(x.strip()) for x in value.strip("()").split(","))
     except ValueError:
-        raise CoshMLError(f"Invalid color value `{value}`. Expected a tuple of 3 integers e.g. `(255, 0, 0)`.")
+        raise CoshUIError.CoshML(f"Invalid color value `{value}`. Expected a tuple of 3 integers e.g. `(255, 0, 0)`.")
     
     if len(parsed) != 3 or not all(0 <= c <= 255 for c in parsed):
-        raise CoshMLError(f"Invalid color value `{value}`. Each channel must be between 0 and 255.")
+        raise CoshUIError.CoshML(f"Invalid color value `{value}`. Each channel must be between 0 and 255.")
     
     return parsed
 
-def validate_font(font : str, bold : bool, italic : bool):
+def validate_font(font: str, bold: bool, italic: bool):
     validated_font = resolve_font_variant(CoshUI._font_library.get(font), bold, italic, font)
     if validated_font is None:
-        raise CoshMLError(f"`{font}` is not a valid font.")
+        raise CoshUIError.CoshML(f"`{font}` is not a valid font.")
     
     return validated_font
 
-def validate_font_size(size : str):
+def validate_font_size(size: str):
     try:
         final_size = int(size)
     except ValueError:
-        raise CoshMLError(f"Invalid size value `{size}` for font_size. Input a proper integer.")
+        raise CoshUIError.CoshML(f"Invalid size value `{size}` for font_size. Input a proper integer.")
     
     return final_size 
 # endregion
 
+"""
+Tags are keywords in the language that require a value that's set using `=`.
+These require "validators", functions that check whether the value can be submitted
+"""
 TAGS = {
-    "color" : validate_color,
-    "font" : validate_font,
-    "font_size" : validate_font_size
+    "color": validate_color,
+    "font": validate_font,
+    "font_size": validate_font_size
 }
 
+"""
+Keywords are words that automatically set the TextStyle values of a TextRun without 
+requiring those values to be set using `=`.
+"""
 KEYWORD_MAP = {
     "bold": ("bold", True),
     "italic": ("italic", True),
@@ -65,23 +74,25 @@ class TextStyle:
 
     def _style_dict(self):
         return {
-            "color" : self.color,
-            "font_size" : self.font_size,
-            "font" : self.font,
-            "bold" : self.bold,
-            "italic" : self.italic,
-            "underline" : self.underline,
-            "strikethrough" : self.strikethrough,
+            "color": self.color,
+            "font_size": self.font_size,
+            "font": self.font,
+            "bold": self.bold,
+            "italic": self.italic,
+            "underline": self.underline,
+            "strikethrough": self.strikethrough,
         }
 
 @dataclass
 class TextRun(TextStyle):
-    text : str | None = None
+    text: str | None = None
 
 @dataclass
 class Token:
-    type: Literal["text", "tag", "close"]
+    type: Literal["text", "tag", "close", "newline"]
     value: str
+    start: int
+    end: int
 
 def tokenize(text: str) -> list[Token]:
     tokens = []
@@ -90,60 +101,62 @@ def tokenize(text: str) -> list[Token]:
         if text[i] == "[":
             end = text.find("]", i)
             if end == -1:
-                raise CoshMLError("Missing `]` closing tag. Did you forget to close a tag?")
+                raise CoshUIError.CoshML("Missing `]` closing tag. Did you forget to close a tag?")
             tag_content = text[i + 1:end]
             if tag_content == "/":
-                tokens.append(Token("close", ""))
+                tokens.append(Token("close", "", i, end + 1))
+            elif tag_content == "n": # Newline
+                tokens.append(Token("newline", "", i, end + 1))
             else:
-                tokens.append(Token("tag", tag_content))
+                tokens.append(Token("tag", tag_content, i, end + 1))
             i = end + 1
         else:
             end = text.find("[", i)
             end = end if end != -1 else len(text)
-            tokens.append(Token("text", text[i:end]))
+            tokens.append(Token("text", text[i:end], i, end))
             i = end
     return tokens
 
 def parse_tag(tag: str) -> dict:
     style = {}
     parts = []
-    current = ""
+    current = [] # better to use a list than string concatenation
     depth = 0
 
     for i, char in enumerate(tag):
         if char == "(":
             depth += 1
-            current += char
+            current.append(char)
 
         elif char == ")":
             depth -= 1
             if depth < 0:
-                raise CoshMLError(f"Unexpected ')' at position {i + 1} of CoshML tag `{tag}`.")
-            current += char
+                raise CoshUIError.CoshML(f"Unexpected ')' at position {i + 1} of CoshML tag `{tag}`.")
+            current.append(char)
 
         elif char == " " and depth == 0:
             if current:
-                parts.append(current)
-            current = ""
+                parts.append("".join(current))
+            current = []
 
         else:
-            current += char
+            current.append(char)
 
     if depth > 0:
-        raise CoshMLError(f"Unclosed parenthesis in CoshML tag `{tag}`.")
+        raise CoshUIError.CoshML(f"Unclosed parenthesis in CoshML tag `{tag}`.")
     
     if current:
-        parts.append(current)
+        parts.append("".join(current))
 
     for part in parts:
         if part in TAGS: # This means the part is a TAG that has no value
-            raise CoshMLError(f"The tag `{part}` needs a value.")
+            raise CoshUIError.CoshML(f"The tag `{part}` needs a value.")
         elif "=" in part:
             key, value = part.split("=", 1)
             known_keys = set(TAGS.keys())
             if key not in known_keys:
                 close_match = difflib.get_close_matches(key, known_keys, n=1)
-                raise CoshMLError(
+                raise CoshUIError.CoshML(
                     f"Unknown CoshML attribute `{key}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?"
                 )
             style[key] = value
@@ -156,13 +169,13 @@ def parse_tag(tag: str) -> dict:
         else:
             all_known = list(KEYWORD_MAP.keys()) + list(CoshUI._text_style_class.keys())
             close_match = difflib.get_close_matches(part, all_known, n=1)
-            raise CoshMLError(
+            raise CoshUIError.CoshML(
                 f"Unknown CoshML tag `{part}`. Did you mean `{close_match[0] if close_match else 'Unknown'}`?"
             )
 
     return style
 
-def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_size: int, letter_spacing : float, word_spacing : float, line_spacing : float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
+def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_size: int, letter_spacing: float, word_spacing: float, line_spacing: float, text_justify, text_align, text_overflow, strikethrough, underline, bold, italic) -> TextData:
     tokens = tokenize(text)
     context = TextData(
         letter_spacing=letter_spacing, word_spacing=word_spacing, 
@@ -172,39 +185,30 @@ def parse_coshml(text: str, text_color: tuple, font_name: str, font: str, font_s
     )
 
     base_style = TextStyle(color=text_color, _font_family=font_name, font=font, font_size=font_size, strikethrough=strikethrough, underline=underline, bold=bold, italic=italic)
-    style_stack = [base_style]
-    full_text = ""
+    style_stack = [(base_style, None, None, None)] # style, tag_name, start, end
+    full_text = io.StringIO()
 
     for token in tokens:
         match token.type:
             case "text":
-                current = style_stack[-1]
-                context.runs.append(TextRun(
-                    text=token.value,
-                    color=current.color,
-                    font=current.font,
-                    font_size=current.font_size,
-                    bold=current.bold,
-                    italic=current.italic,
-                    underline=current.underline,
-                    strikethrough=current.strikethrough,
-                ))
-                full_text += token.value
+                emit_characters(style_stack, context, token.value)
+                full_text.write(token.value)
             case "tag":
-                current = style_stack[-1]
+                current = style_stack[-1][0]
                 overrides = parse_tag(token.value)
-                style_stack.append(validate_style(current, overrides))
+                style_stack.append((validate_style(current, overrides), token.value, token.start, token.end))
+            case "newline":
+                emit_characters(style_stack, context, "\n")
+                full_text.write(token.value)
             case "close":
                 if len(style_stack) == 1:
-                    raise CoshMLError("Closing tag found without any tags, please follow the appropriate use of CoshML.")
-                if len(style_stack) > 1:
-                    style_stack.pop()
+                    raise CoshUIError.CoshML(f"Closing tag `[/]` found at position {token.start} with no open tag to close, please follow the appropriate use of CoshML.")
+                style_stack.pop()
 
     if len(style_stack) != 1:
-        raise CoshMLError(f"{len(style_stack) - 1} unclosed tag(s). Did you forget a closing tag `[/]`?")
+        raise CoshUIError.CoshML(f"The `[{style_stack[-1][1]}]` tag at position {style_stack[-1][2]}-{style_stack[-1][3]} is unclosed. Did you forget a closing tag `[/]`?")
 
-    context.text = full_text
-
+    context.text = full_text.getvalue()
     return context
 
 # region HELPERS
@@ -240,4 +244,17 @@ def validate_style(current: TextStyle, overrides: dict) -> TextStyle:
         strikethrough=overrides.get("strikethrough", current.strikethrough),
         _font_family=override_font_family
     )
+
+def emit_characters(style_stack, context, value):
+    current = style_stack[-1][0]
+    context.runs.append(TextRun(
+        text=value,
+        color=current.color,
+        font=current.font,
+        font_size=current.font_size,
+        bold=current.bold,
+        italic=current.italic,
+        underline=current.underline,
+        strikethrough=current.strikethrough,
+    ))
 # endregion

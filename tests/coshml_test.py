@@ -7,6 +7,7 @@ from coshui.types import *
 BASE_ARGS = dict(
     text_color=(255, 255, 255),
     font="Courier",
+    font_name=None,
     font_size=24,
     letter_spacing=None,
     word_spacing=None,
@@ -154,6 +155,7 @@ def test_text_data_cache_state():
     data = parse_coshml(
         text="Hello",
         text_color=(255, 255, 255),
+        font_name=None,
         font="Arial.ttf",
         font_size=16,
         letter_spacing=1.0,
@@ -188,6 +190,7 @@ def test_text_data_cache_state_uses_raw_text():
     red = parse_coshml(
         text="[red]Hello[/]",
         text_color=(255, 255, 255),
+        font_name=None,
         font="Arial.ttf",
         font_size=16,
         letter_spacing=None,
@@ -205,6 +208,7 @@ def test_text_data_cache_state_uses_raw_text():
     blue = parse_coshml(
         text="[blue]Hello[/]",
         text_color=(255, 255, 255),
+        font_name=None,
         font="Arial.ttf",
         font_size=16,
         letter_spacing=None,
@@ -227,19 +231,7 @@ def test_text_data_cache_state_uses_raw_text():
 def test_text_data_bold_italic():
     data = parse_coshml(
         text="[bold italic]Hello[/]",
-        text_color=(255, 255, 255),
-        font="Inter",
-        font_size=16,
-        letter_spacing=None,
-        word_spacing=None,
-        line_spacing=None,
-        text_justify=CoshTextJustify.CENTER,
-        text_align=CoshTextAlign.CENTER,
-        text_overflow=CoshTextOverflow.VISIBLE,
-        bold=False,
-        italic=False,
-        underline=False,
-        strikethrough=False,
+        **BASE_ARGS
     )
 
     assert len(data.runs) == 1

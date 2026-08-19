@@ -8,6 +8,10 @@ the process for contributing and the conventions we follow.
 
 ## Getting Started
 
+> [!IMPORTANT]
+> Remember that CoshUI's main philosophy is to **never** interfere with a user's code, it should exist alongside it, not control it.
+> ***"UI is what gets drawn and interacted with, not what dictates the structure of the program around it."***
+
 1. Fork the repository
 2. Clone your fork locally
 3. Create a virtual environment and install dependencies:
@@ -34,14 +38,29 @@ Use the following prefixes:
 
 ## Code Style
 
-- **Try not to have confusing abbreviations in variable names**: `center_x` not `cx`
-- **Spaced colons**: (`{ "key" : value }` / `text : str`) not (`{"key": value}` / `text: str`)
-- **Self documenting names**: code should read clearly without needing comments
-- Comments should explain **why**, not **what**
+- **Self documenting names**: Code should read clearly without fully needing comments.
+- **Documentation**: If you want to add documentation for user exposed functions/types follow this example:
+```python
+"""
+Description about the function or class that explains what it is and what it does
 
-> [!WARNING]
-> The spaced colons style for CoshUI is purely for styling purposes (cause I like them) but it's not compliant with PEP 8 standards, 
-> so if you have formatters while contributing to this project, make it ignore those warnings.
+### Parameters (if it has parameters)
+
+- **parameter_x**: Description about what it is and what it does.
+- **parameter_y**: Description about what it is and what it does.
+
+### Attributes (if it has attributes needed to be known or are altered by the user)
+
+- **attribute_1**: What the attribute is, what it holds, and roughly what it does.
+- **attribute_2**: What the attribute is, what it holds, and roughly what it does.
+
+### Returns (if it has a return type)
+
+- **return_type**: What it returns and anything the user has to know about it.
+"""
+```
+Check the `animate()` function for a real example. 
+- **PEP 8**: Just try to follow most [PEP 8](https://peps.python.org/pep-0008/) Standards (But truthfully, it's a convention. Even I'm not sure if I follow it all 😅).
 
 ## Merge Requests
 
@@ -67,6 +86,21 @@ Open an issue with:
 - Explanation on how to replicate the bug if possible
 - A potential fix if you have one
 - A screenshot of UI and/or error traceback
+
+If you're still unsure, here's a guide (this is a guide, but should be followed in this order if this format is followed):
+```markdown
+### Description
+Description of the bug.
+
+### Root Cause 
+What the cause of the bug is (if you know or is applicable).
+
+### Potential Fix
+An idea for a fix of the bug (optional but greatly appreciated).
+
+### Relevant Code & Images / Examples
+Helpful code or images that could help replicate the bug.
+```
 
 ## Feature Requests
 

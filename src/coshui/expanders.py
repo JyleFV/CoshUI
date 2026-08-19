@@ -33,8 +33,18 @@ def _expand_slider(node):
 
     ratio = (value - node.min_value) / (node.max_value - node.min_value)
     # "It ain't much but it's honest work" - Terrarizer May 15, 2026
-    # Nah but seriously though, why is this so ugly 🤮
-    thumb_size = node.thumb_size if node.thumb_size is not None else node.height if node.height is not None else ENGINE_DEFAULTS["thumb_size"]
+    # Nah but seriously though, why is this so ugly 🤮 
+    # thumb_size = node.thumb_size if node.thumb_size is not None else node.height if node.height is not None else ENGINE_DEFAULTS["thumb_size"]
+
+    # UPDATE: August 16 and I have been code reviewed on the Programmer's Hangout discord
+    # I have commented out the old code just to remember the ugliness lol
+    if node.thumb_size is not None:
+        thumb_size = node.thumb_size
+    elif node.height is not None:
+        thumb_size = node.height
+    else:
+        thumb_size = ENGINE_DEFAULTS["thumb_size"]
+
     thumb_x = ratio * (node.width - thumb_size)
 
     thumb = Box(

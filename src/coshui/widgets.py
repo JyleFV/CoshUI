@@ -5,10 +5,11 @@ import math
 from dataclasses import dataclass
 
 from .types import *
-from .utility import Ref, resolve_font_variant
+from .user_functions import Ref
+from .utility import resolve_font_variant
 from .state import CoshUI
-from .cui_error import CoshUIError, warn
-from .node_definitions import Element, TextNode, ParentNode
+from .cui_error import CoshUIError
+from .node_definitions import _type_cache, Element, TextNode, ParentNode
 from ._defaults import _button_default_click, _button_default_hover, _button_default_release, _button_default_unhover, _checkbox_default_click
 from .text_engine import parse_coshml
 from ._defaults import ENGINE_DEFAULTS
@@ -20,13 +21,14 @@ if TYPE_CHECKING:
 
 @dataclass
 class Container(ParentNode):
-    """The base Container Node, simple but the most customizable."""
-
-    direction : CoshDirection = CoshDirection.ROW
+    """
+    The base Container Node, simple but the most customizable.
+    """
+    direction: CoshDirection = CoshDirection.ROW
 
     def measure(self):
         if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
-            warn(f"Container has `AUTO` sizing with no children, setting sizing to `FILL`.")
+            CoshUIError.warn(f"Container has `AUTO` sizing with no children, setting sizing to `FILL`.")
             if self.width is CoshSizing.AUTO:
                 self.width = CoshSizing.FILL
             if self.height is CoshSizing.AUTO:
@@ -53,15 +55,28 @@ class Container(ParentNode):
         if self.height is CoshSizing.AUTO:
             self.height = auto_height
 
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "direction": (CoshDirection,)
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
+
 @dataclass
 class Grid(ParentNode):
-    """A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row."""
-    
-    column_count : int = 1
+    """
+    A "container-like" node but specially designed for containing stacked elements with a predictable amount of elements per row.
+    """
+    column_count: int = 1
 
     def measure(self):
         if not self.children and any(size is CoshSizing.AUTO for size in (self.width, self.height)):
-            warn(f"Grid has `AUTO` sizing with no children, setting sizing to `FILL`.")
+            CoshUIError.warn(f"Grid has `AUTO` sizing with no children, setting sizing to `FILL`.")
             if self.width is CoshSizing.AUTO:
                 self.width = CoshSizing.FILL
             if self.height is CoshSizing.AUTO:
@@ -103,6 +118,18 @@ class Grid(ParentNode):
         if self.height is CoshSizing.AUTO:
             self.height = min_content_height
 
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "column_count": (int,)
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
+
 # ======================== Widgets ========================
 
 # NOTE: Conditional UI is partially unsupported. It's possible, just don't forget to explicitly add ids to all UI elements that appear within conditionals.
@@ -127,9 +154,9 @@ class Label(TextNode):
 
 @dataclass
 class RichLabel(TextNode):
-    letter_spacing : float | None = None
-    line_spacing : float | None = None
-    word_spacing : float | None = None
+    letter_spacing: float | None = None
+    line_spacing: float | None = None
+    word_spacing: float | None = None
 
     def __post_init__(self):
         # Skips TextNode straight to Element so we can bypass create_single_text_data()
@@ -140,22 +167,22 @@ class RichLabel(TextNode):
         self.font_size = self.font_size if self.font_size is not None else ENGINE_DEFAULTS["font_size"]
         
         current = {
-            "raw_text" : self.text,
-            "letter_spacing" : self.letter_spacing,
-            "word_spacing" : self.word_spacing,
-            "line_spacing" : self.line_spacing,
-            "text_align" : self.text_align,
-            "text_justify" : self.text_justify,
-            "text_overflow" : self.text_overflow,
-            "font" : self.font,
-            "font_size" : self.font_size,
-            "color" : self.text_color,
+            "raw_text": self.text,
+            "letter_spacing": self.letter_spacing,
+            "word_spacing": self.word_spacing,
+            "line_spacing": self.line_spacing,
+            "text_align": self.text_align,
+            "text_justify": self.text_justify,
+            "text_overflow": self.text_overflow,
+            "font": self.font,
+            "font_size": self.font_size,
+            "color": self.text_color,
         }
 
         text = CoshUI.get_state(self.id, "text_data")
         if text is None or current != text.cached_state():
             parsed_text = parse_coshml(
-                self.text, self.text_color, font_name,
+                self.text if self.text is not None else "", self.text_color, font_name,
                 self.font, self.font_size, 
                 self.letter_spacing, self.word_spacing, 
                 self.line_spacing, self.text_justify, self.text_align, 
@@ -173,13 +200,29 @@ class RichLabel(TextNode):
 
         return RenderContext(**data)
 
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "letter_spacing": (int, float, type(None)),
+                "line_spacing": (int, float, type(None)),
+                "word_spacing": (int, float, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
+
 @dataclass
 class Checkbox(Element):
-    """ NOTE: Checkboxes don't support background_color animations as background_color is a direct representation of it's functional state """
-    checked : bool =  False
-    checked_color : tuple | None = None
-    unchecked_color : tuple | None = None
-    bind : Ref | None = None
+    """
+    Checkboxes don't support background_color animations as background_color is a direct representation of it's functional state
+    """
+    checked: bool =  False
+    checked_color: tuple | None = None
+    unchecked_color: tuple | None = None
+    bind: Ref | None = None
 
     def __post_init__(self):
         if CoshUI._get_signal(self.id, CoshSignals.CLICKED):
@@ -195,12 +238,32 @@ class Checkbox(Element):
         else:
             CoshUI.set_state(self.id, "checked", self.checked)
 
+        if self.checked:
+            self.style.background_color = self.checked_color
+        else:
+            self.style.background_color = self.unchecked_color
+
     def get_render_data(self):
         return RenderContext(**self.get_base_render_data())
 
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "checked": (bool,),
+                "checked_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "unchecked_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "bind": (Ref, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
+
 @dataclass
 class Image(Element):
-    src : str | None = None
+    src: str | None = None
     
     def __post_init__(self):
         super().__post_init__()
@@ -208,14 +271,26 @@ class Image(Element):
         if self.src:
             self.src = os.path.abspath(self.src)
             if not os.path.isfile(self.src):
-                raise CoshUIError(f"Image path `{self.src}` does not exist or is not a file.")
+                raise CoshUIError.Main(f"Image path `{self.src}` does not exist or is not a file.")
         else:
-            raise CoshUIError(f"Expected path value in `src` field.")
+            raise CoshUIError.Main(f"Expected path value in `src` field.")
 
     def get_render_data(self):
         data = self.get_base_render_data()
         data["image_src"] = self.src
         return RenderContext(**data)
+
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "src": (str, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 # Literally just a filler datatype
 @dataclass
@@ -229,21 +304,37 @@ class Box(Element):
 
 @dataclass
 class Modal(ParentNode):
-    positioning : CoshPositioning = CoshPositioning.ABSOLUTE
-    direction : CoshDirection = CoshDirection.ROW
-    header_color : tuple | None = None
-    header_border_radius : tuple | None = None
-    content_color : tuple | None = None
-    content_border_radius : tuple | None = None
+    positioning: CoshPositioning = CoshPositioning.ABSOLUTE # overrides Node
+    direction: CoshDirection = CoshDirection.ROW # overrides ParentNode
+    header_color: tuple | None = None
+    header_border_radius: tuple | None = None
+    content_color: tuple | None = None
+    content_border_radius: tuple | None = None
 
     def __post_init__(self):
         if self.id is None:
-            raise CoshUIError("ParentNode `Modal` must have an id.")
+            raise CoshUIError.Main("ParentNode `Modal` must have an id.")
 
         super().__post_init__()
 
     def measure(self):
         pass
+
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "direction": (CoshDirection,), # This class inherits ParentNode, not Container, so this needs to be set.
+                "header_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "header_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None)),
+                "content_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "content_border_radius": (TupleLength(4, element_types=(int, float)), int, float, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
 
 @dataclass
 class InputField(TextNode):
@@ -251,13 +342,13 @@ class InputField(TextNode):
 
 @dataclass
 class Dropdown(TextNode):
-    item_list : list | None = None
-    selector_index : int = 0
-    bind : Ref | None = None
+    item_list: list | None = None
+    selector_index: int = 0
+    bind: Ref | None = None
 
     def __post_init__(self):
         if self.item_list is None:
-            raise CoshUIError("Widget `Dropdown` must have a valid `item_list`")
+            raise CoshUIError.Main("Widget `Dropdown` must have a valid `item_list`")
 
         super().__post_init__()
 
@@ -274,16 +365,30 @@ class Dropdown(TextNode):
     def get_render_data(self):
         return None
 
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "item_list": (list,),
+                "selector_index": (int,),
+                "bind": (Ref, type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
+
 @dataclass
 class Slider(Element):
-    min_value : float = 0.0
-    max_value : float = 100.0
-    step : float = 1.0
-    value : float | None = None
-    bind : Ref | None = None
-    thumb_size : int | None = None
-    thumb_color : tuple | None = None
-    track_color : tuple | None = None
+    min_value: float = 0.0
+    max_value: float = 100.0
+    step: float = 1.0
+    value: float | None = None
+    bind: Ref | None = None
+    thumb_size: int | None = None
+    thumb_color: tuple | None = None
+    track_color: tuple | None = None
     
     def __post_init__(self):
         super().__post_init__()
@@ -298,3 +403,22 @@ class Slider(Element):
 
     def get_render_data(self):
         return None
+
+    def valid_property_types(self):
+        cls = type(self)
+        cache = _type_cache.get(cls)
+        if cache is None:
+            base_types = {
+                **super().valid_property_types(),
+                "min_value": (int, float),
+                "max_value": (int, float),
+                "step": (int, float),
+                "value": (float,type(None)),
+                "bind": (Ref, type(None)),
+                "thumb_size": (int, type(None)),
+                "thumb_color": (TupleLength(3, element_types=(int,)), type(None)),
+                "track_color": (TupleLength(3, element_types=(int,)), type(None))
+            }
+            _type_cache[cls] = base_types
+            return base_types
+        return cache
