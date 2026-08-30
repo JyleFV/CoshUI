@@ -94,7 +94,7 @@ class ParentNode(Node):
     justify: CoshJustify = CoshJustify.START
     align: CoshAlign = CoshAlign.START
     overflow: CoshOverflow = CoshOverflow.VISIBLE
-    # scroll: CoshScroll = field(default_factory=lambda: CoshScroll())
+    scroll: CoshScroll = field(default_factory=lambda: CoshScroll())
     padding: float | None = None
     gap: float | None = None
     src: str | None = None
@@ -115,7 +115,7 @@ class ParentNode(Node):
                 "justify": (CoshJustify,),
                 "align": (CoshAlign,),
                 "overflow": (CoshOverflow,),
-                # "scroll": (CoshScroll,),
+                "scroll": (CoshScroll,),
                 "padding": (TupleLength(2, 3, 4, element_types=(int, float,)), int, float, type(None)),
                 "gap": (int, float, type(None)),
                 "src": (str, type(None))
@@ -128,6 +128,7 @@ class ParentNode(Node):
         data = self.get_base_render_data()
         data["image_src"] = self.src
         data["padding"] = self.padding
+        data["scroll_mode"] = self.scroll.mode
         return RenderContext(**data)
 
 @dataclass

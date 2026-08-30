@@ -1,3 +1,16 @@
+# Table of Contents
+
+| Version | Major Changes | Date |
+| :--- | :--- | :--- |
+| [CoshUI v0.3.3](#coshui---033-changelog) | Theme System Rework | `08-21-26` |
+| [CoshUI v0.3.2.1](#coshui---0321-hotfix) | Nested CoshML Fix | `07-07-26` |
+| [CoshUI v0.3.2](#coshui---032-changelog) | CoshML Release | `07-05-26` |
+| [CoshUI v0.3.1](#coshui---031-patch-notes) | GL Shaders Fix | `06-18-26` |
+| [CoshUI v0.3.0](#coshui---030-changelog) | Properties | `06-07-26` |
+| [CoshUI v0.2.4](#coshui---024-initial-release) | Initial Release | `05-23-26` |
+
+---
+
 # CoshUI - 0.3.3 Changelog
 Posted: `August 19, 2026`
 

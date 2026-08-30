@@ -65,12 +65,18 @@ class CoshScrollMode(Enum):
     Y = 2
     ALL = 3
 
+# Currently a placeholder for CoshScrollMode
+# will figure out if other values will be used
 @dataclass
 class CoshScroll:
     mode: CoshScrollMode = CoshScrollMode.NONE
-    overshoot: bool = False
-    scrollbar_visible: bool = False
-    scroll_speed: float | int = 1.0
+    # overshoot: bool = False
+    # scrollbar_visible: bool = False
+    # scroll_speed: float | int = 1.0
+
+    # def __post_init__(self):
+    #     if self.mode is CoshScrollMode.NONE and (self.overshoot or self.scrollbar_visible):
+    #         CoshUIError.warn("The overshoot and scrollbar_visible attributes being set to `True` have no effect when scroll mode is set to `NONE`.")
 
 class CoshMouseButton(Enum):
     LEFT = 0
@@ -218,6 +224,7 @@ class RenderContext(NamedTuple):
     alpha: int = 0
     # Interaction
     mouse_filter: CoshMouseFilter = CoshMouseFilter.STOP
+    scroll_mode: CoshScrollMode = CoshScrollMode.NONE
     # Text
     text_data: TextData | None = None
     # Image
@@ -281,4 +288,4 @@ class LineLayout:
     height: float
     fragments: list = field(default_factory=list)
 
-__all__ = ['CoshClamp', 'CoshMinMax', 'CoshScroll', 'TupleLength', 'FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']
+__all__ = ['CoshClamp', 'CoshMinMax', 'CoshScrollMode', 'CoshScroll', 'TupleLength', 'FourSide', 'LineLayout', 'TextFragment', 'TextData', 'RenderContext', 'CoshMode', 'CoshPercentage', 'CoshSignals', 'CoshMouseButton', 'CoshMouseFilter', 'CoshPositioning', 'CoshOverflow', 'CoshStyling', 'CoshAlign', 'CoshJustify', 'CoshTextAlign', 'CoshTextJustify', 'CoshTextOverflow', 'CoshDirection', 'CoshSizing']

@@ -8,7 +8,7 @@ from .text_engine import TextStyle
 
 from .user_functions import Ref, set_default_font, add_class, add_font, get_signal, create_theme, set_theme, animate
 
-from .types import CoshMode, CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
+from .types import CoshScrollMode, CoshScroll, CoshMode, CoshAlign, CoshJustify, CoshDirection, CoshSizing, CoshPercentage, CoshTextJustify, CoshTextAlign, CoshTextOverflow, CoshStyling, CoshOverflow, CoshPositioning, CoshMouseFilter, CoshMouseButton, CoshSignals
 
 # Align
 ALIGN_START = CoshAlign.START
@@ -72,6 +72,12 @@ ABSOLUTE = CoshPositioning.ABSOLUTE
 FILL = CoshSizing.FILL
 AUTO = CoshSizing.AUTO
 PERCENTAGE = CoshPercentage
+
+# Scroll
+SCROLL_NONE = CoshScrollMode.NONE
+SCROLL_ALL = CoshScrollMode.ALL
+SCROLL_X = CoshScrollMode.X
+SCROLL_Y = CoshScrollMode.Y
 
 # Mode
 NORMAL = CoshMode.NORMAL
@@ -141,6 +147,7 @@ __all__ = [
     # Types (raw enums)
     "CoshStyling",
     "TextStyle",
+    "CoshScroll",
 
     # Align
     "ALIGN_START",

@@ -18,6 +18,24 @@ _image_cache = {}
 _font_cache = {}
 _rect_cache = {}
 _text_cache = {}
+_coshui_scroll_delta = [0, 0]
+
+# monkey patch/replaces the `pygame.event.get` function to make a copy of the mousewheel values and
+# store it for CoshUI's use all without being destructive to the function. a bit of a hack but it works
+def _install_wheel_tap():
+    original_get = pygame.event.get
+
+    def patched_get(*args, **kwargs):
+        events = original_get(*args, **kwargs)
+        for e in events:
+            if e.type == pygame.MOUSEWHEEL:
+                _coshui_scroll_delta[0] += e.x
+                _coshui_scroll_delta[1] += e.y
+        return events
+
+    pygame.event.get = patched_get
+    
+_install_wheel_tap()
 
 class PygameBackend(CoshBackend):
     def __init__(self, surface):
@@ -200,6 +218,9 @@ class PygameBackend(CoshBackend):
         CoshInput._mouse_delta = pygame.mouse.get_rel()
         CoshInput._prev_mouse_position = CoshInput._mouse_position
         CoshInput._current_mouse_pressed = pygame.mouse.get_pressed()[0]
+        CoshInput._scroll_wheel_delta = tuple(_coshui_scroll_delta)        
+        _coshui_scroll_delta[0] = 0
+        _coshui_scroll_delta[1] = 0
 
     def measure_text(self, text_data) -> tuple:
         from ...utility import measure_intrinsic_text  # adjust relative import per backend depth

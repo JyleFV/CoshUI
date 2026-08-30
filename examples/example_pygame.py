@@ -23,6 +23,9 @@ def main():
 
     running = True
     while running:
+        # NOTE: Calling `pygame.event.get()` is crucial for PygameBackend scroll wheel to work
+        # I'm sure most if not all pygame projects will call it if at least for the `pygame.QUIT` event but it's
+        # better documented than not
         for event in py.event.get():
             if event.type == py.QUIT:
                 running = False
@@ -31,7 +34,7 @@ def main():
 
         with cui.CoshUIRenderer(cui.PygameBackend(screen), cui.DEBUG):
             with cui.Container(id="container_1", padding=(10, 10, 0, 0), width=cui.FILL, height=cui.FILL, style=cui.CoshStyling(background_color=(80, 75, 255)), align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER):
-                with cui.Container(id="main_container", mouse_filter=cui.STOP, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
+                with cui.Container(id="main_container", scroll=cui.CoshScroll(cui.SCROLL_Y), mouse_filter=cui.STOP, direction=cui.COLUMN, align=cui.ALIGN_CENTER, justify=cui.JUSTIFY_CENTER, gap=15, style=cui.CoshStyling(background_color=(255, 200, 200))):
                     cui.Label(id="main_label", text="CoshUI", font_size=52, text_overflow=cui.TEXT_HIDDEN)
                     cui.Button(id="settings_button", text="Settings", height=50, text_justify=cui.TEXT_JUSTIFY_CENTER)
                     cui.Button(id="quit_button", text="Quit", height=50, width=150)
