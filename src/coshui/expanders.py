@@ -218,6 +218,7 @@ def _expand_modal(node):
     content = Container(
         id=f"{node.id}::content",
         direction=node.direction,
+        scroll=node.scroll,
         width=node.width,
         height=node.height,
         align=node.align,

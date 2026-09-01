@@ -199,12 +199,14 @@ class RaylibBackend(CoshBackend):
     def poll_input(self):
         mouse_pos = raylibpy.get_mouse_position()
         mouse_delta = raylibpy.get_mouse_delta()
+        scroll_delta = raylibpy.get_mouse_wheel_move_v()
 
         CoshInput._prev_mouse_pressed = CoshInput._current_mouse_pressed
         CoshInput._mouse_position = (int(mouse_pos.x), int(mouse_pos.y))
         CoshInput._mouse_delta = (int(mouse_delta.x), int(mouse_delta.y))
         CoshInput._prev_mouse_position = CoshInput._mouse_position
         CoshInput._current_mouse_pressed = raylibpy.is_mouse_button_down(raylibpy.MOUSE_BUTTON_LEFT)
+        CoshInput._scroll_wheel_delta = (int(scroll_delta.x), int(scroll_delta.y))
 
     def measure_text(self, text_data) -> tuple:
         from ...utility import measure_intrinsic_text  # adjust relative import per backend depth

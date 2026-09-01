@@ -70,9 +70,9 @@ class CoshScrollMode(Enum):
 @dataclass
 class CoshScroll:
     mode: CoshScrollMode = CoshScrollMode.NONE
+    scroll_speed: float | int = 20.0
     # overshoot: bool = False
     # scrollbar_visible: bool = False
-    # scroll_speed: float | int = 1.0
 
     # def __post_init__(self):
     #     if self.mode is CoshScrollMode.NONE and (self.overshoot or self.scrollbar_visible):
@@ -225,6 +225,7 @@ class RenderContext(NamedTuple):
     # Interaction
     mouse_filter: CoshMouseFilter = CoshMouseFilter.STOP
     scroll_mode: CoshScrollMode = CoshScrollMode.NONE
+    scroll_speed: float | int | None = None
     # Text
     text_data: TextData | None = None
     # Image

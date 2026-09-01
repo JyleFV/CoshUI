@@ -129,6 +129,7 @@ class ParentNode(Node):
         data["image_src"] = self.src
         data["padding"] = self.padding
         data["scroll_mode"] = self.scroll.mode
+        data["scroll_speed"] = self.scroll.scroll_speed
         return RenderContext(**data)
 
 @dataclass

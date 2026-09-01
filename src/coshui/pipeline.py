@@ -54,12 +54,28 @@ def render(node: Node, offset_x: float = 0.0, offset_y: float = 0.0, z_offset: i
         child_clip = (node._x, node._y, node.width, node.height)
 
     tx, ty = node.style.transform_position
+
+    scroll_x, scroll_y = (0.0, 0.0)
+    if hasattr(node, 'scroll') and node.scroll.mode is not CoshScrollMode.NONE:
+        relative_children = [c for c in node.children if c.positioning is not CoshPositioning.ABSOLUTE]
+        content_right = max((c._x + c.width for c in relative_children), default=node._x)
+        content_bottom = max((c._y + c.height for c in relative_children), default=node._y)
+
+        max_scroll_x = max(0.0, content_right - (node._x + node.width - node.padding.right))
+        max_scroll_y = max(0.0, content_bottom - (node._y + node.height - node.padding.bottom))
+
+        raw_scroll_x, raw_scroll_y = CoshUI.get_state(node.id, "scroll_offset", (0.0, 0.0))
+        scroll_x = -min(max(raw_scroll_x, 0.0), max_scroll_x) if node.scroll.mode in (CoshScrollMode.X, CoshScrollMode.ALL) else 0.0
+        scroll_y = -min(max(raw_scroll_y, 0.0), max_scroll_y) if node.scroll.mode in (CoshScrollMode.Y, CoshScrollMode.ALL) else 0.0
+        CoshUI.set_state(node.id, "scroll_offset", (-scroll_x, -scroll_y))
+
     child_z_offset = z_offset + node.z_index
     for child in node.children:
-        render(child, offset_x + tx, offset_y + ty, child_z_offset, clip_rect=child_clip or clip_rect, accumulated_alpha=blended_alpha)
+        render(child, offset_x + tx + scroll_x, offset_y + ty + scroll_y, child_z_offset, clip_rect=child_clip or clip_rect, accumulated_alpha=blended_alpha)
 
 def process_events():
     mx, my = CoshInput._mouse_position
+    wheel_x, wheel_y = CoshInput._scroll_wheel_delta
 
     if CoshInput.get_mouse_just_released():
         if CoshUI._focused_id:
@@ -68,6 +84,7 @@ def process_events():
     
     consumed_hover = False
     consumed_click = False
+    consumed_scroll = False
 
     for data in reversed(CoshUI._render_stack):
         if data.id is None: 
@@ -121,6 +138,16 @@ def process_events():
                 CoshUI._emit_signal(data.id, CoshSignals.PRESSED)
                 if data.mouse_filter is CoshMouseFilter.STOP:
                     consumed_click = True
+
+        if hovered and not consumed_scroll and (wheel_x or wheel_y) and data.scroll_mode is not CoshScrollMode.NONE:
+            raw_x, raw_y = CoshUI.get_state(data.id, "scroll_offset", (0.0, 0.0))
+            if data.scroll_mode in (CoshScrollMode.X, CoshScrollMode.ALL):
+                raw_x -= wheel_x * data.scroll_speed
+            if data.scroll_mode in (CoshScrollMode.Y, CoshScrollMode.ALL):
+                raw_y -= wheel_y * data.scroll_speed
+            CoshUI.set_state(data.id, "scroll_offset", (raw_x, raw_y))
+            if data.mouse_filter is CoshMouseFilter.STOP:
+                consumed_scroll = True
 
 def finalize_defaults(node):
     targets = [node, node.style]
